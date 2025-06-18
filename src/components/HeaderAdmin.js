@@ -14,11 +14,7 @@ import {
     FaBell,
     FaUserCircle,
     FaUsers,
-    FaTachometerAlt,
     FaGlobe,
-    FaFileAlt,
-    FaChartBar,
-    FaCogs,
     FaUserShield
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';

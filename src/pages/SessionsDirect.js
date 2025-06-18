@@ -19,7 +19,6 @@ import {
     Avatar,
     Tooltip,
     Descriptions,
-    Steps,
     Switch,
     Alert, DatePicker, TimePicker, Radio
 } from 'antd';
