@@ -1,0 +1,40 @@
+.consultation-interne {
+    padding: 24px;
+}
+
+.consultation-toolbar {
+    margin-bottom: 16px;
+}
+.ant-collapse-header {
+    font-weight: 500 !important;
+    align-items: center !important;
+}
+
+.ant-collapse-content-box {
+    padding: 16px !important;
+    background: #fafafa;
+}
+
+.question-actions {
+    margin-top: 8px;
+}
+
+.ant-steps {
+    margin-bottom: 24px;
+}
+
+.step-content {
+    min-height: 300px;
+}
+/* Responsive */
+@media (max-width: 768px) {
+    .consultation-publique,
+    .consultation-interne {
+        padding: 16px;
+    }
+
+    .consultation-header .ant-col,
+    .consultation-toolbar .ant-col {
+        margin-bottom: 16px;
+    }
+}

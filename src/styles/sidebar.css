@@ -1,0 +1,263 @@
+.admin-sidebar {
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 100;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #1a3a8f 0%, #0d2259 100%) !important;
+    transition: all 0.3s ease;
+}
+
+/* Suppression des soulignements de liens */
+.admin-sidebar a {
+    text-decoration: none !important;
+}
+
+/* Header */
+.admin-sidebar .sidebar-header {
+    height: 72px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.admin-sidebar .sidebar-logo-container {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.admin-sidebar .sidebar-logo {
+    height: 36px;
+    margin-right: 12px;
+    filter: brightness(0) invert(1);
+}
+
+.admin-sidebar .app-name {
+    font-size: 18px;
+    color: white !important;
+    white-space: nowrap;
+    margin-left: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.admin-sidebar .sidebar-collapse-btn {
+    font-size: 18px;
+    width: 48px;
+    height: 48px;
+    color: rgba(255, 255, 255, 0.8) !important;
+    transition: all 0.3s;
+}
+
+.admin-sidebar .sidebar-collapse-btn:hover {
+    color: white !important;
+    transform: scale(1.1);
+}
+
+/* Profile */
+.admin-sidebar .sidebar-profile {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.admin-sidebar .sidebar-profile.collapsed {
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.admin-sidebar .profile-avatar {
+    background-color: white;
+    color: #1a3a8f;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-size: 16px;
+}
+
+.admin-sidebar .profile-avatar.ant-avatar-icon {
+    font-size: 18px;
+}
+
+.admin-sidebar .profile-info {
+    margin-left: 15px;
+    overflow: hidden;
+}
+
+.admin-sidebar .profile-name {
+    display: block;
+    font-size: 15px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    color: white;
+    font-weight: 500;
+}
+
+.admin-sidebar .profile-role {
+    display: block;
+    font-size: 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Menu */
+.admin-sidebar .ant-menu {
+    flex: 1;
+    border-right: none !important;
+    padding: 15px 0;
+    overflow-y: auto;
+    background: transparent !important;
+}
+
+.admin-sidebar .ant-menu-item,
+.admin-sidebar .ant-menu-submenu-title {
+    margin: 5px 8px !important;
+    height: 46px !important;
+    line-height: 46px !important;
+    padding-left: 24px !important;
+    width: calc(100% - 16px) !important;
+    border-radius: 6px !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    transition: all 0.3s !important;
+}
+
+.admin-sidebar .ant-menu-item:hover,
+.admin-sidebar .ant-menu-submenu-title:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+}
+
+.admin-sidebar .ant-menu-item-selected {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    font-weight: 500 !important;
+}
+
+.admin-sidebar .ant-menu-item-selected .ant-menu-item-icon {
+    color: white !important;
+}
+
+.admin-sidebar .ant-menu-item-icon {
+    font-size: 18px !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.admin-sidebar .ant-menu-submenu-arrow {
+    right: 16px !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    transition: all 0.3s !important;
+}
+
+.admin-sidebar .ant-menu-submenu-arrow:hover {
+    color: white !important;
+}
+
+.admin-sidebar .ant-menu-submenu-title:hover .ant-menu-submenu-arrow {
+    color: white !important;
+}
+
+/* Sous-menu */
+.admin-sidebar .ant-menu-submenu .ant-menu {
+    padding: 0 !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+.admin-sidebar .ant-menu-submenu .ant-menu-item {
+    padding-left: 48px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    margin: 2px 8px !important;
+}
+
+/* Footer */
+.admin-sidebar .sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.admin-sidebar .sidebar-footer.collapsed {
+    align-items: center;
+    padding: 20px 0;
+}
+
+.admin-sidebar .version-text {
+    font-size: 12px;
+    margin-bottom: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.admin-sidebar .logout-btn {
+    width: 100%;
+    height: 42px;
+    color: rgba(255, 255, 255, 0.8) !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 24px;
+    transition: all 0.3s;
+}
+
+.admin-sidebar .logout-btn:hover {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.admin-sidebar .logout-btn .anticon {
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+/* Badges */
+.admin-sidebar .ant-badge-count {
+    font-size: 10px;
+    font-weight: 600;
+    box-shadow: none;
+    background: #ff4d4f;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin-sidebar {
+        z-index: 1000;
+    }
+
+    .admin-sidebar:not(.ant-layout-sider-collapsed) {
+        position: fixed !important;
+        height: 100%;
+        box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* Animation pour le menu réduit */
+.admin-sidebar.collapsed .ant-menu-item,
+.admin-sidebar.collapsed .ant-menu-submenu-title {
+    padding: 0 calc(50% - 20px / 2) !important;
+    display: flex;
+    justify-content: center;
+}
+
+.admin-sidebar.collapsed .ant-menu-item-icon {
+    margin-right: 0 !important;
+    font-size: 20px !important;
+}

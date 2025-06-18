@@ -1,0 +1,211 @@
+/* Styles généraux */
+.assemblee-page {
+    padding: 20px;
+    background-color: #f0f2f5;
+}
+
+/* En-tête de la carte */
+.bureau-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.bureau-header .instructions {
+    flex: 1;
+    min-width: 300px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Tableau des membres */
+.bureau-table {
+    margin-top: 20px;
+}
+
+.bureau-table .membre-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bureau-table .membre-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.bureau-table .membre-nom {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.bureau-table .actions-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* Aperçu du bureau */
+.bureau-preview {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.bureau-preview h3 {
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+.membre-card {
+    height: 100%;
+    transition: all 0.3s;
+    border-radius: 8px;
+}
+
+.membre-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.membre-card .membre-role {
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: center;
+}
+
+.membre-card .membre-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+}
+
+.membre-card .membre-content h4 {
+    margin: 8px 0 4px;
+    font-weight: 500;
+}
+
+.membre-card .membre-description {
+    margin-top: 8px;
+    color: #666;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* Options des députés dans le select */
+.depute-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.depute-option > span {
+    flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .bureau-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .bureau-header .instructions {
+        min-width: 100%;
+        margin-bottom: 12px;
+    }
+
+    .bureau-table .membre-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .membre-card {
+        margin-bottom: 16px;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.bureau-table .ant-table-row {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Styles pour les tags de rôle */
+.ant-tag {
+    border-radius: 12px;
+    padding: 0 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+/* Personnalisation des couleurs pour les rôles */
+.ant-tag-red {
+    background: #fff1f0;
+    border-color: #ffa39e;
+    color: #cf1322;
+}
+
+.ant-tag-blue {
+    background: #f0f5ff;
+    border-color: #adc6ff;
+    color: #1d39c4;
+}
+
+.ant-tag-green {
+    background: #f6ffed;
+    border-color: #b7eb8f;
+    color: #389e0d;
+}
+
+.ant-tag-orange {
+    background: #fff7e6;
+    border-color: #ffd591;
+    color: #d46b08;
+}
+
+.ant-tag-purple {
+    background: #f9f0ff;
+    border-color: #d3adf7;
+    color: #722ed1;
+}
+
+/* Style pour le statut publié */
+.published-badge {
+    margin-left: 10px;
+    font-size: 14px;
+}
+
+/* Style pour les cartes dans l'aperçu */
+.ant-card-bordered {
+    border: 1px solid #e8e8e8;
+}
+
+/* Style pour le bouton de publication */
+.publish-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Style pour l'avatar dans le tableau */
+.ant-table-cell .ant-avatar {
+    background-color: #1890ff;
+}
+
+/* Style pour les messages d'erreur */
+.error-message {
+    color: #ff4d4f;
+    margin-top: 10px;
+    font-size: 14px;
+}

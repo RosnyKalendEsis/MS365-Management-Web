@@ -1,0 +1,146 @@
+/* Styles généraux */
+.deputes-page {
+    padding: 20px;
+    background-color: #f5f7fa;
+}
+
+/* Cartes de statistiques */
+.stats-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s;
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stats-card .ant-statistic-title {
+    font-size: 14px;
+    color: #666;
+}
+
+.stats-card .ant-statistic-content {
+    font-size: 24px;
+}
+
+/* Tableau des députés */
+.deputes-table {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.deputes-table .ant-table-thead > tr > th {
+    background: #f7f9fc;
+    font-weight: 600;
+    color: #333;
+}
+
+.deputes-table .ant-table-tbody > tr:hover > td {
+    background: #f0f7ff !important;
+}
+
+/* Cartes en mode grille */
+.depute-card {
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s;
+    border: 1px solid #e8e8e8;
+}
+
+.depute-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.depute-card.published {
+    border-left: 3px solid #52c41a;
+}
+
+.depute-card .ant-card-actions {
+    background: #f7f9fc;
+}
+
+.depute-card .ant-card-actions > li {
+    margin: 8px 0;
+}
+
+.depute-card .ant-card-actions > li > span:hover {
+    color: #1890ff;
+}
+
+/* Modals */
+.depute-modal .ant-modal-body,
+.history-modal .ant-modal-body,
+.add-depute-modal .ant-modal-body {
+    padding: 20px;
+}
+
+.depute-modal .ant-tabs-tab {
+    font-weight: 500;
+}
+
+.history-modal .history-date {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.history-modal .history-change {
+    color: #666;
+    margin-left: 24px;
+}
+
+/* Actions groupées */
+.batch-actions {
+    padding: 12px 16px;
+    background: #e6f7ff;
+    border-radius: 4px;
+    border: 1px solid #91d5ff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .deputes-table .ant-table-thead > tr > th,
+    .deputes-table .ant-table-tbody > tr > td {
+        padding: 12px 8px;
+    }
+
+    .depute-card {
+        margin-bottom: 16px;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.deputes-table .ant-table-row {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Tooltips */
+.ant-tooltip-inner {
+    font-size: 12px;
+}
+
+/* Tags améliorés */
+.ant-tag {
+    border-radius: 12px;
+    padding: 0 8px;
+    font-size: 12px;
+}
+
+/* Boutons d'action */
+.ant-btn-link {
+    padding: 0 4px;
+}
+
+/* Avatar avec bordure */
+.ant-avatar {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3px #e8e8e8;
+}

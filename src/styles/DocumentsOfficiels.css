@@ -1,0 +1,63 @@
+.page-documents {
+    padding: 24px;
+}
+
+.page-documents .ant-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    border-radius: 8px;
+}
+
+.page-documents .ant-card-head {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.page-documents .ant-card-head-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a3a8f;
+}
+
+.filters-bar {
+    margin-bottom: 24px;
+}
+
+.document-details {
+    background: #fafafa;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+/* Style pour les icônes de type de document */
+.anticon-file-pdf {
+    color: #f5222d;
+}
+
+.anticon-file-word {
+    color: #1890ff;
+}
+
+.anticon-file-excel {
+    color: #52c41a;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .filters-bar .ant-row {
+        flex-direction: column;
+    }
+
+    .filters-bar .ant-col {
+        margin-bottom: 16px;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-documents {
+        padding: 16px;
+    }
+
+    .page-documents .ant-card-head-title {
+        font-size: 18px;
+    }
+}

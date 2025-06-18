@@ -1,0 +1,122 @@
+/* Styles généraux */
+.page-sessions {
+    padding: 20px;
+    background-color: #f5f7fa;
+}
+
+/* Barre de filtres */
+.filters-bar {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Cartes de session */
+.session-card {
+    margin-bottom: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s;
+    border: 1px solid #e8e8e8;
+}
+
+.session-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.session-card.published {
+    border-left: 3px solid #52c41a;
+}
+
+/* Détails de session */
+.session-details {
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+/* Prévisualisation */
+.preview-container {
+    padding: 16px;
+}
+
+.preview-embed {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+    height: 0;
+    overflow: hidden;
+    margin-bottom: 16px;
+    border-radius: 4px;
+    background: #000;
+}
+
+.preview-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Tableau */
+.ant-table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.ant-table-thead > tr > th {
+    background: #f7f9fc;
+    font-weight: 600;
+}
+
+.ant-table-tbody > tr:hover > td {
+    background: #f0f7ff !important;
+}
+
+/* Tags */
+.ant-tag {
+    border-radius: 12px;
+    padding: 0 8px;
+    font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filters-bar .ant-col {
+        margin-bottom: 12px;
+    }
+
+    .filters-bar .ant-space {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+        padding: 12px 8px;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ant-table-row {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Icônes */
+.anticon {
+    vertical-align: middle;
+}
+
+/* Boutons d'action */
+.ant-btn-link {
+    padding: 0 4px;
+}

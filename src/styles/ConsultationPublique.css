@@ -1,0 +1,68 @@
+.consultation-publique {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.consultation-header {
+    margin-bottom: 24px;
+}
+
+.consultation-card {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.consultation-card.en_cours {
+    border-left: 4px solid #1890ff;
+}
+
+.consultation-card.termine {
+    border-left: 4px solid #d9d9d9;
+}
+
+.consultation-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.consultation-content {
+    padding: 8px;
+}
+
+.ant-tabs-tab-active {
+    font-weight: 500;
+}
+
+.ant-statistic-content {
+    font-size: 16px;
+}
+.ant-collapse-header {
+    font-weight: 500 !important;
+}
+
+.question-preview {
+    background: #f9f9f9;
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.ant-collapse-content-box {
+    padding: 16px !important;
+}
+
+.ant-form-item-label label {
+    font-weight: 500;
+}
+@media (max-width: 768px) {
+    .consultation-publique {
+        padding: 12px;
+    }
+
+    .consultation-header .ant-col {
+        margin-bottom: 12px;
+        text-align: left !important;
+    }
+}

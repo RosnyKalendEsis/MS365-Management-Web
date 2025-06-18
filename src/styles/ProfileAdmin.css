@@ -1,0 +1,70 @@
+.profile-admin {
+    padding: 24px;
+}
+
+.profile-admin .ant-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    border-radius: 8px;
+}
+
+.avatar-section {
+    text-align: center;
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.admin-avatar {
+    border: 3px solid #1890ff;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.avatar-edit-overlay {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 128px;
+    height: 128px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.avatar-section:hover .avatar-edit-overlay {
+    opacity: 1;
+}
+
+.security-section .ant-descriptions-item-label {
+    font-weight: 500;
+    width: 40%;
+}
+
+.activity-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.activity-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-admin {
+        padding: 16px;
+    }
+
+    .admin-avatar {
+        width: 96px;
+        height: 96px;
+    }
+}

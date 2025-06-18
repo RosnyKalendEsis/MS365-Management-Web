@@ -1,0 +1,62 @@
+stages:
+  - build
+  - deploy
+# Variables globales
+variables:
+  BUILD_DIR: build
+
+# Cache pour accélérer les builds
+cache:
+  key: "enabel-web-node-module"
+  paths:
+    - node_modules/
+before_script:
+  - export NVM_DIR=$HOME/.nvm;
+  - source $NVM_DIR/nvm.sh;
+build_dev:
+  stage: build
+  tags:
+    - web
+  environment: development
+  only:
+    - Developper
+  script:
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - $BUILD_DIR/
+build_prod:
+  stage: build
+  tags:
+    - web
+  environment: production
+  only:
+    - main
+  script:
+    # Construire le projet Ember.js
+    - node --version
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - $BUILD_DIR/
+deploy_dev:
+  stage: deploy
+  tags:
+    - web
+  environment: development
+  only:
+    - Developper  # Déployer uniquement depuis la branche master
+  script:
+    # Copier les fichiers buildés sur le serveur distant
+    - scp -r $BUILD_DIR/* root@172.16.18.210:/var/www/enabel_admin
+deploy_prod:
+  stage: deploy
+  tags:
+    - web
+  environment: production
+  only:
+    - main  # Déployer uniquement depuis la branche main
+  script:
+    - scp -r $BUILD_DIR/* root@172.16.18.26:/var/www/devbuy

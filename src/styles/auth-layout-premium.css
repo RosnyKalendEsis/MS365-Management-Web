@@ -1,0 +1,225 @@
+/* Styles généraux */
+.auth-layout-premium {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background-color: #f8f9fa;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+
+    overflow: hidden; /* empêche scroll inutile */
+    padding: 1rem; /* sécurité pour les petits écrans */
+}
+.auth-box {
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-height: 90vh;
+}
+
+/* Colonne d'illustration */
+.auth-illustration {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0073ff 0%, #004a8f 100%);
+    transition: background 1s ease;
+}
+
+.logo-container {
+    transition: all 0.3s ease;
+}
+
+.logo-image {
+    max-width: 200px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.text-content h2 {
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Features supplémentaires */
+.additional-features {
+    margin-top: 3rem;
+    width: 100%;
+    max-width: 300px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.feature-icon {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Colonne de formulaire */
+.auth-form-container {
+    background-color: #ffffff;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.03);
+}
+
+.auth-form-wrapper {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2rem;
+    border-radius: 12px;
+    background-color: white;
+}
+
+.form-logo {
+    max-width: 50px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+/* Styles des inputs */
+.auth-input-premium {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.auth-input-premium:focus {
+    border-color: #0073ff;
+    box-shadow: 0 0 0 0.25rem rgba(0, 115, 255, 0.15);
+}
+
+.password-input-container {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    z-index: 5;
+}
+
+/* Bouton de connexion */
+.auth-btn-premium {
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #0073ff 0%, #004a8f 100%);
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 115, 255, 0.2);
+}
+
+.auth-btn-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 115, 255, 0.25);
+}
+
+.auth-btn-premium:active {
+    transform: translateY(0);
+}
+
+/* Liens */
+.auth-link-premium {
+    color: #0073ff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.auth-link-premium:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.footer-link {
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+    color: #0073ff;
+}
+
+/* Diviseur */
+.auth-divider {
+    position: relative;
+    margin: 1.5rem 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.auth-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #e0e0e0;
+    z-index: 1;
+}
+
+.auth-divider span {
+    position: relative;
+    display: inline-block;
+    padding: 0 1rem;
+    background-color: white;
+    z-index: 2;
+}
+
+/* Boutons sociaux */
+.auth-social-btn {
+    width: 100%;
+    padding: 0.65rem;
+    border-radius: 8px;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+    border: 1px solid #e0e0e0;
+    color: #495057;
+}
+
+.auth-social-btn:hover {
+    background-color: #f8f9fa;
+    border-color: #d0d0d0;
+}
+
+/* Case à cocher personnalisée */
+.remember-me .form-check-input:checked {
+    background-color: #0073ff;
+    border-color: #0073ff;
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .auth-form-wrapper {
+        padding: 1.5rem;
+    }
+
+    .auth-illustration {
+        display: none !important;
+    }
+
+    .auth-form-container {
+        padding: 1rem;
+    }
+}

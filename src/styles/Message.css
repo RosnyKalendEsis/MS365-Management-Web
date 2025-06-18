@@ -1,0 +1,83 @@
+.page-messages {
+    padding: 24px;
+}
+
+.page-messages .ant-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    border-radius: 8px;
+}
+
+.messages-toolbar {
+    margin-bottom: 16px;
+}
+
+.message-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.message-item:hover {
+    background-color: #f6f9ff;
+}
+
+.message-item.selected {
+    background-color: #e6f7ff;
+}
+
+.message-item.unread {
+    background-color: #f0f9ff;
+}
+
+.message-item .ant-list-item-meta-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.message-subject {
+    font-weight: 500;
+    color: #333;
+}
+
+.message-preview {
+    color: #666;
+    font-size: 13px;
+    margin: 4px 0;
+}
+
+.message-meta {
+    display: flex;
+    justify-content: space-between;
+    color: #999;
+    font-size: 12px;
+}
+
+.message-content {
+    white-space: pre-line;
+    line-height: 1.8;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .page-messages .ant-col-md-8,
+    .page-messages .ant-col-md-16 {
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+
+    .message-item {
+        padding: 8px 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-messages {
+        padding: 16px;
+    }
+
+    .messages-toolbar .ant-col {
+        margin-bottom: 16px;
+        width: 100%;
+    }
+}
