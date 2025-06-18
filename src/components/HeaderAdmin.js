@@ -1,13 +1,10 @@
 import React, { memo, useCallback, useEffect, useState } from 'react';
 import {
     Navbar,
-    Nav,
-    Offcanvas,
     Badge,
     Dropdown,
     Image,
     Container,
-    Button
 } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -40,20 +37,13 @@ const HeaderAdmin = memo(({
                           }) => {
     const [notifications, setNotifications] = useState(unreadNotifications);
     const [showOffcanvas, setShowOffcanvas] = useState(false);
-    const [activeLink, setActiveLink] = useState('dashboard');
+    const [, setActiveLink] = useState('dashboard');
     const navigate = useNavigate();
 
     const handleLogout = useCallback(() => {
         onLogout();
         navigate('/login');
     }, [onLogout, navigate]);
-
-    const handleNavClick = useCallback((path, linkName) => {
-        setActiveLink(linkName);
-        navigate(path);
-        setShowOffcanvas(false);
-    }, [navigate]);
-
     // Simulate real-time notifications
     useEffect(() => {
         const interval = setInterval(() => {
@@ -87,15 +77,6 @@ const HeaderAdmin = memo(({
             time: "Il y a 2 heures",
             read: false
         }
-    ];
-
-    const navLinks = [
-        { name: 'dashboard', path: '/dashboard', label: 'Tableau de bord', icon: <FaTachometerAlt /> },
-        { name: 'polls', path: '/polls', label: 'Sondages', icon: <FaPoll /> },
-        { name: 'reports', path: '/reports', label: 'Rapports', icon: <FaFileAlt /> },
-        { name: 'analytics', path: '/analytics', label: 'Analytique', icon: <FaChartBar /> },
-        { name: 'users', path: '/users', label: 'Utilisateurs', icon: <FaUserShield /> },
-        { name: 'settings', path: '/settings', label: 'Configuration', icon: <FaCogs /> }
     ];
 
     return (

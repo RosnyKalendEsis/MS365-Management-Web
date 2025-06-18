@@ -79,7 +79,7 @@ const pollColumns = [
         title: 'Titre',
         dataIndex: 'title',
         key: 'title',
-        render: (text) => <a>{text}</a>,
+        render: (text) => <a href='https://localhost://'>{text}</a>,
     },
     {
         title: 'Date',

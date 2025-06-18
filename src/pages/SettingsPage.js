@@ -36,7 +36,6 @@ import '../styles/Settings.css';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
-const { TextArea } = Input;
 
 const SettingsPage = () => {
     const [form] = Form.useForm();
@@ -51,7 +50,7 @@ const SettingsPage = () => {
         email: 'admin@gouv.cd',
         avatar: null,
         lastLogin: '2023-07-20 14:30',
-        role: 'Super Administrateur',
+        role: 'Administrateur',
         permissions: ['full_access']
     };
 

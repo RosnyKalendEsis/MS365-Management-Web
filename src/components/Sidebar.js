@@ -29,7 +29,7 @@ const Sidebar = ({
                      unreadMessages = 3,
                      pendingActions = 2
                  }) => {
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, ] = useState(false);
     const location = useLocation();
 
     const menuItems = [

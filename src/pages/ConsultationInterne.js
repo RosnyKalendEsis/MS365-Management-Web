@@ -322,37 +322,6 @@ const ConsultationInterne = () => {
         setConsultations(consultations.filter(cons => cons.id !== id));
         message.success('Consultation supprimée');
     };
-
-    const handleSubmit = (values) => {
-        const updatedValues = {
-            ...values,
-            dateFin: values.dateFin.format('YYYY-MM-DD'),
-            statut: 'active',
-            participants: currentConsultation?.participants || 0,
-            questions: values.questions || []
-        };
-
-        if (currentConsultation) {
-            setConsultations(consultations.map(cons =>
-                cons.id === currentConsultation.id ? { ...cons, ...updatedValues } : cons
-            ));
-            message.success('Consultation mise à jour');
-        } else {
-            const newConsultation = {
-                id: consultations.length + 1,
-                ...updatedValues,
-                documents: []
-            };
-            setConsultations([...consultations, newConsultation]);
-            message.success('Nouvelle consultation créée');
-        }
-
-        setIsModalVisible(false);
-        form.resetFields();
-        setCurrentConsultation(null);
-        setCurrentStep(0);
-    };
-
     const filteredConsultations = consultations.filter(cons => {
         const matchesSearch = cons.titre.toLowerCase().includes(searchText.toLowerCase());
         const matchesTab = activeTab === 'toutes' ||

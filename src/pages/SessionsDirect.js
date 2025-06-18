@@ -46,7 +46,6 @@ import Search from "antd/es/input/Search";
 
 const { Option } = Select;
 const { TextArea } = Input;
-const { Step } = Steps;
 const { TabPane } = Tabs;
 
 const SessionsDirect = () => {
