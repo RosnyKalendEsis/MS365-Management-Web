@@ -50,7 +50,7 @@ deploy_dev:
     - Developper  # Déployer uniquement depuis la branche master
   script:
     # Copier les fichiers buildés sur le serveur distant
-    - scp -r $BUILD_DIR/* root@172.16.18.210:/var/www/enabel_admin/
+    - scp -r $BUILD_DIR/* root@172.16.18.210:/var/www/enabel_admin
 deploy_prod:
   stage: deploy
   tags:
