@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
     Table, Button, Input, Space, Tag, Avatar, Card, Row, Col, Popconfirm,
     message, Select, Badge, Descriptions, Tabs, Statistic, Switch,
@@ -12,6 +12,8 @@ import {
 } from '@ant-design/icons';
 import '../styles/Deputes.css';
 import { Form } from 'antd';
+import {AssemblyContext} from "../providers/AssemblyProvider";
+import {DeputyContext} from "../providers/DeputyProvider";
 
 const { Option } = Select;
 const { Search } = Input;
@@ -31,6 +33,8 @@ const Deputes = () => {
     const [, setActiveTab] = useState('1');
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const { deputies,createDeputy, onCreateDeputy,publishDeputy,deleteDeputy } = useContext(DeputyContext);
+    const { provincialAssembly } = useContext(AssemblyContext);
     const [newDepute, setNewDepute] = useState({
         nom: '',
         circonscription: '',
@@ -44,60 +48,65 @@ const Deputes = () => {
     });
 
     // Données des députés
-    const [deputes, setDeputes] = useState([
-        {
-            id: 1,
-            nom: 'Jean Kabila',
-            circonscription: 'Kinshasa',
-            region: 'Kinshasa',
-            parti: 'PPRD',
-            commission: 'Budget et Finances',
-            statut: 'actif',
-            telephone: '+243 81 234 5678',
-            email: 'jean.kabila@assemblee.rdc',
-            photo: null,
-            published: true
-        },
-        {
-            id: 2,
-            nom: 'Marie Lumumba',
-            circonscription: 'Lubumbashi',
-            region: 'Haut-Katanga',
-            parti: 'UDPS',
-            commission: 'Affaires Étrangères',
-            statut: 'actif',
-            telephone: '+243 82 345 6789',
-            email: 'marie.lumumba@assemblee.rdc',
-            photo: null,
-            published: false
-        },
-        {
-            id: 3,
-            nom: 'Paul Mobutu',
-            circonscription: 'Goma',
-            region: 'Nord-Kivu',
-            parti: 'UNC',
-            commission: 'Défense Nationale',
-            statut: 'inactif',
-            telephone: '+243 97 123 4567',
-            email: 'paul.mobutu@assemblee.rdc',
-            photo: null,
-            published: false
-        },
-        {
-            id: 4,
-            nom: 'Sophie Kasaï',
-            circonscription: 'Mbuji-Mayi',
-            region: 'Kasaï-Oriental',
-            parti: 'AFDC',
-            commission: 'Santé Publique',
-            statut: 'actif',
-            telephone: '+243 90 987 6543',
-            email: 'sophie.kasai@assemblee.rdc',
-            photo: null,
-            published: true
-        }
-    ]);
+    const [deputes, setDeputes] = useState(deputies);
+    useEffect(() => {
+        setDeputes(deputies);
+    }, [deputies]);
+
+    // const [deputes, setDeputes] = useState([
+    //     {
+    //         id: 1,
+    //         nom: 'Jean Kabila',
+    //         circonscription: 'Kinshasa',
+    //         region: 'Kinshasa',
+    //         parti: 'PPRD',
+    //         commission: 'Budget et Finances',
+    //         statut: 'actif',
+    //         telephone: '+243 81 234 5678',
+    //         email: 'jean.kabila@assemblee.rdc',
+    //         photo: null,
+    //         published: true
+    //     },
+    //     {
+    //         id: 2,
+    //         nom: 'Marie Lumumba',
+    //         circonscription: 'Lubumbashi',
+    //         region: 'Haut-Katanga',
+    //         parti: 'UDPS',
+    //         commission: 'Affaires Étrangères',
+    //         statut: 'actif',
+    //         telephone: '+243 82 345 6789',
+    //         email: 'marie.lumumba@assemblee.rdc',
+    //         photo: null,
+    //         published: false
+    //     },
+    //     {
+    //         id: 3,
+    //         nom: 'Paul Mobutu',
+    //         circonscription: 'Goma',
+    //         region: 'Nord-Kivu',
+    //         parti: 'UNC',
+    //         commission: 'Défense Nationale',
+    //         statut: 'inactif',
+    //         telephone: '+243 97 123 4567',
+    //         email: 'paul.mobutu@assemblee.rdc',
+    //         photo: null,
+    //         published: false
+    //     },
+    //     {
+    //         id: 4,
+    //         nom: 'Sophie Kasaï',
+    //         circonscription: 'Mbuji-Mayi',
+    //         region: 'Kasaï-Oriental',
+    //         parti: 'AFDC',
+    //         commission: 'Santé Publique',
+    //         statut: 'actif',
+    //         telephone: '+243 90 987 6543',
+    //         email: 'sophie.kasai@assemblee.rdc',
+    //         photo: null,
+    //         published: true
+    //     }
+    // ]);
 
     // Historique des modifications
     const historyData = [
@@ -133,37 +142,55 @@ const Deputes = () => {
         onChange: onSelectChange,
     };
 
-    // Publication des députés sélectionnés
-    const handlePublish = () => {
+    const handlePublish = async () => {
         if (selectedRowKeys.length === 0) {
             message.warning('Veuillez sélectionner au moins un député');
             return;
         }
 
-        setDeputes(deputes.map(depute =>
-            selectedRowKeys.includes(depute.id)
-                ? { ...depute, published: true }
-                : depute
-        ));
-        message.success(`${selectedRowKeys.length} député(s) publié(s) avec succès`);
-        setSelectedRowKeys([]);
+        try {
+            // Appelle publishDeputy avec true pour chaque id sélectionné
+            await Promise.all(
+                selectedRowKeys.map(id => publishDeputy(id, true))
+            );
+
+            // Met à jour localement le state après confirmation API
+            setDeputes(deputes.map(depute =>
+                selectedRowKeys.includes(depute.id)
+                    ? { ...depute, published: true }
+                    : depute
+            ));
+            message.success(`${selectedRowKeys.length} député(s) publié(s) avec succès`);
+            setSelectedRowKeys([]);
+        } catch (error) {
+            message.error("Erreur lors de la publication des députés");
+        }
     };
 
-    // Retrait de la publication
-    const handleUnpublish = () => {
+    const handleUnpublish = async () => {
         if (selectedRowKeys.length === 0) {
             message.warning('Veuillez sélectionner au moins un député');
             return;
         }
 
-        setDeputes(deputes.map(depute =>
-            selectedRowKeys.includes(depute.id)
-                ? { ...depute, published: false }
-                : depute
-        ));
-        message.success(`${selectedRowKeys.length} député(s) retiré(s) de la publication`);
-        setSelectedRowKeys([]);
+        try {
+            // Appelle publishDeputy avec false pour chaque id sélectionné
+            await Promise.all(
+                selectedRowKeys.map(id => publishDeputy(id, false))
+            );
+
+            setDeputes(deputes.map(depute =>
+                selectedRowKeys.includes(depute.id)
+                    ? { ...depute, published: false }
+                    : depute
+            ));
+            message.success(`${selectedRowKeys.length} député(s) retiré(s) de la publication`);
+            setSelectedRowKeys([]);
+        } catch (error) {
+            message.error("Erreur lors du retrait de publication des députés");
+        }
     };
+
 
     // Colonnes du tableau
     const columns = [
@@ -308,19 +335,33 @@ const Deputes = () => {
         message.info(`Modification du député ${id}`);
     };
 
-    const handleDelete = (id) => {
-        setDeputes(deputes.filter(depute => depute.id !== id));
+    const handleDelete = async (id) => {
+        await deleteDeputy(id);
         message.success('Député supprimé avec succès');
     };
 
-    const handleTogglePublish = (id) => {
-        setDeputes(deputes.map(depute =>
-            depute.id === id
-                ? { ...depute, published: !depute.published }
-                : depute
-        ));
-        message.success(`Député ${deputes.find(d => d.id === id).published ? 'retiré de la publication' : 'publié'} avec succès`);
+    const handleTogglePublish = async (id) => {
+        try {
+            // Trouve le député courant
+            const deputy = deputes.find(d => d.id === id);
+            if (!deputy) return;
+
+            const newPublished = !deputy.published;
+
+            // Appelle l'API pour changer le statut
+            await publishDeputy(id, newPublished);
+
+            // Met à jour localement après succès
+            setDeputes(deputes.map(d =>
+                d.id === id ? { ...d, published: newPublished } : d
+            ));
+
+            message.success(`Député ${newPublished ? 'publié' : 'retiré de la publication'} avec succès`);
+        } catch (error) {
+            message.error("Erreur lors de la mise à jour du statut de publication");
+        }
     };
+
 
     // Statistiques
     const stats = {
@@ -676,17 +717,34 @@ const Deputes = () => {
                         published: false
                     });
                 }}
-                onOk={() => {
+                onOk={async () => {
                     if (newDepute.id) {
-                        // Modification
+                        // ⚠️ Partie modification : à faire plus tard
                         setDeputes(deputes.map(d => d.id === newDepute.id ? newDepute : d));
                         message.success('Député modifié avec succès');
                     } else {
-                        // Ajout
-                        const id = Math.max(...deputes.map(d => d.id)) + 1;
-                        setDeputes([...deputes, { ...newDepute, id }]);
-                        message.success('Député ajouté avec succès');
+                        // ✅ Création via API
+                        const deputyData = {
+                            name: newDepute.nom,
+                            constituency: newDepute.circonscription,
+                            region: newDepute.region,
+                            party: newDepute.parti,
+                            commission: newDepute.commission,
+                            status: newDepute.statut,
+                            phone: newDepute.telephone,
+                            email: newDepute.email,
+                            published: newDepute.published,
+                            assemblyId: provincialAssembly?.id // à adapter si nécessaire
+                        };
+
+                        try {
+                            await createDeputy(deputyData, newDepute.photoFile || null);
+                            message.success("Député ajouté avec succès !");
+                        } catch (error) {
+                            message.error("Erreur lors de la création du député.");
+                        }
                     }
+
                     setIsAddModalVisible(false);
                     setNewDepute({
                         nom: '',
@@ -697,7 +755,9 @@ const Deputes = () => {
                         statut: 'actif',
                         telephone: '',
                         email: '',
-                        published: false
+                        published: false,
+                        photo: null,
+                        photoFile: null,
                     });
                 }}
                 okText={newDepute.id ? "Modifier" : "Ajouter"}
@@ -819,11 +879,15 @@ const Deputes = () => {
                             <Upload
                                 listType="picture-card"
                                 showUploadList={false}
-                                beforeUpload={() => false}
-                                onChange={(info) => {
-                                    if (info.file.status === 'done') {
-                                        setNewDepute({...newDepute, photo: URL.createObjectURL(info.file.originFileObj)});
-                                    }
+                                beforeUpload={(file) => {
+                                    console.log("file:", file);
+                                    // On capture le fichier ici ✅
+                                    setNewDepute({
+                                        ...newDepute,
+                                        photo: URL.createObjectURL(file),
+                                        photoFile: file
+                                    });
+                                    return false; // empêcher le chargement automatique
                                 }}
                             >
                                 {newDepute.photo ? (
@@ -836,6 +900,7 @@ const Deputes = () => {
                                 )}
                             </Upload>
                         </Form.Item>
+
                     </Form>
                 </div>
             </Modal>

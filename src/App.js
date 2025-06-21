@@ -13,6 +13,25 @@ import ConsultationPublique from "./pages/ConsultationPublique";
 import ProfileAdmin from "./pages/ProfileAdmin";
 import Assemblee from "./pages/Assemblee";
 import SettingsPage from "./pages/SettingsPage";
+import {EventProvider} from "./providers/EventProvider";
+import {ActualityProvider} from "./providers/ActualityProvider";
+import {AssemblyProvider} from "./providers/AssemblyProvider";
+import {DeputyProvider} from "./providers/DeputyProvider";
+
+
+function AppWrapper() {
+    return (
+        <AssemblyProvider>
+            <DeputyProvider>
+                <ActualityProvider>
+                    <EventProvider>
+                        <App />
+                    </EventProvider>
+                </ActualityProvider>
+            </DeputyProvider>
+        </AssemblyProvider>
+    );
+}
 
 function App() {
     return (
@@ -42,4 +61,4 @@ function App() {
     )
 }
 
-export default App
+export default AppWrapper
