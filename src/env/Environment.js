@@ -16,8 +16,8 @@ const security = {
 };
 
 const hosts = {
-    api: "http://localhost:8082",
-    image: "http://localhost:8082/images",
+    api: "https://api-provinces.numibit.com",
+    image: "https://api-provinces.numibit.com/images",
     oauth_api: process.env.REACT_APP_OAUTH_API_HOST,
     oauth_exposed: process.env.REACT_APP_OAUTH_EXPOSED_HOST,
     location_api: process.env.REACT_APP_LOCATION_API_HOST,
