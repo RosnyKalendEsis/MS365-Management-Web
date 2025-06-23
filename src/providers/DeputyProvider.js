@@ -21,8 +21,6 @@ const DeputyProvider = ({ children }) => {
         if (photoFile) {
             formData.append("photo", photoFile);
         }
-        console.log("Fichier photo:", formData.get("photo"));
-        console.log("Données JSON:", formData.get("data"));
 
 
         try {
@@ -115,7 +113,6 @@ const DeputyProvider = ({ children }) => {
                         published: dep.published
                     }));
                     setDeputies(transformed);
-                    console.log("data:",transformed);
                 } else {
                     setDeputyError("Erreur lors du chargement des députés.");
                 }

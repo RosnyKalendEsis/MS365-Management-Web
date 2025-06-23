@@ -17,17 +17,20 @@ import {EventProvider} from "./providers/EventProvider";
 import {ActualityProvider} from "./providers/ActualityProvider";
 import {AssemblyProvider} from "./providers/AssemblyProvider";
 import {DeputyProvider} from "./providers/DeputyProvider";
+import {BureauProvider} from "./providers/BureauProvider";
 
 
 function AppWrapper() {
     return (
         <AssemblyProvider>
             <DeputyProvider>
-                <ActualityProvider>
-                    <EventProvider>
-                        <App />
-                    </EventProvider>
-                </ActualityProvider>
+                <BureauProvider>
+                    <ActualityProvider>
+                        <EventProvider>
+                            <App />
+                        </EventProvider>
+                    </ActualityProvider>
+                </BureauProvider>
             </DeputyProvider>
         </AssemblyProvider>
     );

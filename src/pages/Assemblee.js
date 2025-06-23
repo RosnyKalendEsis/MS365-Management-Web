@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
     Card, Button, Form, Input, Select, Avatar, Row, Col,
     Table, Tag, Modal, message, Upload, Space
@@ -8,12 +8,16 @@ import {
     SaveOutlined, UploadOutlined, CheckOutlined
 } from '@ant-design/icons';
 import '../styles/Assemblee.css';
+import {BureauContext} from "../providers/BureauProvider";
+import {DeputyContext} from "../providers/DeputyProvider";
 
 const { Option } = Select;
 const { TextArea } = Input;
 
 const Assemblee = () => {
     // États
+    const { bureauLoading, bureauError,bureauRoles } = useContext(BureauContext);
+    const { deputies } = useContext(DeputyContext);
     const [bureau, setBureau] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [currentMembre, setCurrentMembre] = useState(null);
@@ -21,21 +25,21 @@ const Assemblee = () => {
     const [form] = Form.useForm();
 
     // Rôles disponibles
-    const roles = [
-        'Président',
-        'Vice-président',
-        'Rapporteur',
-        'Rapporteur adjoint',
-        'Questeur'
-    ];
+    const [roles, setRoles] = useState(bureauRoles);
+
+    useEffect(() => {
+        setRoles(bureauRoles);
+    },[bureauRoles]);
 
     // Données de députés (simulées)
-    const deputes = [
-        { id: 1, nom: 'Jean Kabila', parti: 'PPRD', photo: null },
-        { id: 2, nom: 'Marie Lumumba', parti: 'UDPS', photo: null },
-        { id: 3, nom: 'Paul Mobutu', parti: 'UNC', photo: null },
-        { id: 4, nom: 'Sophie Kasaï', parti: 'AFDC', photo: null }
-    ];
+    const [deputes, setDeputes] = useState(deputies);
+    useEffect(() => {
+        setDeputes(deputies);
+    },[deputies]);
+
+    useEffect(() => {
+        console.log("bureau: ",bureau)
+    }, [bureau]);
 
     // Colonnes du tableau
     const columns = [
@@ -279,11 +283,11 @@ const Assemblee = () => {
                                 <Select placeholder="Sélectionnez un rôle">
                                     {roles.map(role => (
                                         <Option
-                                            key={role}
-                                            value={role}
+                                            key={role.id}
+                                            value={role.id}
                                             disabled={bureau.some(m => m.role === role) && (!currentMembre || bureau[currentMembre.index].role !== role)}
                                         >
-                                            {role}
+                                            {role.name}
                                         </Option>
                                     ))}
                                 </Select>
