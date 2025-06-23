@@ -54,6 +54,51 @@ const DeputyProvider = ({ children }) => {
             setDeputyLoading(false);
         }
     };
+
+    const updateDeputyPhoto = async (deputyId, photoFile) => {
+        if (!deputyId || !photoFile) {
+            console.warn("ID du député ou fichier photo manquant");
+            return;
+        }
+
+        setOnCreateDeputy(true);
+
+        const formData = new FormData();
+        formData.append("photo", photoFile);
+
+        try {
+            const { data } = await Ajax.putRequest(`/admin/deputies/${deputyId}/photo`, formData);
+
+            if (!data.error) {
+                const updatedDeputy = {
+                    id: data.object.id,
+                    nom: data.object.name,
+                    circonscription: data.object.constituency,
+                    region: data.object.region,
+                    parti: data.object.party,
+                    commission: data.object.commission,
+                    statut: data.object.status,
+                    telephone: data.object.phone,
+                    email: data.object.email,
+                    photo: `${hosts.image}/${data.object.photo}`,
+                    published: data.object.published
+                };
+
+                // Met à jour localement le député avec la nouvelle photo
+                setDeputies(prev =>
+                    prev.map(dep => dep.id === updatedDeputy.id ? updatedDeputy : dep)
+                );
+            }
+
+            return data;
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour de la photo :", error);
+            throw error;
+        } finally {
+            setOnCreateDeputy(false);
+        }
+    };
+
     const publishDeputy = async (id, published) => {
         setOnUpdateDeputy(true);
         try {
@@ -130,7 +175,7 @@ const DeputyProvider = ({ children }) => {
     }, [loading, provincialAssembly]);
 
     return (
-        <DeputyContext.Provider value={{ deputyLoading, deputies, deputyError, createDeputy, onCreateDeputy, publishDeputy, deleteDeputy }}>
+        <DeputyContext.Provider value={{ deputyLoading, deputies, deputyError, createDeputy, onCreateDeputy, publishDeputy, deleteDeputy,updateDeputyPhoto }}>
             {children}
         </DeputyContext.Provider>
     );
