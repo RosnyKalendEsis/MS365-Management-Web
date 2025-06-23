@@ -42,7 +42,7 @@ export const Ajax = {
 
 
     async putRequest(path, data, option) {
-        option = await this.updateOptions(option);
+        option = await this.updateOptions(option,data);
         return axios.put(`${this.host()}${path}`, data, option);
     },
 

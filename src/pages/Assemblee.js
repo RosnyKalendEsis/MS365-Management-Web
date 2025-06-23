@@ -16,13 +16,14 @@ const { TextArea } = Input;
 
 const Assemblee = () => {
     // États
-    const { bureauLoading, bureauError,bureauRoles } = useContext(BureauContext);
+    const { bureauLoading, bureauError,bureauRoles,createMember, members } = useContext(BureauContext);
     const { deputies } = useContext(DeputyContext);
-    const [bureau, setBureau] = useState([]);
+    const [bureau, setBureau] = useState(members);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [currentMembre, setCurrentMembre] = useState(null);
     const [isPublie, setIsPublie] = useState(false);
     const [form] = Form.useForm();
+    const [newPhoto, setNewPhoto] = useState({photo:null});
 
     // Rôles disponibles
     const [roles, setRoles] = useState(bureauRoles);
@@ -38,8 +39,8 @@ const Assemblee = () => {
     },[deputies]);
 
     useEffect(() => {
-        console.log("bureau: ",bureau)
-    }, [bureau]);
+        setBureau(members);
+    }, [members]);
 
     // Colonnes du tableau
     const columns = [
@@ -47,7 +48,7 @@ const Assemblee = () => {
             title: 'Rôle',
             dataIndex: 'role',
             key: 'role',
-            render: (role) => <Tag color={getRoleColor(role)}>{role}</Tag>
+            render: (role) => <Tag color={getRoleColor(role.name)}>{role.name}</Tag>
         },
         {
             title: 'Membre',
@@ -87,11 +88,11 @@ const Assemblee = () => {
     // Fonctions utilitaires
     const getRoleColor = (role) => {
         const colors = {
-            'Président': 'red',
-            'Vice-président': 'blue',
-            'Rapporteur': 'green',
-            'Rapporteur adjoint': 'orange',
-            'Questeur': 'purple'
+            'PRESIDENT': 'red',
+            'VICE PRESIDENT': 'blue',
+            'RAPPORTEUR': 'green',
+            'RAPPORTEUR ADJOINT': 'orange',
+            'QUESTEUR': 'purple'
         };
         return colors[role] || 'gray';
     };
@@ -115,7 +116,7 @@ const Assemblee = () => {
     const handleEdit = (index) => {
         setCurrentMembre({ ...bureau[index], index });
         form.setFieldsValue({
-            role: bureau[index].role,
+            role: bureau[index].role.name,
             membreId: bureau[index].membre.id
         });
         setIsModalVisible(true);
@@ -129,32 +130,33 @@ const Assemblee = () => {
     };
 
     const handleSubmit = () => {
-        form.validateFields().then(values => {
+        form.validateFields().then(async (values) => {
             const membreSelectionne = deputes.find(d => d.id === values.membreId);
 
-            const nouveauMembre = {
-                role: values.role,
-                membre: {
-                    ...membreSelectionne,
-                    description: values.description
-                }
+            // Mettre à jour le state newMember avec les nouvelles valeurs
+            const newMember ={
+                deputyId: membreSelectionne.id,
+                roleId: values.role,
+                description: values.description
             };
 
             if (currentMembre !== null) {
-                // Modification
-                const newBureau = [...bureau];
-                newBureau[currentMembre.index] = nouveauMembre;
-                setBureau(newBureau);
-                message.success('Membre modifié avec succès');
+                // Modification locale (à implémenter côté backend si besoin)
+                // const newBureau = [...bureau];
+                // newBureau[currentMembre.index] = {
+                //     ...newBureau[currentMembre.index],
+                //     ...newMembre
+                // };
+                // setBureau(newBureau);
+                message.success("Membre modifié avec succès");
             } else {
-                // Ajout
-                // Vérifier si le rôle est déjà attribué
-                if (bureau.some(m => m.role === values.role)) {
-                    message.error('Ce rôle est déjà attribué à un autre membre');
+                // Ajout via API
+                if (bureau.some(m => m.role.id === values.role)) {
+                    message.error("Ce rôle est déjà attribué à un autre membre");
                     return;
                 }
-                setBureau([...bureau, nouveauMembre]);
-                message.success('Membre ajouté au bureau avec succès');
+
+                await createMember(newMember, newPhoto);
             }
 
             setIsModalVisible(false);
@@ -162,9 +164,10 @@ const Assemblee = () => {
         });
     };
 
+
     const handlePublier = () => {
         // Vérifier que tous les rôles sont attribués
-        const rolesManquants = roles.filter(role => !bureau.some(m => m.role === role));
+        const rolesManquants = roles.filter(role => !bureau.some(m => m.role.id === role));
 
         if (rolesManquants.length > 0) {
             message.error(`Certains rôles ne sont pas attribués : ${rolesManquants.join(', ')}`);
@@ -232,7 +235,7 @@ const Assemblee = () => {
                                 <Col xs={24} sm={12} md={8} lg={6} key={index}>
                                     <Card className="membre-card">
                                         <div className="membre-role">
-                                            <Tag color={getRoleColor(membre.role)}>{membre.role}</Tag>
+                                            <Tag color={getRoleColor(membre.role.name)}>{membre.role.name}</Tag>
                                         </div>
                                         <div className="membre-content">
                                             <Avatar size={64} src={membre.membre.photo} icon={<UserOutlined />} />
@@ -285,7 +288,7 @@ const Assemblee = () => {
                                         <Option
                                             key={role.id}
                                             value={role.id}
-                                            disabled={bureau.some(m => m.role === role) && (!currentMembre || bureau[currentMembre.index].role !== role)}
+                                            disabled={bureau.some(m => m.role.id === role) && (!currentMembre || bureau[currentMembre.index].role.id !== role)}
                                         >
                                             {role.name}
                                         </Option>
@@ -335,12 +338,25 @@ const Assemblee = () => {
                         <Upload
                             listType="picture-card"
                             showUploadList={false}
-                            beforeUpload={() => false}
+                            beforeUpload={(file) => {
+                                console.log("file:", file);
+                                // On capture le fichier ici ✅
+                                setNewPhoto({
+                                    ...newPhoto,
+                                    photo: URL.createObjectURL(file),
+                                    photoFile: file
+                                });
+                                return false; // empêcher le chargement automatique
+                            }}
                         >
-                            <div>
-                                <UploadOutlined />
-                                <div style={{ marginTop: 8 }}>Changer la photo</div>
-                            </div>
+                            {newPhoto.photo ? (
+                                <img src={newPhoto.photo} alt="avatar" style={{ width: '100%' }} />
+                            ) : (
+                                <div>
+                                    <UploadOutlined />
+                                    <div style={{ marginTop: 8 }}>Changer la photo</div>
+                                </div>
+                            )}
                         </Upload>
                     </Form.Item>
                 </Form>
