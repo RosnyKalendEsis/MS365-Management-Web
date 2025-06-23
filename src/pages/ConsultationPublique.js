@@ -26,7 +26,7 @@ import {
     TeamOutlined,
     FileTextOutlined,
     CheckCircleOutlined,
-    PlusOutlined, EditOutlined, DeleteOutlined
+    PlusOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined
 } from '@ant-design/icons';
 import '../styles/ConsultationPublique.css';
 import moment from "moment";
@@ -252,6 +252,14 @@ const ConsultationPublique = () => {
             <Card
                 title={
                     <Space>
+                        <Button
+                            type="default"
+                            icon={<ArrowLeftOutlined />}
+                            onClick={() => window.history.back()}
+                            style={{ marginRight: 16 }}
+                        >
+                            Retour
+                        </Button>
                         <BarChartOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
                         <span style={{ fontSize: '20px', fontWeight: '600' }}>Consultations Publiques</span>
                         <Badge

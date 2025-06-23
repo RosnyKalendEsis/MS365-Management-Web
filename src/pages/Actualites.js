@@ -30,7 +30,7 @@ import {
     FilePdfOutlined,
     CalendarOutlined,
     FilterOutlined,
-    SyncOutlined
+    SyncOutlined, ArrowLeftOutlined
 } from '@ant-design/icons';
 import '../styles/Actualites.css';
 import Search from "antd/es/input/Search";
@@ -259,6 +259,14 @@ const Actualites = () => {
 
     return (
         <div className="page-actualites">
+            <Button
+                type="default"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => window.history.back()}
+                style={{ marginRight: 16, marginBottom: 16 }}
+            >
+                Retour
+            </Button>
             <Card
                 title="Gestion des Actualités"
                 bordered={false}

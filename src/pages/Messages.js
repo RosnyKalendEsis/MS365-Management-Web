@@ -157,6 +157,14 @@ const Messages = () => {
 
     return (
         <div className="page-messages">
+            <Button
+                type="default"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => window.history.back()}
+                style={{ marginRight: 16, marginBottom: 16 }}
+            >
+                Retour
+            </Button>
             <Card
                 title={
                     <Space>

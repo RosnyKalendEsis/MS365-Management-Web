@@ -30,7 +30,7 @@ import {
     CloudUploadOutlined,
     DeleteOutlined,
     EditOutlined,
-    SaveOutlined, PlusOutlined
+    SaveOutlined, PlusOutlined, ArrowLeftOutlined
 } from '@ant-design/icons';
 import '../styles/Settings.css';
 
@@ -116,6 +116,14 @@ const SettingsPage = () => {
     return (
         <div className="settings-page">
             <Card title="Paramètres du Système" bordered={false}>
+                <Button
+                    type="default"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => window.history.back()}
+                    style={{ marginRight: 16, marginBottom: 16 }}
+                >
+                    Retour
+                </Button>
                 <Tabs
                     activeKey={activeTab}
                     onChange={setActiveTab}

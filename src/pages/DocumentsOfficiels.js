@@ -32,7 +32,7 @@ import {
     FileExcelOutlined,
     FileTextOutlined,
     CalendarOutlined,
-    SyncOutlined, UploadOutlined
+    SyncOutlined, UploadOutlined, ArrowLeftOutlined
 } from '@ant-design/icons';
 import moment from 'moment';
 import Search from "antd/es/input/Search";
@@ -262,6 +262,14 @@ const DocumentsOfficiels = () => {
 
     return (
         <div className="page-documents">
+            <Button
+                type="default"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => window.history.back()}
+                style={{ marginRight: 16, marginBottom: 16 }}
+            >
+                Retour
+            </Button>
             <Card
                 title="Gestion des Documents Officiels"
                 bordered={false}

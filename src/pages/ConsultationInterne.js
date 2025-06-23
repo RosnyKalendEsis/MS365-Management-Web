@@ -34,7 +34,7 @@ import {
     BarChartOutlined,
     LockOutlined,
     TeamOutlined,
-    FilePdfOutlined,
+    FilePdfOutlined, ArrowLeftOutlined,
 } from '@ant-design/icons';
 import '../styles/ConsultationInterne.css';
 import moment from "moment";
@@ -335,6 +335,14 @@ const ConsultationInterne = () => {
             <Card
                 title={
                     <Space>
+                        <Button
+                            type="default"
+                            icon={<ArrowLeftOutlined />}
+                            onClick={() => window.history.back()}
+                            style={{ marginRight: 16 }}
+                        >
+                            Retour
+                        </Button>
                         <TeamOutlined />
                         <span>Consultations Internes</span>
                         <Badge

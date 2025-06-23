@@ -37,7 +37,7 @@ import {
     CheckOutlined,
     CloseOutlined,
     FacebookOutlined,
-    YoutubeOutlined, UserOutlined
+    YoutubeOutlined, UserOutlined, ArrowLeftOutlined
 } from '@ant-design/icons';
 import moment from 'moment';
 import '../styles/SessionsDirect.css';
@@ -337,6 +337,14 @@ const SessionsDirect = () => {
 
     return (
         <div className="page-sessions">
+            <Button
+                type="default"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => window.history.back()}
+                style={{ marginRight: 16, marginBottom: 16 }}
+            >
+                Retour
+            </Button>
             <Card
                 title="Gestion des Sessions en Direct"
                 bordered={false}

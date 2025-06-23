@@ -8,7 +8,7 @@ import {
     SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
     SyncOutlined, UserOutlined, FileExcelOutlined, FilePdfOutlined,
     InfoCircleOutlined, AppstoreOutlined, UnorderedListOutlined,
-    HistoryOutlined, ArrowDownOutlined, CheckOutlined, SendOutlined, CloseOutlined
+    HistoryOutlined, ArrowDownOutlined, CheckOutlined, SendOutlined, CloseOutlined, ArrowLeftOutlined
 } from '@ant-design/icons';
 import '../styles/Deputes.css';
 import { Form } from 'antd';
@@ -52,61 +52,6 @@ const Deputes = () => {
     useEffect(() => {
         setDeputes(deputies);
     }, [deputies]);
-
-    // const [deputes, setDeputes] = useState([
-    //     {
-    //         id: 1,
-    //         nom: 'Jean Kabila',
-    //         circonscription: 'Kinshasa',
-    //         region: 'Kinshasa',
-    //         parti: 'PPRD',
-    //         commission: 'Budget et Finances',
-    //         statut: 'actif',
-    //         telephone: '+243 81 234 5678',
-    //         email: 'jean.kabila@assemblee.rdc',
-    //         photo: null,
-    //         published: true
-    //     },
-    //     {
-    //         id: 2,
-    //         nom: 'Marie Lumumba',
-    //         circonscription: 'Lubumbashi',
-    //         region: 'Haut-Katanga',
-    //         parti: 'UDPS',
-    //         commission: 'Affaires Étrangères',
-    //         statut: 'actif',
-    //         telephone: '+243 82 345 6789',
-    //         email: 'marie.lumumba@assemblee.rdc',
-    //         photo: null,
-    //         published: false
-    //     },
-    //     {
-    //         id: 3,
-    //         nom: 'Paul Mobutu',
-    //         circonscription: 'Goma',
-    //         region: 'Nord-Kivu',
-    //         parti: 'UNC',
-    //         commission: 'Défense Nationale',
-    //         statut: 'inactif',
-    //         telephone: '+243 97 123 4567',
-    //         email: 'paul.mobutu@assemblee.rdc',
-    //         photo: null,
-    //         published: false
-    //     },
-    //     {
-    //         id: 4,
-    //         nom: 'Sophie Kasaï',
-    //         circonscription: 'Mbuji-Mayi',
-    //         region: 'Kasaï-Oriental',
-    //         parti: 'AFDC',
-    //         commission: 'Santé Publique',
-    //         statut: 'actif',
-    //         telephone: '+243 90 987 6543',
-    //         email: 'sophie.kasai@assemblee.rdc',
-    //         photo: null,
-    //         published: true
-    //     }
-    // ]);
 
     // Historique des modifications
     const historyData = [
@@ -374,6 +319,14 @@ const Deputes = () => {
 
     return (
         <div className="deputes-page">
+            <Button
+                type="default"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => window.history.back()}
+                style={{ marginRight: 16, marginBottom: 16 }}
+            >
+                Retour
+            </Button>
             <Card
                 title="Gestion des Députés"
                 bordered={false}

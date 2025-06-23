@@ -19,7 +19,7 @@ build_dev:
     - web
   environment: development
   only:
-    - Developper
+    - backend
   script:
     - npm install
     - npm run build
@@ -47,7 +47,7 @@ deploy_dev:
     - web
   environment: development
   only:
-    - Developper  # Déployer uniquement depuis la branche master
+    - backend  # Déployer uniquement depuis la branche master
   script:
     # Copier les fichiers buildés sur le serveur distant
     - scp -r $BUILD_DIR/* root@172.16.18.210:/var/www/enabel_admin

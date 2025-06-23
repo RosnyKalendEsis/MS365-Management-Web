@@ -29,7 +29,7 @@ import {
     AuditOutlined,
     LogoutOutlined,
     CameraOutlined,
-    CheckCircleOutlined
+    CheckCircleOutlined, ArrowLeftOutlined
 } from '@ant-design/icons';
 import '../styles/ProfileAdmin.css';
 import moment from "moment";
@@ -104,6 +104,14 @@ const ProfileAdmin = () => {
             <Card
                 title={
                     <Space>
+                        <Button
+                            type="default"
+                            icon={<ArrowLeftOutlined />}
+                            onClick={() => window.history.back()}
+                            style={{ marginRight: 16, marginBottom: 16 }}
+                        >
+                            Retour
+                        </Button>
                         <UserOutlined />
                         <span>Profil Administrateur</span>
                         <Tag color="blue" icon={<SafetyOutlined />}>
