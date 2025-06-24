@@ -2,34 +2,28 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import {Ajax} from "../services/ajax";
 import { AssemblyContext } from "./AssemblyProvider";
 import {hosts} from "../env/Environment";
-import {DeputyContext} from "./DeputyProvider";
 
 const BureauContext = createContext();
 
 const BureauProvider = ({ children }) => {
     const { loading, provincialAssembly } = useContext(AssemblyContext);
-    const {updateDeputyPhoto} = useContext(DeputyContext);
     const [bureauLoading, setBureauLoading] = useState(true);
-    const [ setOncreateBureau] = useState(false);
-    const [bureau] = useState(null);
+    const [ onCreateBureau,setOnCreateBureau] = useState(false);
+    const [onUpdatingBureau, setOnUpdatingBureau] = useState(false);
+    const [onPublishBureau,setOnPublishBureau] = useState(false);
+    const [bureauProvincial, setBureauProvincial] = useState(null);
     const [members, setMembers] = useState([]);
     const [bureauError, setBureauError] = useState(null);
     const [bureauRoles, setBureauRoles] = useState([]);
 
     const createMember = async (bureauData, photoFile) => {
-        setOncreateBureau(true);
+        setOnCreateBureau(true);
 
         try {
             // Associer le bureauId
             bureauData.bureauId = provincialAssembly?.bureauId;
             // Créer le membre du bureau
             const { data } = await Ajax.postRequest("/admin/assembly-bureau-members", bureauData);
-
-            // Mettre à jour la photo du député si fournie
-            if (photoFile && bureauData.deputyId) {
-                console.log("il y a une photo")
-                await updateDeputyPhoto(bureauData.deputyId, photoFile);
-            }
 
             if (!data.error) {
                 const newMember = {
@@ -58,9 +52,40 @@ const BureauProvider = ({ children }) => {
             console.error("Erreur lors de la création du membre :", error);
             throw error;
         } finally {
-            setOncreateBureau(false);
+            setOnCreateBureau(false);
         }
     };
+
+    const deleteMember = async (id) => {
+        try {
+            await Ajax.deleteRequest(`/admin/assembly-bureau-members/${id}`);
+
+            // Mise à jour locale : on enlève le membre supprimé du state
+            setMembers(prev => prev.filter(member => member.id !== id));
+
+            setBureauError("Député supprimé avec succès");
+        } catch (error) {
+            setBureauError("Erreur lors de la suppression");
+        }
+    };
+
+    const publishBureau = async (isPublish) => {
+        setOnPublishBureau(true);
+        try {
+            const {data} = await Ajax.putRequest(`/admin/bureaus/${provincialAssembly.bureauId}/publish?publish=${isPublish}`);
+            if (!data.error) {
+                setBureauProvincial(data.object);
+            }else{
+                setBureauError(data.message);
+            }
+
+        } catch (error) {
+            setBureauError("Erreur lors de la publication");
+        }finally {
+            setOnPublishBureau(false);
+        }
+    };
+
     useEffect(() => {
         const fetchBureauData = async () => {
             if (!provincialAssembly) return;
@@ -68,14 +93,22 @@ const BureauProvider = ({ children }) => {
             setBureauError(null);
 
             try {
-                const [rolesResponse, membersResponse] = await Promise.all([
+                const [rolesResponse, membersResponse, bureauResponse] = await Promise.all([
                     Ajax.getRequest(`/admin/bureau-roles`),
-                    Ajax.getRequest(`/admin/assembly-bureau-members/by-bureau/${provincialAssembly.bureauId}`)
+                    Ajax.getRequest(`/admin/assembly-bureau-members/by-bureau/${provincialAssembly.bureauId}`),
+                    Ajax.getRequest(`/admin/bureaus/${provincialAssembly.bureauId}`),
                 ]);
 
                 if (!rolesResponse.data.error) {
                     setBureauRoles(rolesResponse.data.object);
                     console.log("bureau roles:", rolesResponse.data.object);
+                } else {
+                    setBureauError("Erreur lors du chargement des rôles du bureau.");
+                }
+
+                if (!bureauResponse.data.error) {
+                    setBureauProvincial(bureauResponse.data.object);
+                    console.log("bureau:", bureauResponse.data.object);
                 } else {
                     setBureauError("Erreur lors du chargement des rôles du bureau.");
                 }
@@ -120,7 +153,7 @@ const BureauProvider = ({ children }) => {
     }, [loading, provincialAssembly]);
 
     return (
-        <BureauContext.Provider value={{ bureauLoading, bureau, bureauError,bureauRoles,members,createMember }}>
+        <BureauContext.Provider value={{ bureauLoading, bureauProvincial, bureauError,bureauRoles,members,createMember,onCreateBureau,onUpdatingBureau,deleteMember ,publishBureau, onPublishBureau,setOnUpdatingBureau }}>
             {children}
         </BureauContext.Provider>
     );

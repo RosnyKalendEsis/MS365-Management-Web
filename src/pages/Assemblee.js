@@ -16,12 +16,12 @@ const { TextArea } = Input;
 
 const Assemblee = () => {
     // États
-    const { bureauRoles,createMember, members } = useContext(BureauContext);
+    const { bureauRoles,createMember, members,onCreateBureau,onUpdatingBureau,deleteMember,bureauProvincial,publishBureau,onPublishBureau  } = useContext(BureauContext);
     const { deputies } = useContext(DeputyContext);
     const [bureau, setBureau] = useState(members);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [currentMembre, setCurrentMembre] = useState(null);
-    const [isPublie, setIsPublie] = useState(false);
+    const [isPublie, setIsPublie] = useState(bureauProvincial ? bureauProvincial.published : false );
     const [form] = Form.useForm();
     const [newPhoto, setNewPhoto] = useState({photo:null});
 
@@ -41,6 +41,10 @@ const Assemblee = () => {
     useEffect(() => {
         setBureau(members);
     }, [members]);
+
+    useEffect(() => {
+        setIsPublie(bureauProvincial ? bureauProvincial.published : false);
+    },[bureauProvincial]);
 
     // Colonnes du tableau
     const columns = [
@@ -122,11 +126,9 @@ const Assemblee = () => {
         setIsModalVisible(true);
     };
 
-    const handleDelete = (index) => {
-        const newBureau = [...bureau];
-        newBureau.splice(index, 1);
-        setBureau(newBureau);
-        message.success('Membre retiré du bureau avec succès');
+    const handleDelete = async (index) => {
+        const membreASupprimer = bureau[index];
+        await deleteMember(membreASupprimer.id);
     };
 
     const handleSubmit = () => {
@@ -165,17 +167,16 @@ const Assemblee = () => {
     };
 
 
-    const handlePublier = () => {
+    const handlePublier = async () => {
         // Vérifier que tous les rôles sont attribués
-        const rolesManquants = roles.filter(role => !bureau.some(m => m.role.id === role));
-
+        const rolesManquants = roles.filter(role => !bureau.some(m => m.role.id === role.id));
         if (rolesManquants.length > 0) {
-            message.error(`Certains rôles ne sont pas attribués : ${rolesManquants.join(', ')}`);
+            console.log(`Certains rôles ne sont pas attribués : ${rolesManquants.join(', ')}`);
             return;
         }
+        await publishBureau(true)
 
-        setIsPublie(true);
-        message.success('Le bureau collégial a été publié avec succès');
+        console.log('Le bureau collégial a été publié avec succès');
     };
 
     return (
@@ -199,7 +200,7 @@ const Assemblee = () => {
                             onClick={handlePublier}
                             disabled={isPublie || bureau.length === 0}
                         >
-                            {isPublie ? 'Publié' : 'Publier le bureau'}
+                            {isPublie ? 'Publié' : (onPublishBureau ? 'Publication du bureau en cours....' : 'Publier le bureau')}
                         </Button>
                         {isPublie && <Tag icon={<CheckOutlined />} color="success">Publié</Tag>}
                     </Space>
@@ -278,7 +279,7 @@ const Assemblee = () => {
                         icon={currentMembre ? <EditOutlined /> : <PlusOutlined />}
                         onClick={handleSubmit}
                     >
-                        {currentMembre ? "Modifier" : "Ajouter"}
+                        {currentMembre ? (onUpdatingBureau ? "Modification en cours..." : "Modifier") : (onCreateBureau ? "Ajout en cours..." : "Ajouter")}
                     </Button>
                 ]}
                 width={700}

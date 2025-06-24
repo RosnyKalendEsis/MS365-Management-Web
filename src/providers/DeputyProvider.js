@@ -10,7 +10,7 @@ const DeputyProvider = ({ children }) => {
     const [deputyLoading, setDeputyLoading] = useState(true);
     const [deputies, setDeputies] = useState([]);
     const [onCreateDeputy, setOnCreateDeputy] = useState(false);
-    const [ setOnUpdateDeputy] = useState(false);
+    const [ onUpdateDeputy,setOnUpdateDeputy] = useState(false);
     const [deputyError, setDeputyError] = useState(null);
 
 
@@ -175,7 +175,7 @@ const DeputyProvider = ({ children }) => {
     }, [loading, provincialAssembly]);
 
     return (
-        <DeputyContext.Provider value={{ deputyLoading, deputies, deputyError, createDeputy, onCreateDeputy, publishDeputy, deleteDeputy,updateDeputyPhoto }}>
+        <DeputyContext.Provider value={{ deputyLoading, deputies, deputyError, createDeputy, onCreateDeputy, publishDeputy, deleteDeputy,updateDeputyPhoto, onUpdateDeputy }}>
             {children}
         </DeputyContext.Provider>
     );

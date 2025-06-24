@@ -33,7 +33,7 @@ const Deputes = () => {
     const [, setActiveTab] = useState('1');
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-    const { deputies,createDeputy,publishDeputy,deleteDeputy } = useContext(DeputyContext);
+    const { deputies,createDeputy,publishDeputy,deleteDeputy,onCreateDeputy,onUpdateDeputy } = useContext(DeputyContext);
     const { provincialAssembly } = useContext(AssemblyContext);
     const [newDepute, setNewDepute] = useState({
         nom: '',
@@ -713,7 +713,7 @@ const Deputes = () => {
                         photoFile: null,
                     });
                 }}
-                okText={newDepute.id ? "Modifier" : "Ajouter"}
+                okText={newDepute.id ? (onUpdateDeputy ? "Modification en cours..." : "Modifier") : (onCreateDeputy ? "Ajout en cours..." : "Ajouter")}
                 cancelText="Annuler"
                 width={700}
                 className="add-depute-modal"
