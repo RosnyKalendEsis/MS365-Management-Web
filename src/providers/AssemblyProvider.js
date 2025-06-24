@@ -6,7 +6,6 @@ const AssemblyContext = createContext();
 const AssemblyProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [provincialAssembly, setProvincialAssembly] = useState(null);
-    const [actualities, setActualities] = useState(null);
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true)
