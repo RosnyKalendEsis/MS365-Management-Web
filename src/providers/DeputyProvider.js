@@ -10,7 +10,7 @@ const DeputyProvider = ({ children }) => {
     const [deputyLoading, setDeputyLoading] = useState(true);
     const [deputies, setDeputies] = useState([]);
     const [onCreateDeputy, setOnCreateDeputy] = useState(false);
-    const [onUpdateDeputy, setOnUpdateDeputy] = useState(false);
+    const [ setOnUpdateDeputy] = useState(false);
     const [deputyError, setDeputyError] = useState(null);
 
 

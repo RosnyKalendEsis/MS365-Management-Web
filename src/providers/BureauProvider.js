@@ -10,8 +10,8 @@ const BureauProvider = ({ children }) => {
     const { loading, provincialAssembly } = useContext(AssemblyContext);
     const {updateDeputyPhoto} = useContext(DeputyContext);
     const [bureauLoading, setBureauLoading] = useState(true);
-    const [onCreateBureau, setOncreateBureau] = useState(false);
-    const [bureau, setBureau] = useState(null);
+    const [ setOncreateBureau] = useState(false);
+    const [bureau] = useState(null);
     const [members, setMembers] = useState([]);
     const [bureauError, setBureauError] = useState(null);
     const [bureauRoles, setBureauRoles] = useState([]);

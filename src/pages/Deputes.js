@@ -33,7 +33,7 @@ const Deputes = () => {
     const [, setActiveTab] = useState('1');
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-    const { deputies,createDeputy, onCreateDeputy,publishDeputy,deleteDeputy } = useContext(DeputyContext);
+    const { deputies,createDeputy,publishDeputy,deleteDeputy } = useContext(DeputyContext);
     const { provincialAssembly } = useContext(AssemblyContext);
     const [newDepute, setNewDepute] = useState({
         nom: '',

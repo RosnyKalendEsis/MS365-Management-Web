@@ -5,7 +5,7 @@ import {
 } from 'antd';
 import {
     UserOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
-    SaveOutlined, UploadOutlined, CheckOutlined
+    SaveOutlined, UploadOutlined, CheckOutlined, ArrowLeftOutlined
 } from '@ant-design/icons';
 import '../styles/Assemblee.css';
 import {BureauContext} from "../providers/BureauProvider";
@@ -16,7 +16,7 @@ const { TextArea } = Input;
 
 const Assemblee = () => {
     // États
-    const { bureauLoading, bureauError,bureauRoles,createMember, members } = useContext(BureauContext);
+    const { bureauRoles,createMember, members } = useContext(BureauContext);
     const { deputies } = useContext(DeputyContext);
     const [bureau, setBureau] = useState(members);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -180,6 +180,14 @@ const Assemblee = () => {
 
     return (
         <div className="assemblee-page">
+            <Button
+                type="default"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => window.history.back()}
+                style={{ marginRight: 16, marginBottom: 16 }}
+            >
+                Retour
+            </Button>
             <Card
                 title="Création du Bureau Collégial"
                 bordered={false}
