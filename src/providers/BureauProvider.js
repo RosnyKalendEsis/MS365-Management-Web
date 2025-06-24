@@ -16,7 +16,7 @@ const BureauProvider = ({ children }) => {
     const [bureauError, setBureauError] = useState(null);
     const [bureauRoles, setBureauRoles] = useState([]);
 
-    const createMember = async (bureauData, photoFile) => {
+    const createMember = async (bureauData) => {
         setOnCreateBureau(true);
 
         try {

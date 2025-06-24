@@ -1,11 +1,11 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {
     Card, Button, Form, Input, Select, Avatar, Row, Col,
-    Table, Tag, Modal, message, Upload, Space
+    Table, Tag, Modal, message, Space
 } from 'antd';
 import {
     UserOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
-    SaveOutlined, UploadOutlined, CheckOutlined, ArrowLeftOutlined
+    SaveOutlined,CheckOutlined, ArrowLeftOutlined
 } from '@ant-design/icons';
 import '../styles/Assemblee.css';
 import {BureauContext} from "../providers/BureauProvider";
@@ -23,7 +23,6 @@ const Assemblee = () => {
     const [currentMembre, setCurrentMembre] = useState(null);
     const [isPublie, setIsPublie] = useState(bureauProvincial ? bureauProvincial.published : false );
     const [form] = Form.useForm();
-    const [newPhoto, setNewPhoto] = useState({photo:null});
 
     // Rôles disponibles
     const [roles, setRoles] = useState(bureauRoles);
@@ -158,7 +157,7 @@ const Assemblee = () => {
                     return;
                 }
 
-                await createMember(newMember, newPhoto);
+                await createMember(newMember);
             }
 
             setIsModalVisible(false);
@@ -343,31 +342,31 @@ const Assemblee = () => {
                         />
                     </Form.Item>
 
-                    <Form.Item label="Photo (optionnel)">
-                        <Upload
-                            listType="picture-card"
-                            showUploadList={false}
-                            beforeUpload={(file) => {
-                                console.log("file:", file);
-                                // On capture le fichier ici ✅
-                                setNewPhoto({
-                                    ...newPhoto,
-                                    photo: URL.createObjectURL(file),
-                                    photoFile: file
-                                });
-                                return false; // empêcher le chargement automatique
-                            }}
-                        >
-                            {newPhoto.photo ? (
-                                <img src={newPhoto.photo} alt="avatar" style={{ width: '100%' }} />
-                            ) : (
-                                <div>
-                                    <UploadOutlined />
-                                    <div style={{ marginTop: 8 }}>Changer la photo</div>
-                                </div>
-                            )}
-                        </Upload>
-                    </Form.Item>
+                    {/*<Form.Item label="Photo (optionnel)">*/}
+                    {/*    <Upload*/}
+                    {/*        listType="picture-card"*/}
+                    {/*        showUploadList={false}*/}
+                    {/*        beforeUpload={(file) => {*/}
+                    {/*            console.log("file:", file);*/}
+                    {/*            // On capture le fichier ici ✅*/}
+                    {/*            setNewPhoto({*/}
+                    {/*                ...newPhoto,*/}
+                    {/*                photo: URL.createObjectURL(file),*/}
+                    {/*                photoFile: file*/}
+                    {/*            });*/}
+                    {/*            return false; // empêcher le chargement automatique*/}
+                    {/*        }}*/}
+                    {/*    >*/}
+                    {/*        {newPhoto.photo ? (*/}
+                    {/*            <img src={newPhoto.photo} alt="avatar" style={{ width: '100%' }} />*/}
+                    {/*        ) : (*/}
+                    {/*            <div>*/}
+                    {/*                <UploadOutlined />*/}
+                    {/*                <div style={{ marginTop: 8 }}>Changer la photo</div>*/}
+                    {/*            </div>*/}
+                    {/*        )}*/}
+                    {/*    </Upload>*/}
+                    {/*</Form.Item>*/}
                 </Form>
             </Modal>
         </div>
