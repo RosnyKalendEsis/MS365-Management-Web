@@ -8,7 +8,8 @@ export const Ajax = {
             return '';
         }
         return hosts.api;
-    },
+
+        },
 
     async updateOptions(option, data = null) {
         option = option || {};
