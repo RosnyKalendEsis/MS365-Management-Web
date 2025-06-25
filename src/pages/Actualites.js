@@ -18,7 +18,9 @@ import {
     Col,
     Tabs,
     Badge,
-    List
+    List,
+    Image,
+    Switch
 } from 'antd';
 import {
     SearchOutlined,
@@ -26,119 +28,120 @@ import {
     EditOutlined,
     DeleteOutlined,
     EyeOutlined,
-    FileImageOutlined,
     FilePdfOutlined,
     CalendarOutlined,
     FilterOutlined,
-    SyncOutlined, ArrowLeftOutlined
+    ArrowLeftOutlined,
+    VideoCameraOutlined,
+    NotificationOutlined,
+    TeamOutlined
 } from '@ant-design/icons';
+import moment from 'moment';
 import '../styles/Actualites.css';
 import Search from "antd/es/input/Search";
-import moment from 'moment';
-import '../styles/Actualites.css'
 
 const { Option } = Select;
-const { TextArea } = Input;
 const { RangePicker } = DatePicker;
 const { TabPane } = Tabs;
+
+// Types d'actualités avec icônes et couleurs
+const ACTUALITE_TYPES = [
+    {
+        value: 'seance',
+        label: 'Séance publique',
+        icon: <TeamOutlined />,
+        color: 'blue'
+    },
+    {
+        value: 'commission',
+        label: 'Commission',
+        icon: <VideoCameraOutlined />,
+        color: 'green'
+    },
+    {
+        value: 'conference',
+        label: 'Conférence',
+        icon: <NotificationOutlined />,
+        color: 'orange'
+    },
+    {
+        value: 'evenement',
+        label: 'Événement',
+        icon: <CalendarOutlined />,
+        color: 'purple'
+    },
+    {
+        value: 'communique',
+        label: 'Communiqué',
+        icon: <FilePdfOutlined />,
+        color: 'red'
+    }
+];
+
+const STATUTS = [
+    { value: 'brouillon', label: 'Brouillon', color: 'default' },
+    { value: 'programme', label: 'Programmé', color: 'orange' },
+    { value: 'publie', label: 'Publié', color: 'green' },
+    { value: 'archive', label: 'Archivé', color: 'gray' }
+];
 
 const Actualites = () => {
     // États
     const [searchText, setSearchText] = useState('');
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [currentArticle, setCurrentArticle] = useState(null);
+    const [currentActualite, setCurrentActualite] = useState(null);
     const [activeTab, setActiveTab] = useState('tous');
+    const [previewVisible, setPreviewVisible] = useState(false);
     const [form] = Form.useForm();
 
-    // Données des actualités
-    const [articles, setArticles] = useState([
+    // Données initiales
+    const [actualites, setActualites] = useState([
         {
             id: 1,
-            titre: 'Réforme constitutionnelle adoptée',
-            categorie: 'politique',
-            date: '2023-06-15',
-            statut: 'publié',
-            auteur: 'Admin RDC',
-            vues: 1245,
-            piecesJointes: ['document.pdf'],
-            contenu: 'Le parlement a adopté la réforme constitutionnelle avec une majorité de 75%.'
-        },
-        {
-            id: 2,
-            titre: 'Nouveau programme éducatif',
-            categorie: 'education',
-            date: '2023-06-10',
-            statut: 'brouillon',
-            auteur: 'Ministre Education',
-            vues: 0,
+            type: 'seance',
+            title: "Séance publique",
+            date: "2025-04-01T16:30:00",
+            description: "Lutte contre le narcotrafic : votes solennels sur une proposition de loi",
+            details: "La séance portera sur l'examen approfondi des propositions de loi...",
+            imageUrl: "https://img.freepik.com/photos-premium/presentation-du-conferencier-partenariat-au-congres-international_53876-58732.jpg",
+            statut: 'publie',
+            isImportant: true,
             piecesJointes: [],
-            contenu: 'Le nouveau programme sera appliqué dès la rentrée scolaire 2023-2024.'
+            auteur: "Admin Assemblée"
         },
-        {
-            id: 3,
-            titre: 'Session plénière du 20 juin',
-            categorie: 'annonce',
-            date: '2023-06-18',
-            statut: 'programmé',
-            auteur: 'Admin RDC',
-            vues: 0,
-            piecesJointes: ['ordre_du_jour.pdf'],
-            contenu: 'La prochaine session plénière traitera du budget national.'
-        }
+        // ... autres exemples
     ]);
-
-    // Options
-    const categories = [
-        { value: 'politique', label: 'Politique' },
-        { value: 'economie', label: 'Économie' },
-        { value: 'education', label: 'Éducation' },
-        { value: 'sante', label: 'Santé' },
-        { value: 'annonce', label: 'Annonce officielle' }
-    ];
-
-    const statuts = [
-        { value: 'brouillon', label: 'Brouillon', color: 'default' },
-        { value: 'programmé', label: 'Programmé', color: 'orange' },
-        { value: 'publié', label: 'Publié', color: 'green' },
-        { value: 'archivé', label: 'Archivé', color: 'gray' }
-    ];
 
     // Colonnes du tableau
     const columns = [
         {
             title: 'Titre',
-            dataIndex: 'titre',
-            key: 'titre',
+            dataIndex: 'title',
+            key: 'title',
             render: (text, record) => (
                 <Space>
-                    {record.piecesJointes?.some(f => f.endsWith('.pdf')) && <FilePdfOutlined style={{ color: '#f5222d' }} />}
-                    {record.piecesJointes?.some(f => f.match(/\.(jpg|jpeg|png)$/i)) && <FileImageOutlined style={{ color: '#52c41a' }} />}
+                    {ACTUALITE_TYPES.find(t => t.value === record.type)?.icon}
                     <span>{text}</span>
+                    {record.isImportant && <Tag color="red">Important</Tag>}
                 </Space>
             )
         },
         {
-            title: 'Catégorie',
-            dataIndex: 'categorie',
-            key: 'categorie',
-            render: (categorie) => (
-                <Tag color={getCategoryColor(categorie)}>
-                    {categories.find(c => c.value === categorie)?.label}
-                </Tag>
-            ),
-            filters: categories.map(c => ({ text: c.label, value: c.value })),
-            onFilter: (value, record) => record.categorie === value,
+            title: 'Type',
+            dataIndex: 'type',
+            key: 'type',
+            render: (type) => {
+                const typeInfo = ACTUALITE_TYPES.find(t => t.value === type);
+                return <Tag color={typeInfo.color}>{typeInfo.label}</Tag>;
+            },
+            filters: ACTUALITE_TYPES.map(t => ({ text: t.label, value: t.value })),
+            onFilter: (value, record) => record.type === value,
         },
         {
             title: 'Date',
             dataIndex: 'date',
             key: 'date',
-            render: (date) => (
-                <Space>
-                    <CalendarOutlined />
-                    {new Date(date).toLocaleDateString()}
-                </Space>
-            ),
+            render: (date) => moment(date).format('DD/MM/YYYY HH:mm'),
             sorter: (a, b) => new Date(a.date) - new Date(b.date),
         },
         {
@@ -146,40 +149,22 @@ const Actualites = () => {
             dataIndex: 'statut',
             key: 'statut',
             render: (statut) => {
-                const status = statuts.find(s => s.value === statut);
+                const status = STATUTS.find(s => s.value === statut);
                 return <Badge color={status.color} text={status.label} />;
             },
-            filters: statuts.map(s => ({ text: s.label, value: s.value })),
+            filters: STATUTS.map(s => ({ text: s.label, value: s.value })),
             onFilter: (value, record) => record.statut === value,
-        },
-        {
-            title: 'Auteur',
-            dataIndex: 'auteur',
-            key: 'auteur',
-        },
-        {
-            title: 'Vues',
-            dataIndex: 'vues',
-            key: 'vues',
-            sorter: (a, b) => a.vues - b.vues,
-            render: (vues) => vues.toLocaleString(),
         },
         {
             title: 'Actions',
             key: 'actions',
             render: (_, record) => (
                 <Space size="middle">
-                    <Button
-                        icon={<EyeOutlined />}
-                        onClick={() => previewArticle(record)}
-                    />
-                    <Button
-                        icon={<EditOutlined />}
-                        onClick={() => editArticle(record)}
-                    />
+                    <Button icon={<EyeOutlined />} onClick={() => handlePreview(record)} />
+                    <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
                     <Popconfirm
-                        title="Êtes-vous sûr de vouloir supprimer cet article ?"
-                        onConfirm={() => deleteArticle(record.id)}
+                        title="Êtes-vous sûr de vouloir supprimer cette actualité ?"
+                        onConfirm={() => handleDelete(record.id)}
                     >
                         <Button icon={<DeleteOutlined />} danger />
                     </Popconfirm>
@@ -188,72 +173,64 @@ const Actualites = () => {
         },
     ];
 
-    // Fonctions utilitaires
-    const getCategoryColor = (categorie) => {
-        const colors = {
-            politique: 'red',
-            economie: 'gold',
-            education: 'blue',
-            sante: 'green',
-            annonce: 'purple'
-        };
-        return colors[categorie] || 'gray';
-    };
-
-    const previewArticle = (article) => {
-        setCurrentArticle(article);
+    // Handlers
+    const handleAdd = () => {
+        setCurrentActualite(null);
+        form.resetFields();
         setIsModalVisible(true);
     };
 
-    const editArticle = (article) => {
-        setCurrentArticle(article);
+    const handleEdit = (actualite) => {
+        setCurrentActualite(actualite);
         form.setFieldsValue({
-            ...article,
-            date: article.date ? moment(article.date) : null
+            ...actualite,
+            date: moment(actualite.date)
         });
         setIsModalVisible(true);
     };
 
-    const deleteArticle = (id) => {
-        setArticles(articles.filter(article => article.id !== id));
-        message.success('Article supprimé avec succès');
+    const handleDelete = (id) => {
+        setActualites(actualites.filter(a => a.id !== id));
+        message.success('Actualité supprimée avec succès');
+    };
+
+    const handlePreview = (actualite) => {
+        setCurrentActualite(actualite);
+        setPreviewVisible(true);
     };
 
     const handleSubmit = (values) => {
-        const updatedValues = {
+        const actualiteData = {
             ...values,
-            date: values.date ? values.date.format('YYYY-MM-DD') : null
+            date: values.date.format(),
+            auteur: "Admin Assemblée"
         };
 
-        if (currentArticle) {
+        if (currentActualite) {
             // Édition
-            setArticles(articles.map(article =>
-                article.id === currentArticle.id ? { ...article, ...updatedValues } : article
+            setActualites(actualites.map(a =>
+                a.id === currentActualite.id ? { ...a, ...actualiteData } : a
             ));
-            message.success('Article mis à jour avec succès');
+            message.success('Actualité mise à jour avec succès');
         } else {
             // Création
-            const newArticle = {
-                id: articles.length + 1,
-                ...updatedValues,
-                statut: 'brouillon',
-                auteur: 'Admin RDC',
-                vues: 0,
-                piecesJointes: []
+            const newActualite = {
+                id: Math.max(...actualites.map(a => a.id), 0) + 1,
+                ...actualiteData,
+                statut: 'brouillon'
             };
-            setArticles([...articles, newArticle]);
-            message.success('Article créé avec succès');
+            setActualites([...actualites, newActualite]);
+            message.success('Actualité créée avec succès');
         }
 
         setIsModalVisible(false);
         form.resetFields();
-        setCurrentArticle(null);
     };
 
-    const filteredArticles = articles.filter(article => {
-        const matchesSearch = article.titre.toLowerCase().includes(searchText.toLowerCase()) ||
-            article.contenu.toLowerCase().includes(searchText.toLowerCase());
-        const matchesTab = activeTab === 'tous' || article.statut === activeTab;
+    const filteredActualites = actualites.filter(actualite => {
+        const matchesSearch = actualite.title.toLowerCase().includes(searchText.toLowerCase()) ||
+            actualite.description.toLowerCase().includes(searchText.toLowerCase());
+        const matchesTab = activeTab === 'tous' || actualite.statut === activeTab;
         return matchesSearch && matchesTab;
     });
 
@@ -267,80 +244,47 @@ const Actualites = () => {
             >
                 Retour
             </Button>
+
             <Card
                 title="Gestion des Actualités"
                 bordered={false}
                 extra={
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => {
-                            setCurrentArticle(null);
-                            form.resetFields();
-                            setIsModalVisible(true);
-                        }}
-                    >
-                        Nouvel Article
+                    <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                        Nouvelle Actualité
                     </Button>
                 }
             >
-                {/* Barre de filtres */}
+                {/* Filtres */}
                 <div className="filters-bar">
                     <Space size="large">
                         <Search
-                            placeholder="Rechercher des articles..."
+                            placeholder="Rechercher..."
                             allowClear
                             enterButton={<SearchOutlined />}
                             size="large"
                             style={{ width: 300 }}
                             onChange={e => setSearchText(e.target.value)}
                         />
-
-                        <Select
-                            placeholder="Filtrer par catégorie"
-                            style={{ width: 200 }}
-                            allowClear
-                            onChange={val => form.setFieldsValue({ categorie: val })}
-                        >
-                            {categories.map(cat => (
-                                <Option key={cat.value} value={cat.value}>{cat.label}</Option>
-                            ))}
-                        </Select>
-
-                        <RangePicker />
-
+                        <RangePicker showTime />
                         <Button icon={<FilterOutlined />}>Filtres avancés</Button>
-                        <Button icon={<SyncOutlined />}>Réinitialiser</Button>
                     </Space>
                 </div>
 
-                {/* Onglets de statut */}
-                <Tabs
-                    activeKey={activeTab}
-                    onChange={setActiveTab}
-                    style={{ marginTop: 16 }}
-                >
+                {/* Onglets */}
+                <Tabs activeKey={activeTab} onChange={setActiveTab} style={{ marginTop: 16 }}>
                     <TabPane tab="Tous" key="tous" />
-                    {statuts.map(statut => (
+                    {STATUTS.map(statut => (
                         <TabPane
-                            tab={
-                                <span>
-                  {statut.label}
-                                    <Badge
-                                        count={articles.filter(a => a.statut === statut.value).length}
-                                        style={{ marginLeft: 5 }}
-                                    />
-                </span>
-                            }
+                            tab={<Badge count={actualites.filter(a => a.statut === statut.value).length}>{statut.label}</Badge>}
                             key={statut.value}
                         />
                     ))}
                 </Tabs>
 
-                {/* Tableau des articles */}
+                {/* Tableau */}
                 <Table
                     columns={columns}
-                    dataSource={filteredArticles}
+                    dataSource={filteredActualites}
                     rowKey="id"
                     pagination={{ pageSize: 10 }}
                     scroll={{ x: true }}
@@ -349,12 +293,11 @@ const Actualites = () => {
 
             {/* Modal d'édition/création */}
             <Modal
-                title={currentArticle ? 'Modifier l\'article' : 'Créer un nouvel article'}
+                title={currentActualite ? 'Modifier une actualité' : 'Créer une nouvelle actualité'}
                 visible={isModalVisible}
                 onCancel={() => {
                     setIsModalVisible(false);
                     form.resetFields();
-                    setCurrentArticle(null);
                 }}
                 footer={null}
                 width={800}
@@ -365,43 +308,27 @@ const Actualites = () => {
                     layout="vertical"
                     onFinish={handleSubmit}
                     initialValues={{
-                        statut: 'brouillon'
+                        statut: 'brouillon',
+                        isImportant: false
                     }}
                 >
                     <Row gutter={16}>
-                        <Col span={24}>
-                            <Form.Item
-                                name="titre"
-                                label="Titre de l'article"
-                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
-                            >
-                                <Input placeholder="Titre accrocheur..." />
-                            </Form.Item>
-                        </Col>
-
                         <Col span={12}>
                             <Form.Item
-                                name="categorie"
-                                label="Catégorie"
+                                name="type"
+                                label="Type d'actualité"
                                 rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
                             >
-                                <Select placeholder="Sélectionnez une catégorie">
-                                    {categories.map(cat => (
-                                        <Option key={cat.value} value={cat.value}>{cat.label}</Option>
+                                <Select placeholder="Sélectionnez un type">
+                                    {ACTUALITE_TYPES.map(type => (
+                                        <Option key={type.value} value={type.value}>
+                                            <Space>
+                                                {type.icon}
+                                                {type.label}
+                                            </Space>
+                                        </Option>
                                     ))}
                                 </Select>
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={12}>
-                            <Form.Item
-                                name="date"
-                                label="Date de publication"
-                            >
-                                <DatePicker
-                                    style={{ width: '100%' }}
-                                    showTime={false}
-                                />
                             </Form.Item>
                         </Col>
 
@@ -411,35 +338,95 @@ const Actualites = () => {
                                 label="Statut"
                             >
                                 <Select>
-                                    {statuts.map(statut => (
-                                        <Option key={statut.value} value={statut.value}>{statut.label}</Option>
+                                    {STATUTS.map(statut => (
+                                        <Option key={statut.value} value={statut.value}>
+                                            <Badge color={statut.color} text={statut.label} />
+                                        </Option>
                                     ))}
                                 </Select>
                             </Form.Item>
                         </Col>
 
+                        <Col span={24}>
+                            <Form.Item
+                                name="title"
+                                label="Titre"
+                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                            >
+                                <Input placeholder="Titre de l'actualité" />
+                            </Form.Item>
+                        </Col>
+
                         <Col span={12}>
                             <Form.Item
-                                name="piecesJointes"
-                                label="Pièces jointes"
+                                name="date"
+                                label="Date et heure"
+                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                            >
+                                <DatePicker
+                                    showTime
+                                    format="DD/MM/YYYY HH:mm"
+                                    style={{ width: '100%' }}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={12}>
+                            <Form.Item
+                                name="isImportant"
+                                label="Actualité importante"
+                                valuePropName="checked"
+                            >
+                                <Switch checkedChildren="Oui" unCheckedChildren="Non" />
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={24}>
+                            <Form.Item
+                                name="description"
+                                label="Description courte"
+                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                            >
+                                <Input.TextArea rows={3} placeholder="Description visible dans les listes" />
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={24}>
+                            <Form.Item
+                                name="details"
+                                label="Contenu détaillé"
+                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                            >
+                                <Input.TextArea rows={6} placeholder="Contenu complet de l'actualité" />
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={24}>
+                            <Form.Item
+                                name="imageUrl"
+                                label="Image principale"
                             >
                                 <Upload
-                                    multiple
-                                    beforeUpload={() => false} // Empêche l'upload automatique
-                                    listType="picture"
+                                    listType="picture-card"
+                                    showUploadList={false}
+                                    beforeUpload={() => false}
                                 >
-                                    <Button icon={<FileImageOutlined />}>Ajouter des fichiers</Button>
+                                    <div>
+                                        <PlusOutlined />
+                                        <div style={{ marginTop: 8 }}>Uploader</div>
+                                    </div>
                                 </Upload>
                             </Form.Item>
                         </Col>
 
                         <Col span={24}>
                             <Form.Item
-                                name="contenu"
-                                label="Contenu"
-                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                                name="piecesJointes"
+                                label="Pièces jointes"
                             >
-                                <TextArea rows={10} placeholder="Rédigez votre article ici..." />
+                                <Upload multiple beforeUpload={() => false}>
+                                    <Button icon={<FilePdfOutlined />}>Ajouter des documents</Button>
+                                </Upload>
                             </Form.Item>
                         </Col>
                     </Row>
@@ -452,7 +439,7 @@ const Actualites = () => {
                                 Annuler
                             </Button>
                             <Button type="primary" htmlType="submit">
-                                {currentArticle ? 'Mettre à jour' : 'Publier'}
+                                {currentActualite ? 'Mettre à jour' : 'Créer'}
                             </Button>
                         </Space>
                     </Form.Item>
@@ -460,53 +447,62 @@ const Actualites = () => {
             </Modal>
 
             {/* Modal de prévisualisation */}
-            {currentArticle && (
-                <Modal
-                    title={currentArticle.titre}
-                    visible={isModalVisible && currentArticle}
-                    onCancel={() => setIsModalVisible(false)}
-                    footer={null}
-                    width={800}
-                >
-                    <div className="article-preview">
-                        <div className="article-meta">
-                            <Tag color={getCategoryColor(currentArticle.categorie)}>
-                                {categories.find(c => c.value === currentArticle.categorie)?.label}
+            <Modal
+                title={currentActualite?.title}
+                visible={previewVisible}
+                onCancel={() => setPreviewVisible(false)}
+                footer={null}
+                width={800}
+            >
+                {currentActualite && (
+                    <div className="actualite-preview">
+                        <div className="actualite-header">
+                            <Tag color={ACTUALITE_TYPES.find(t => t.value === currentActualite.type)?.color}>
+                                {ACTUALITE_TYPES.find(t => t.value === currentActualite.type)?.label}
                             </Tag>
-                            <span className="article-date">
-                {new Date(currentArticle.date).toLocaleDateString()}
+                            <span className="actualite-date">
+                {moment(currentActualite.date).format('dddd D MMMM YYYY [à] HH[h]mm')}
               </span>
-                            <Badge
-                                status={statuts.find(s => s.value === currentArticle.statut)?.color || 'default'}
-                                text={statuts.find(s => s.value === currentArticle.statut)?.label}
+                            {currentActualite.isImportant && <Tag color="red">Important</Tag>}
+                        </div>
+
+                        {currentActualite.imageUrl && (
+                            <Image
+                                src={currentActualite.imageUrl}
+                                alt={currentActualite.title}
+                                style={{ width: '100%', margin: '16px 0' }}
                             />
+                        )}
+
+                        <div className="actualite-description">
+                            <h3>{currentActualite.description}</h3>
                         </div>
 
                         <Divider />
 
-                        <div className="article-content">
-                            {currentArticle.contenu.split('\n').map((paragraph, i) => (
+                        <div className="actualite-content">
+                            {currentActualite.details.split('\n').map((paragraph, i) => (
                                 <p key={i}>{paragraph}</p>
                             ))}
                         </div>
 
-                        {currentArticle.piecesJointes?.length > 0 && (
+                        {currentActualite.piecesJointes?.length > 0 && (
                             <>
-                                <Divider orientation="left">Pièces jointes</Divider>
+                                <Divider orientation="left">Documents associés</Divider>
                                 <List
-                                    dataSource={currentArticle.piecesJointes}
+                                    dataSource={currentActualite.piecesJointes}
                                     renderItem={item => (
                                         <List.Item>
                                             <FilePdfOutlined style={{ marginRight: 8 }} />
-                                            {item}
+                                            {item.name}
                                         </List.Item>
                                     )}
                                 />
                             </>
                         )}
                     </div>
-                </Modal>
-            )}
+                )}
+            </Modal>
         </div>
     );
 };

@@ -2,7 +2,6 @@
   "name": "espace-citoyen-admin",
   "version": "0.1.0",
   "private": true,
-  "proxy": "https://api-provinces.numibit.com",
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",

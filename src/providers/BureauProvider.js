@@ -19,6 +19,7 @@ const BureauProvider = ({ children }) => {
     const [onCreatingRole, setOnCreatingRole] = useState(false);
     const [onDeletingRole, setOnDeletingRole] = useState(false);
 
+    //BlackSigma verifie un peu les API de sortes qu'ils correspondent avec ceux du backend pour la gestion des roles
     const createMember = async (bureauData) => {
         setOnCreateBureau(true);
 
@@ -164,7 +165,7 @@ const BureauProvider = ({ children }) => {
                 if (!membersResponse.data.error) {
                     const transformedMembers = membersResponse.data.object.map(data => ({
                         id: data.id,
-                        role: data.role, // si tu veux juste l’objet brut (id, name, description)
+                        role: data.role,
                         membre: {
                             id: data.deputy.id,
                             nom: data.deputy.name,
