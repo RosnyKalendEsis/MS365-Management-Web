@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import {Ajax} from "../services/ajax";
 import { AssemblyContext } from "./AssemblyProvider";
 import {hosts} from "../env/Environment";
+import {message} from "antd";
 
 const BureauContext = createContext();
 
@@ -15,6 +16,8 @@ const BureauProvider = ({ children }) => {
     const [members, setMembers] = useState([]);
     const [bureauError, setBureauError] = useState(null);
     const [bureauRoles, setBureauRoles] = useState([]);
+    const [onCreatingRole, setOnCreatingRole] = useState(false);
+    const [onDeletingRole, setOnDeletingRole] = useState(false);
 
     const createMember = async (bureauData) => {
         setOnCreateBureau(true);
@@ -85,6 +88,51 @@ const BureauProvider = ({ children }) => {
             setOnPublishBureau(false);
         }
     };
+    const createRole = async (roleData) => {
+        setOnCreatingRole(true);
+        try {
+            const { data } = await Ajax.postRequest("/admin/bureau-roles", roleData);
+
+            if (!data.error) {
+                setBureauRoles(prev => [...prev, data.object]);
+                message.success("Rôle créé avec succès");
+                return data.object;
+            } else {
+                message.error(data.message || "Erreur lors de la création du rôle");
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la création du rôle :", error);
+            message.error("Erreur lors de la création du rôle");
+            throw error;
+        } finally {
+            setOnCreatingRole(false);
+        }
+    };
+
+    // Nouvelle fonction pour supprimer un rôle
+    const deleteRole = async (roleId) => {
+        setOnDeletingRole(true);
+        try {
+            const { data } = await Ajax.deleteRequest(`/admin/bureau-roles/${roleId}`);
+
+            if (!data.error) {
+                setBureauRoles(prev => prev.filter(role => role.id !== roleId));
+                // Supprimer aussi les membres qui ont ce rôle
+                setMembers(prev => prev.filter(member => member.role.id !== roleId));
+                message.success("Rôle supprimé avec succès");
+            } else {
+                message.error(data.message || "Erreur lors de la suppression du rôle");
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la suppression du rôle :", error);
+            message.error("Erreur lors de la suppression du rôle");
+            throw error;
+        } finally {
+            setOnDeletingRole(false);
+        }
+    };
 
     useEffect(() => {
         const fetchBureauData = async () => {
@@ -153,7 +201,24 @@ const BureauProvider = ({ children }) => {
     }, [loading, provincialAssembly]);
 
     return (
-        <BureauContext.Provider value={{ bureauLoading, bureauProvincial, bureauError,bureauRoles,members,createMember,onCreateBureau,onUpdatingBureau,deleteMember ,publishBureau, onPublishBureau,setOnUpdatingBureau }}>
+        <BureauContext.Provider value={{
+            bureauLoading,
+            bureauProvincial,
+            bureauError,
+            bureauRoles,
+            members,
+            createMember,
+            onCreateBureau,
+            onUpdatingBureau,
+            deleteMember,
+            publishBureau,
+            onPublishBureau,
+            setOnUpdatingBureau,
+            createRole,
+            deleteRole,
+            onCreatingRole,
+            onDeletingRole
+        }}>
             {children}
         </BureauContext.Provider>
     );

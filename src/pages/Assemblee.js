@@ -1,7 +1,7 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {
     Card, Button, Form, Input, Select, Avatar, Row, Col,
-    Table, Tag, Modal, message, Space
+    Table, Tag, Modal, message, Space, Popconfirm
 } from 'antd';
 import {
     UserOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
@@ -16,13 +16,28 @@ const { TextArea } = Input;
 
 const Assemblee = () => {
     // États
-    const { bureauRoles,createMember, members,onCreateBureau,onUpdatingBureau,deleteMember,bureauProvincial,publishBureau,onPublishBureau  } = useContext(BureauContext);
+    const {
+        bureauRoles,
+        createMember,
+        members,
+        onCreateBureau,
+        onUpdatingBureau,
+        deleteMember,
+        bureauProvincial,
+        publishBureau,
+        onPublishBureau,
+        createRole,
+        deleteRole
+    } = useContext(BureauContext);
+
     const { deputies } = useContext(DeputyContext);
     const [bureau, setBureau] = useState(members);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
     const [currentMembre, setCurrentMembre] = useState(null);
     const [isPublie, setIsPublie] = useState(bureauProvincial ? bureauProvincial.published : false );
     const [form] = Form.useForm();
+    const [roleForm] = Form.useForm();
 
     // Rôles disponibles
     const [roles, setRoles] = useState(bureauRoles);
@@ -134,7 +149,6 @@ const Assemblee = () => {
         form.validateFields().then(async (values) => {
             const membreSelectionne = deputes.find(d => d.id === values.membreId);
 
-            // Mettre à jour le state newMember avec les nouvelles valeurs
             const newMember ={
                 deputyId: membreSelectionne.id,
                 roleId: values.role,
@@ -142,16 +156,8 @@ const Assemblee = () => {
             };
 
             if (currentMembre !== null) {
-                // Modification locale (à implémenter côté backend si besoin)
-                // const newBureau = [...bureau];
-                // newBureau[currentMembre.index] = {
-                //     ...newBureau[currentMembre.index],
-                //     ...newMembre
-                // };
-                // setBureau(newBureau);
                 message.success("Membre modifié avec succès");
             } else {
-                // Ajout via API
                 if (bureau.some(m => m.role.id === values.role)) {
                     message.error("Ce rôle est déjà attribué à un autre membre");
                     return;
@@ -165,17 +171,26 @@ const Assemblee = () => {
         });
     };
 
+    const handleCreateRole = () => {
+        roleForm.validateFields().then(async (values) => {
+            await createRole(values);
+            setIsRoleModalVisible(false);
+            roleForm.resetFields();
+        });
+    };
+
+    const handleDeleteRole = async (roleId) => {
+        await deleteRole(roleId);
+    };
 
     const handlePublier = async () => {
-        // Vérifier que tous les rôles sont attribués
         const rolesManquants = roles.filter(role => !bureau.some(m => m.role.id === role.id));
         if (rolesManquants.length > 0) {
-            console.log(`Certains rôles ne sont pas attribués : ${rolesManquants.join(', ')}`);
+            message.error(`Certains rôles ne sont pas attribués : ${rolesManquants.map(r => r.name).join(', ')}`);
             return;
         }
         await publishBureau(true)
-
-        console.log('Le bureau collégial a été publié avec succès');
+        message.success('Le bureau collégial a été publié avec succès');
     };
 
     return (
@@ -193,6 +208,14 @@ const Assemblee = () => {
                 bordered={false}
                 extra={
                     <Space>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsRoleModalVisible(true)}
+                            disabled={isPublie}
+                        >
+                            Créer un rôle
+                        </Button>
                         <Button
                             type="primary"
                             icon={<SaveOutlined />}
@@ -220,6 +243,26 @@ const Assemblee = () => {
                     >
                         Ajouter un membre
                     </Button>
+                </div>
+
+                {/* Liste des rôles disponibles */}
+                <div style={{ marginBottom: 24 }}>
+                    <h3>Rôles disponibles</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {roles.map(role => (
+                            <Tag
+                                key={role.id}
+                                color={getRoleColor(role.name)}
+                                closable
+                                onClose={(e) => {
+                                    e.preventDefault();
+                                    handleDeleteRole(role.id);
+                                }}
+                            >
+                                {role.name}
+                            </Tag>
+                        ))}
+                    </div>
                 </div>
 
                 <Table
@@ -296,7 +339,7 @@ const Assemblee = () => {
                                         <Option
                                             key={role.id}
                                             value={role.id}
-                                            disabled={bureau.some(m => m.role.id === role) && (!currentMembre || bureau[currentMembre.index].role.id !== role)}
+                                            disabled={bureau.some(m => m.role.id === role.id) && (!currentMembre || bureau[currentMembre.index].role.id !== role.id)}
                                         >
                                             {role.name}
                                         </Option>
@@ -341,32 +384,46 @@ const Assemblee = () => {
                             placeholder="Ajoutez une description ou une note concernant ce membre..."
                         />
                     </Form.Item>
+                </Form>
+            </Modal>
 
-                    {/*<Form.Item label="Photo (optionnel)">*/}
-                    {/*    <Upload*/}
-                    {/*        listType="picture-card"*/}
-                    {/*        showUploadList={false}*/}
-                    {/*        beforeUpload={(file) => {*/}
-                    {/*            console.log("file:", file);*/}
-                    {/*            // On capture le fichier ici ✅*/}
-                    {/*            setNewPhoto({*/}
-                    {/*                ...newPhoto,*/}
-                    {/*                photo: URL.createObjectURL(file),*/}
-                    {/*                photoFile: file*/}
-                    {/*            });*/}
-                    {/*            return false; // empêcher le chargement automatique*/}
-                    {/*        }}*/}
-                    {/*    >*/}
-                    {/*        {newPhoto.photo ? (*/}
-                    {/*            <img src={newPhoto.photo} alt="avatar" style={{ width: '100%' }} />*/}
-                    {/*        ) : (*/}
-                    {/*            <div>*/}
-                    {/*                <UploadOutlined />*/}
-                    {/*                <div style={{ marginTop: 8 }}>Changer la photo</div>*/}
-                    {/*            </div>*/}
-                    {/*        )}*/}
-                    {/*    </Upload>*/}
-                    {/*</Form.Item>*/}
+            {/* Modal pour créer un nouveau rôle */}
+            <Modal
+                title="Créer un nouveau rôle"
+                visible={isRoleModalVisible}
+                onCancel={() => setIsRoleModalVisible(false)}
+                footer={[
+                    <Button key="cancel" onClick={() => setIsRoleModalVisible(false)}>
+                        Annuler
+                    </Button>,
+                    <Button
+                        key="submit"
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleCreateRole}
+                    >
+                        Créer le rôle
+                    </Button>
+                ]}
+            >
+                <Form form={roleForm} layout="vertical">
+                    <Form.Item
+                        name="name"
+                        label="Nom du rôle"
+                        rules={[{ required: true, message: 'Veuillez entrer un nom pour le rôle' }]}
+                    >
+                        <Input placeholder="Ex: PRESIDENT, VICE PRESIDENT, etc." />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="description"
+                        label="Description (optionnel)"
+                    >
+                        <TextArea
+                            rows={3}
+                            placeholder="Description du rôle et de ses responsabilités..."
+                        />
+                    </Form.Item>
                 </Form>
             </Modal>
         </div>
