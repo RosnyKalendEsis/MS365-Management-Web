@@ -4,6 +4,9 @@ export const Ajax = {
     contentType: 'application/json; charset=utf-8',
 
     host() {
+        if (process.env.NODE_ENV === 'development') {
+            return '';
+        }
         return hosts.api;
     },
 
