@@ -1,5 +1,6 @@
 import {hosts} from "../env/Environment";
 import axios from "axios";
+import https from 'https';
 export const Ajax = {
     contentType: 'application/json; charset=utf-8',
 
@@ -32,22 +33,34 @@ export const Ajax = {
 
     async getRequest(url, option) {
         option = await this.updateOptions(option);
+        option.httpsAgent = new https.Agent({
+            rejectUnauthorized: false,
+        })
         return axios.get(`${this.host()}${url}`, option);
     },
 
     async postRequest(path, data, option = {}) {
-        option = await this.updateOptions(option, data); // ✅ on passe data ici
+        option = await this.updateOptions(option, data);
+        option.httpsAgent = new https.Agent({
+            rejectUnauthorized: false // Désactivation de la vérification SSL
+        });
         return axios.post(`${this.host()}${path}`, data, option);
     },
 
 
     async putRequest(path, data, option) {
         option = await this.updateOptions(option,data);
+        option.httpsAgent = new https.Agent({
+            rejectUnauthorized: false,
+        })
         return axios.put(`${this.host()}${path}`, data, option);
     },
 
     async deleteRequest(path, option) {
         option = await this.updateOptions(option);
+        option.httpsAgent = new https.Agent({
+            rejectUnauthorized: false,
+        })
         return axios.delete(`${this.host()}${path}`, option);
     },
 };
