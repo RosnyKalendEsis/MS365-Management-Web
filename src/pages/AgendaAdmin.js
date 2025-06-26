@@ -209,19 +209,19 @@ const AgendaAdmin = () => {
         setIsModalVisible(false);
     };
 
-    const addDetailItem = () => {
-        const details = form.getFieldValue('details') || [];
-        form.setFieldsValue({
-            details: [...details, { title: '', content: '' }]
-        });
-    };
+    // const addDetailItem = () => {
+    //     const details = form.getFieldValue('details') || [];
+    //     form.setFieldsValue({
+    //         details: [...details, { title: '', content: '' }]
+    //     });
+    // };
 
-    const removeDetailItem = (index) => {
-        const details = form.getFieldValue('details') || [];
-        form.setFieldsValue({
-            details: details.filter((_, i) => i !== index)
-        });
-    };
+    // const removeDetailItem = (index) => {
+    //     const details = form.getFieldValue('details') || [];
+    //     form.setFieldsValue({
+    //         details: details.filter((_, i) => i !== index)
+    //     });
+    // };
 
     const filteredEvents = agendaEvents.filter(event => {
         const matchesSearch = event.title.toLowerCase().includes(searchText.toLowerCase()) ||
