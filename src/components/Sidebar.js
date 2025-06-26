@@ -105,17 +105,17 @@ const Sidebar = ({
             theme="light"
         >
             {/* Logo et bouton de réduction */}
-            <div className="sidebar-header">
-                <div className="sidebar-logo-container">
-                    <Link to="/dashboard">
-                        {!collapsed && (
-                            <Text strong className="app-name">
-                                {appName}
-                            </Text>
-                        )}
-                    </Link>
-                </div>
-            </div>
+            {/*<div className="sidebar-header">*/}
+            {/*    <div className="sidebar-logo-container">*/}
+            {/*        <Link to="/dashboard">*/}
+            {/*            {!collapsed && (*/}
+            {/*                <Text strong className="app-name">*/}
+            {/*                    {appName}*/}
+            {/*                </Text>*/}
+            {/*            )}*/}
+            {/*        </Link>*/}
+            {/*    </div>*/}
+            {/*</div>*/}
 
             {/* Profil utilisateur */}
             <div className={`sidebar-profile ${collapsed ? 'collapsed' : ''}`}>
