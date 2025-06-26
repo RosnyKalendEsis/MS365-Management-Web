@@ -29,13 +29,19 @@ const Assemblee = () => {
         publishBureau,
         onPublishBureau,
         createRole,
-        deleteRole
+        deleteRole,
+        commissions,
+        createCommission,
+        deleteCommission,
+        onCreatingCommission,
+        onDeletingCommission
     } = useContext(BureauContext);
 
     const { deputies } = useContext(DeputyContext);
 
     // États pour le Bureau Collégial
     const [bureau, setBureau] = useState(members);
+    const [roles, setRoles] = useState(bureauRoles);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
     const [currentMembre, setCurrentMembre] = useState(null);
@@ -44,11 +50,7 @@ const Assemblee = () => {
     const [roleForm] = Form.useForm();
 
     // États pour les Commissions
-    const [commissions, setCommissions] = useState([
-        { id: 1, title: "Commission Budget", domain: "Finances", members: 15, active: true },
-        { id: 2, title: "Commission Affaires Sociales", domain: "Santé", members: 12, active: true },
-        { id: 3, title: "Commission Éducation", domain: "Enseignement", members: 10, active: false }
-    ]);
+    const [commissionList, setCommissionList] = useState([]);
     const [isCommissionModalVisible, setIsCommissionModalVisible] = useState(false);
     const [currentCommission, setCurrentCommission] = useState(null);
     const [commissionForm] = Form.useForm();
@@ -64,7 +66,22 @@ const Assemblee = () => {
     useEffect(() => {
         setBureau(members);
         setIsPublie(bureauProvincial ? bureauProvincial.published : false);
-    }, [members, bureauProvincial]);
+        setRoles(bureauRoles);
+
+        const transformedCommissions = (commissions || []).map(commission => {
+            const memberCount = (deputies || []).filter(
+                deputy => deputy.commission === commission.title
+            ).length;
+
+            return {
+                ...commission,
+                members: memberCount
+            };
+        });
+
+        setCommissionList(transformedCommissions);
+    }, [members, bureauProvincial, bureauRoles, commissions, deputies]);
+
 
     // Fonctions utilitaires
     const getRoleColor = (role) => {
@@ -152,7 +169,7 @@ const Assemblee = () => {
     };
 
     const handlePublier = async () => {
-        const rolesManquants = bureauRoles.filter(role => !bureau.some(m => m.role.id === role.id));
+        const rolesManquants = roles.filter(role => !bureau.some(m => m.role.id === role.id));
         if (rolesManquants.length > 0) {
             message.error(`Certains rôles ne sont pas attribués : ${rolesManquants.map(r => r.name).join(', ')}`);
             return;
@@ -174,29 +191,36 @@ const Assemblee = () => {
         setIsCommissionModalVisible(true);
     };
 
-    const handleDeleteCommission = (id) => {
-        setCommissions(commissions.filter(c => c.id !== id));
+    const handleDeleteCommission = async (id) => {
+        await deleteCommission(id);
         message.success('Commission supprimée avec succès');
     };
 
     const handleCommissionSubmit = () => {
-        commissionForm.validateFields().then(values => {
+        commissionForm.validateFields().then(async values => {
+            // Forcer `active: true` si non défini
+            if (values.active === undefined) {
+                values.active = true;
+            }
+
             if (currentCommission) {
-                setCommissions(commissions.map(c =>
-                    c.id === currentCommission.id ? { ...c, ...values } : c
+                setCommissionList(commissionList.map(c =>
+                    c.id === currentCommission.id ? {...c, ...values} : c
                 ));
                 message.success('Commission mise à jour avec succès');
             } else {
                 const newCommission = {
-                    id: Math.max(...commissions.map(c => c.id), 0) + 1,
+                    id: Math.max(...commissionList.map(c => c.id), 0) + 1,
                     ...values
                 };
-                setCommissions([...commissions, newCommission]);
+                await createCommission(newCommission);
                 message.success('Commission créée avec succès');
             }
+
             setIsCommissionModalVisible(false);
         });
     };
+
 
     // Colonnes pour le tableau du Bureau
     const bureauColumns = [
@@ -364,7 +388,7 @@ const Assemblee = () => {
                         <div style={{ marginBottom: 24 }}>
                             <h3>Rôles disponibles</h3>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                                {bureauRoles.map(role => (
+                                {roles.map(role => (
                                     <Tag
                                         key={role.id}
                                         color={getRoleColor(role.name)}
@@ -445,7 +469,7 @@ const Assemblee = () => {
                     >
                         <Table
                             columns={commissionColumns}
-                            dataSource={commissions}
+                            dataSource={commissionList}
                             rowKey="id"
                             bordered
                             pagination={{ pageSize: 5 }}
@@ -483,7 +507,7 @@ const Assemblee = () => {
                                 rules={[{ required: true, message: 'Veuillez sélectionner un rôle' }]}
                             >
                                 <Select placeholder="Sélectionnez un rôle">
-                                    {bureauRoles.map(role => (
+                                    {roles.map(role => (
                                         <Option
                                             key={role.id}
                                             value={role.id}
@@ -593,7 +617,13 @@ const Assemblee = () => {
                     </Button>
                 ]}
             >
-                <Form form={commissionForm} layout="vertical">
+                <Form
+                    form={commissionForm}
+                    layout="vertical"
+                    initialValues={{
+                        active: true // Le switch sera activé par défaut
+                    }}
+                >
                     <Form.Item
                         name="title"
                         label="Nom de la commission"
@@ -609,17 +639,9 @@ const Assemblee = () => {
                     >
                         <Select placeholder="Sélectionnez un domaine">
                             {commissionDomains.map(domain => (
-                                <Option key={domain} value={domain}>{domain}</Option>
+                                <Select.Option key={domain} value={domain}>{domain}</Select.Option>
                             ))}
                         </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                        name="members"
-                        label="Nombre de membres"
-                        rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
-                    >
-                        <Input type="number" min="1" />
                     </Form.Item>
 
                     <Form.Item
@@ -630,10 +652,10 @@ const Assemblee = () => {
                         <Switch
                             checkedChildren="Active"
                             unCheckedChildren="Inactive"
-                            defaultChecked
                         />
                     </Form.Item>
                 </Form>
+
             </Modal>
         </div>
     );

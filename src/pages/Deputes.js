@@ -14,6 +14,7 @@ import '../styles/Deputes.css';
 import { Form } from 'antd';
 import {AssemblyContext} from "../providers/AssemblyProvider";
 import {DeputyContext} from "../providers/DeputyProvider";
+import {BureauContext} from "../providers/BureauProvider";
 
 const { Option } = Select;
 const { Search } = Input;
@@ -35,6 +36,7 @@ const Deputes = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const { deputies,createDeputy,publishDeputy,deleteDeputy,onCreateDeputy,onUpdateDeputy } = useContext(DeputyContext);
     const { provincialAssembly } = useContext(AssemblyContext);
+    const {commissions} = useContext(BureauContext);
     const [newDepute, setNewDepute] = useState({
         nom: '',
         circonscription: '',
@@ -63,7 +65,7 @@ const Deputes = () => {
     const regions = ['Kinshasa', 'Kongo-Central', 'Nord-Kivu', 'Haut-Katanga', 'Kasaï-Oriental'];
     const partis = ['PPRD', 'UDPS', 'UNC', 'AFDC', 'MLC'];
     const statuts = ['actif', 'inactif', 'en congé'];
-    const commissions = ['Budget et Finances', 'Affaires Étrangères', 'Défense Nationale', 'Santé Publique'];
+    //const commissions = ['Budget et Finances', 'Affaires Étrangères', 'Défense Nationale', 'Santé Publique'];
 
     // Menu déroulant pour export
     const exportMenu = (
@@ -779,7 +781,7 @@ const Deputes = () => {
                                         placeholder="Sélectionnez une commission"
                                     >
                                         {commissions.map(commission => (
-                                            <Option key={commission} value={commission}>{commission}</Option>
+                                            <Option key={commission.id} value={commission.id}>{commission.title}</Option>
                                         ))}
                                     </Select>
                                 </Form.Item>

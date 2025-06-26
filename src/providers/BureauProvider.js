@@ -3,11 +3,13 @@ import {Ajax} from "../services/ajax";
 import { AssemblyContext } from "./AssemblyProvider";
 import {hosts} from "../env/Environment";
 import {message} from "antd";
+import {DeputyContext} from "./DeputyProvider";
 
 const BureauContext = createContext();
 
 const BureauProvider = ({ children }) => {
     const { loading, provincialAssembly } = useContext(AssemblyContext);
+    const {deputies} = useContext(DeputyContext);
     const [bureauLoading, setBureauLoading] = useState(true);
     const [ onCreateBureau,setOnCreateBureau] = useState(false);
     const [onUpdatingBureau, setOnUpdatingBureau] = useState(false);
@@ -18,6 +20,9 @@ const BureauProvider = ({ children }) => {
     const [bureauRoles, setBureauRoles] = useState([]);
     const [onCreatingRole, setOnCreatingRole] = useState(false);
     const [onDeletingRole, setOnDeletingRole] = useState(false);
+    const [commissions, setCommissions] = useState([]);
+    const [onCreatingCommission,setOnCreatingCommission] = useState(false);
+    const [onDeletingCommission,setOnDeletingCommission] = useState(false);
 
     //BlackSigma verifie un peu les API de sortes qu'ils correspondent avec ceux du backend pour la gestion des roles
     const createMember = async (bureauData) => {
@@ -135,6 +140,59 @@ const BureauProvider = ({ children }) => {
         }
     };
 
+
+    const createCommission = async (commissionData) => {
+        setOnCreatingCommission(true);
+        try {
+            const { data } = await Ajax.postRequest("/admin/commissions", commissionData);
+
+            if (!data.error) {
+                const transformed = {
+                    id: data.object.id,
+                    title: data.object.title,
+                    members:0,
+                    active:data.object.active,
+                    domain:data.object.domain,
+
+                };
+                setCommissions(prev => [...prev, transformed]);
+                message.success("Rôle créé avec succès");
+                return data.object;
+            } else {
+                message.error(data.message || "Erreur lors de la création de la commission");
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la création de la commission :", error);
+            message.error("Erreur lors de la création de la commission");
+            throw error;
+        } finally {
+            setOnCreatingCommission(false);
+        }
+    };
+
+    // Nouvelle fonction pour supprimer un rôle
+    const deleteCommission = async (commissionId) => {
+        setOnDeletingCommission(true);
+        try {
+            const { data } = await Ajax.deleteRequest(`/admin/commissions/${commissionId}`);
+
+            if (!data.error) {
+                setCommissions(prev => prev.filter(commission => commission.id !== commissionId));
+                message.success("commission supprimé avec succès");
+            } else {
+                message.error(data.message || "Erreur lors de la suppression du rôle");
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la suppression de la commission :", error);
+            message.error("Erreur lors de la suppression de la commission");
+            throw error;
+        } finally {
+            setOnDeletingCommission(false);
+        }
+    };
+
     useEffect(() => {
         const fetchBureauData = async () => {
             if (!provincialAssembly) return;
@@ -142,10 +200,11 @@ const BureauProvider = ({ children }) => {
             setBureauError(null);
 
             try {
-                const [rolesResponse, membersResponse, bureauResponse] = await Promise.all([
+                const [rolesResponse, membersResponse, bureauResponse, commissionResponse] = await Promise.all([
                     Ajax.getRequest(`/admin/bureau-roles`),
                     Ajax.getRequest(`/admin/assembly-bureau-members/by-bureau/${provincialAssembly.bureauId}`),
                     Ajax.getRequest(`/admin/bureaus/${provincialAssembly.bureauId}`),
+                    Ajax.getRequest(`/admin/commissions`),
                 ]);
 
                 if (!rolesResponse.data.error) {
@@ -162,6 +221,19 @@ const BureauProvider = ({ children }) => {
                     setBureauError("Erreur lors du chargement des rôles du bureau.");
                 }
 
+                if (!commissionResponse.data.error) {
+                    setCommissions(commissionResponse.data.object);
+                    const transformedCommissions = commissionResponse.data.object.map(commission => ({
+                        id: commission.id,
+                        title: commission.title,
+                        domain: commission.domain,
+                        members: 0,
+                        active: commission.active,
+                    }))
+                    setCommissions(transformedCommissions);
+                    console.log("commissions:", transformedCommissions);
+                }
+
                 if (!membersResponse.data.error) {
                     const transformedMembers = membersResponse.data.object.map(data => ({
                         id: data.id,
@@ -172,7 +244,7 @@ const BureauProvider = ({ children }) => {
                             circonscription: data.deputy.constituency,
                             region: data.deputy.region,
                             parti: data.deputy.party,
-                            commission: data.deputy.commission,
+                            commission: data.deputy.commission.title,
                             statut: data.deputy.status,
                             telephone: data.deputy.phone,
                             email: data.deputy.email,
@@ -218,7 +290,12 @@ const BureauProvider = ({ children }) => {
             createRole,
             deleteRole,
             onCreatingRole,
-            onDeletingRole
+            onDeletingRole,
+            createCommission,
+            deleteCommission,
+            onCreatingCommission,
+            onDeletingCommission,
+            commissions
         }}>
             {children}
         </BureauContext.Provider>

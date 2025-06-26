@@ -11,25 +11,89 @@ const ActualityProvider = ({ children }) => {
     const [lastActualities, setLastActualities] = useState([]);
     const [actualities, setActualities] = useState([]);
     const [error, setError] = useState(null);
+    const [onCreateActuality, setOnCreateActuality] = useState(false);
+    const [onDeleteActuality, setOnDeleteActuality] = useState(false);
 
-    const formatDateFr = (isoString) => {
-        const date = new Date(isoString);
-        const jours = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-        const mois = [
-            'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-            'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-        ];
+    const createActuality = async (actualityData, coverFile, attachments = []) => {
+        setOnCreateActuality(true);
 
-        const jourSemaine = jours[date.getDay()];
-        const jour = date.getDate();
-        const moisNom = mois[date.getMonth()];
-        const heures = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
+        // 🔒 Vérification obligatoire de l'image principale
+        if (!coverFile) {
+            console.log("Veuillez sélectionner une image principale (cover) avant de continuer.");
+            setOnCreateActuality(false);
+            return;
+        }
 
-        const jourTexte = (jour === 1) ? "1er" : jour;
+        // 🧠 Transformation des données
+        const transformedActualityData = {
+            title: actualityData.title,
+            type: actualityData.type,
+            status: actualityData.statut,
+            important: actualityData.isImportant,
+            author: actualityData.auteur,
+            date: actualityData.date,
+            description: actualityData.description,
+            details: actualityData.details,
+            assemblyId: provincialAssembly.id
+        };
 
-        return `${jourSemaine} ${jourTexte} ${moisNom} ${heures}H${minutes}`;
+        const formData = new FormData();
+        formData.append("data", JSON.stringify(transformedActualityData));
+        formData.append("cover", coverFile); // ✅ Assuré qu’il est présent
+
+        if (attachments.length > 0) {
+            attachments.forEach(file => {
+                formData.append("attachments", file);
+            });
+        }
+
+        try {
+            const { data } = await Ajax.postRequest("/admin/actualities", formData);
+
+            if (!data.error) {
+                const actuality = data.object;
+
+                const newActuality = {
+                    id: actuality.id,
+                    type: actuality.type,
+                    title: actuality.title,
+                    date: actuality.date,
+                    description: actuality.description,
+                    details: actuality.details,
+                    imageUrl: `${hosts.image}/${actuality.imageUrl}`,
+                    statut: actuality.status,
+                    isImportant: actuality.important,
+                    piecesJointes: actuality.attachments,
+                    auteur: actuality.author
+                };
+
+                setActualities(prev => [...prev, newActuality]);
+            }
+
+            return data;
+        } catch (error) {
+            console.error("Erreur:", error);
+            throw error;
+        } finally {
+            setOnCreateActuality(false);
+        }
     };
+
+    const deleteActuality = async (id) => {
+        setOnDeleteActuality(true);
+        try {
+            await Ajax.deleteRequest(`/admin/actualities/${id}`);
+            setActualities(prev => prev.filter(actuality => actuality.id !== id));
+            setError("Député supprimé avec succès");
+        } catch (error) {
+            setError("Erreur lors de la suppression");
+        }finally {
+            setOnDeleteActuality(false);
+        }
+    };
+
+
+
 
     useEffect(() => {
         const fetchActualities = async () => {
@@ -43,12 +107,22 @@ const ActualityProvider = ({ children }) => {
                     const formatted = data.object
                         .sort((a, b) => new Date(b.date) - new Date(a.date)) // 1. Tri du plus récent au plus ancien
                         .map(actu => ({
-                            ...actu,
-                            date: formatDateFr(actu.date), // 2. Formatage de la date
-                            imageUrl: `${hosts.image}/${actu.imageUrl}` // 3. Ajout du préfixe d'hôte à imageUrl
+                            id: actu.id, // ou actu.id si tu veux garder l'UUID
+                            type: actu.type,
+                            title: actu.title,
+                            date: actu.date, // ou formatDateFr(actu.date) si souhaité
+                            description: actu.description,
+                            details: actu.details,
+                            imageUrl: `${hosts.image}/${actu.imageUrl}`,
+                            statut: actu.status,
+                            isImportant: actu.important,
+                            piecesJointes: actu.attachments || [],
+                            auteur: actu.author
                         }));
 
+
                     setActualities(formatted);
+                    console.log("actualite: ",formatted)
                     setLastActualities(formatted.slice(0, 2)); // Garde uniquement les deux plus récentes
                 } else {
                     setError("Erreur lors du chargement des actualités.");
@@ -67,7 +141,7 @@ const ActualityProvider = ({ children }) => {
     }, [loading, provincialAssembly]);
 
     return (
-        <ActualityContext.Provider value={{ actualityLoading,lastActualities, actualities, error }}>
+        <ActualityContext.Provider value={{ actualityLoading,lastActualities, actualities, error,createActuality,onCreateActuality,deleteActuality}}>
             {children}
         </ActualityContext.Provider>
     );

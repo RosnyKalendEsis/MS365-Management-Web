@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
     Card,
     Table,
@@ -39,6 +39,7 @@ import {
 import moment from 'moment';
 import '../styles/Actualites.css';
 import Search from "antd/es/input/Search";
+import {ActualityContext} from "../providers/ActualityProvider";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -92,25 +93,17 @@ const Actualites = () => {
     const [currentActualite, setCurrentActualite] = useState(null);
     const [activeTab, setActiveTab] = useState('tous');
     const [previewVisible, setPreviewVisible] = useState(false);
+    const [cover,setCover] = useState({});
+    const [attachments, setAttachments] = useState([]);
+    const {actualities,createActuality,deleteActuality } = useContext(ActualityContext)
     const [form] = Form.useForm();
 
     // Données initiales
-    const [actualites, setActualites] = useState([
-        {
-            id: 1,
-            type: 'seance',
-            title: "Séance publique",
-            date: "2025-04-01T16:30:00",
-            description: "Lutte contre le narcotrafic : votes solennels sur une proposition de loi",
-            details: "La séance portera sur l'examen approfondi des propositions de loi...",
-            imageUrl: "https://img.freepik.com/photos-premium/presentation-du-conferencier-partenariat-au-congres-international_53876-58732.jpg",
-            statut: 'publie',
-            isImportant: true,
-            piecesJointes: [],
-            auteur: "Admin Assemblée"
-        },
-        // ... autres exemples
-    ]);
+    const [actualites, setActualites] = useState(actualities);
+
+    useEffect(() => {
+        setActualites(actualities);
+    },[actualities]);
 
     // Colonnes du tableau
     const columns = [
@@ -189,8 +182,8 @@ const Actualites = () => {
         setIsModalVisible(true);
     };
 
-    const handleDelete = (id) => {
-        setActualites(actualites.filter(a => a.id !== id));
+    const handleDelete = async (id) => {
+        await deleteActuality(id);
         message.success('Actualité supprimée avec succès');
     };
 
@@ -199,17 +192,17 @@ const Actualites = () => {
         setPreviewVisible(true);
     };
 
-    const handleSubmit = (values) => {
+    const handleSubmit = async (values) => {
         const actualiteData = {
             ...values,
-            date: values.date.format(),
+            date: values.date.format('YYYY-MM-DDTHH:mm:ss'), // ISO sans offset
             auteur: "Admin Assemblée"
         };
 
         if (currentActualite) {
             // Édition
             setActualites(actualites.map(a =>
-                a.id === currentActualite.id ? { ...a, ...actualiteData } : a
+                a.id === currentActualite.id ? {...a, ...actualiteData} : a
             ));
             message.success('Actualité mise à jour avec succès');
         } else {
@@ -217,9 +210,8 @@ const Actualites = () => {
             const newActualite = {
                 id: Math.max(...actualites.map(a => a.id), 0) + 1,
                 ...actualiteData,
-                statut: 'brouillon'
             };
-            setActualites([...actualites, newActualite]);
+            await createActuality(newActualite, cover.photoFile || null, attachments);
             message.success('Actualité créée avec succès');
         }
 
@@ -406,15 +398,29 @@ const Actualites = () => {
                                 name="imageUrl"
                                 label="Image principale"
                             >
+
                                 <Upload
                                     listType="picture-card"
                                     showUploadList={false}
-                                    beforeUpload={() => false}
+                                    beforeUpload={(file) => {
+                                        console.log("file photo:", file);
+                                        // On capture le fichier ici ✅
+                                        setCover({
+                                            ...cover,
+                                            photo: URL.createObjectURL(file),
+                                            photoFile: file
+                                        });
+                                        return false; // empêcher le chargement automatique
+                                    }}
                                 >
-                                    <div>
-                                        <PlusOutlined />
-                                        <div style={{ marginTop: 8 }}>Uploader</div>
-                                    </div>
+                                    {cover.photo ? (
+                                        <img src={cover.photo} alt="avatar" style={{ width: '100%' }} />
+                                    ) : (
+                                        <div>
+                                            <PlusOutlined />
+                                            <div style={{ marginTop: 8 }}>Uploader</div>
+                                        </div>
+                                    )}
                                 </Upload>
                             </Form.Item>
                         </Col>
@@ -424,11 +430,27 @@ const Actualites = () => {
                                 name="piecesJointes"
                                 label="Pièces jointes"
                             >
-                                <Upload multiple beforeUpload={() => false}>
+                                <Upload
+                                    multiple
+                                    beforeUpload={(file) => {
+                                        // 🔁 Ajoute le fichier à l'état
+                                        setAttachments(prev => [...prev, file]);
+                                        return false; // empêche l'upload automatique
+                                    }}
+                                    fileList={attachments.map((file, index) => ({
+                                        uid: index,
+                                        name: file.name,
+                                        status: 'done'
+                                    }))}
+                                    onRemove={(file) => {
+                                        setAttachments(prev => prev.filter(f => f.name !== file.name));
+                                    }}
+                                >
                                     <Button icon={<FilePdfOutlined />}>Ajouter des documents</Button>
                                 </Upload>
                             </Form.Item>
                         </Col>
+
                     </Row>
 
                     <Divider />
@@ -494,7 +516,7 @@ const Actualites = () => {
                                     renderItem={item => (
                                         <List.Item>
                                             <FilePdfOutlined style={{ marginRight: 8 }} />
-                                            {item.name}
+                                            {item.split('/').pop()}
                                         </List.Item>
                                     )}
                                 />
