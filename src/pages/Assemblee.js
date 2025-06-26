@@ -1,21 +1,23 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
     Card, Button, Form, Input, Select, Avatar, Row, Col,
-    Table, Tag, Modal, message, Space
+    Table, Tag, Modal, message, Space, Tabs, Badge, Popconfirm, Switch
 } from 'antd';
 import {
     UserOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
-    SaveOutlined,CheckOutlined, ArrowLeftOutlined
+    SaveOutlined, CheckOutlined, ArrowLeftOutlined, TeamOutlined,
+    AuditOutlined, AppstoreOutlined
 } from '@ant-design/icons';
 import '../styles/Assemblee.css';
-import {BureauContext} from "../providers/BureauProvider";
-import {DeputyContext} from "../providers/DeputyProvider";
+import { BureauContext } from "../providers/BureauProvider";
+import { DeputyContext } from "../providers/DeputyProvider";
 
 const { Option } = Select;
 const { TextArea } = Input;
+const { TabPane } = Tabs;
 
 const Assemblee = () => {
-    // États
+    // Contextes
     const {
         bureauRoles,
         createMember,
@@ -31,37 +33,173 @@ const Assemblee = () => {
     } = useContext(BureauContext);
 
     const { deputies } = useContext(DeputyContext);
+
+    // États pour le Bureau Collégial
     const [bureau, setBureau] = useState(members);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
     const [currentMembre, setCurrentMembre] = useState(null);
-    const [isPublie, setIsPublie] = useState(bureauProvincial ? bureauProvincial.published : false );
+    const [isPublie, setIsPublie] = useState(bureauProvincial ? bureauProvincial.published : false);
     const [form] = Form.useForm();
     const [roleForm] = Form.useForm();
 
-    // Rôles disponibles
-    const [roles, setRoles] = useState(bureauRoles);
+    // États pour les Commissions
+    const [commissions, setCommissions] = useState([
+        { id: 1, title: "Commission Budget", domain: "Finances", members: 15, active: true },
+        { id: 2, title: "Commission Affaires Sociales", domain: "Santé", members: 12, active: true },
+        { id: 3, title: "Commission Éducation", domain: "Enseignement", members: 10, active: false }
+    ]);
+    const [isCommissionModalVisible, setIsCommissionModalVisible] = useState(false);
+    const [currentCommission, setCurrentCommission] = useState(null);
+    const [commissionForm] = Form.useForm();
+    const [activeTab, setActiveTab] = useState('bureau');
 
-    useEffect(() => {
-        setRoles(bureauRoles);
-    },[bureauRoles]);
+    // Domaines disponibles pour les commissions
+    const commissionDomains = [
+        'Finances', 'Santé', 'Éducation', 'Défense',
+        'Affaires Étrangères', 'Justice', 'Environnement'
+    ];
 
-    // Données de députés (simulées)
-    const [deputes, setDeputes] = useState(deputies);
-    useEffect(() => {
-        setDeputes(deputies);
-    },[deputies]);
-
+    // Initialisation des données
     useEffect(() => {
         setBureau(members);
-    }, [members]);
-
-    useEffect(() => {
         setIsPublie(bureauProvincial ? bureauProvincial.published : false);
-    },[bureauProvincial]);
+    }, [members, bureauProvincial]);
 
-    // Colonnes du tableau
-    const columns = [
+    // Fonctions utilitaires
+    const getRoleColor = (role) => {
+        const colors = {
+            'PRESIDENT': 'red',
+            'VICE PRESIDENT': 'blue',
+            'RAPPORTEUR': 'green',
+            'RAPPORTEUR ADJOINT': 'orange',
+            'QUESTEUR': 'purple'
+        };
+        return colors[role] || 'gray';
+    };
+
+    const getPartiColor = (parti) => {
+        const colors = {
+            'PPRD': 'volcano',
+            'UDPS': 'geekblue',
+            'UNC': 'green',
+            'AFDC': 'orange'
+        };
+        return colors[parti] || 'gray';
+    };
+
+    // Gestion du Bureau Collégial
+    const handleAdd = () => {
+        setCurrentMembre(null);
+        form.resetFields();
+        setIsModalVisible(true);
+    };
+
+    const handleEdit = (index) => {
+        setCurrentMembre({ ...bureau[index], index });
+        form.setFieldsValue({
+            role: bureau[index].role.id,
+            membreId: bureau[index].membre.id,
+            description: bureau[index].description
+        });
+        setIsModalVisible(true);
+    };
+
+    const handleDelete = async (index) => {
+        const membreASupprimer = bureau[index];
+        await deleteMember(membreASupprimer.id);
+    };
+
+    const handleSubmit = () => {
+        form.validateFields().then(async (values) => {
+            const membreSelectionne = deputies.find(d => d.id === values.membreId);
+
+            const newMember = {
+                deputyId: membreSelectionne.id,
+                roleId: values.role,
+                description: values.description
+            };
+
+            if (currentMembre !== null) {
+                await createMember({ ...newMember, id: currentMembre.id });
+                message.success("Membre modifié avec succès");
+            } else {
+                if (bureau.some(m => m.role.id === values.role)) {
+                    message.error("Ce rôle est déjà attribué à un autre membre");
+                    return;
+                }
+                await createMember(newMember);
+                message.success("Membre ajouté avec succès");
+            }
+
+            setIsModalVisible(false);
+            form.resetFields();
+        });
+    };
+
+    const handleCreateRole = () => {
+        roleForm.validateFields().then(async (values) => {
+            await createRole(values);
+            setIsRoleModalVisible(false);
+            roleForm.resetFields();
+            message.success("Rôle créé avec succès");
+        });
+    };
+
+    const handleDeleteRole = async (roleId) => {
+        await deleteRole(roleId);
+        message.success("Rôle supprimé avec succès");
+    };
+
+    const handlePublier = async () => {
+        const rolesManquants = bureauRoles.filter(role => !bureau.some(m => m.role.id === role.id));
+        if (rolesManquants.length > 0) {
+            message.error(`Certains rôles ne sont pas attribués : ${rolesManquants.map(r => r.name).join(', ')}`);
+            return;
+        }
+        await publishBureau(true);
+        message.success('Le bureau collégial a été publié avec succès');
+    };
+
+    // Gestion des Commissions
+    const handleAddCommission = () => {
+        setCurrentCommission(null);
+        commissionForm.resetFields();
+        setIsCommissionModalVisible(true);
+    };
+
+    const handleEditCommission = (commission) => {
+        setCurrentCommission(commission);
+        commissionForm.setFieldsValue(commission);
+        setIsCommissionModalVisible(true);
+    };
+
+    const handleDeleteCommission = (id) => {
+        setCommissions(commissions.filter(c => c.id !== id));
+        message.success('Commission supprimée avec succès');
+    };
+
+    const handleCommissionSubmit = () => {
+        commissionForm.validateFields().then(values => {
+            if (currentCommission) {
+                setCommissions(commissions.map(c =>
+                    c.id === currentCommission.id ? { ...c, ...values } : c
+                ));
+                message.success('Commission mise à jour avec succès');
+            } else {
+                const newCommission = {
+                    id: Math.max(...commissions.map(c => c.id), 0) + 1,
+                    ...values
+                };
+                setCommissions([...commissions, newCommission]);
+                message.success('Commission créée avec succès');
+            }
+            setIsCommissionModalVisible(false);
+        });
+    };
+
+    // Colonnes pour le tableau du Bureau
+    const bureauColumns = [
         {
             title: 'Rôle',
             dataIndex: 'role',
@@ -103,95 +241,62 @@ const Assemblee = () => {
         }
     ];
 
-    // Fonctions utilitaires
-    const getRoleColor = (role) => {
-        const colors = {
-            'PRESIDENT': 'red',
-            'VICE PRESIDENT': 'blue',
-            'RAPPORTEUR': 'green',
-            'RAPPORTEUR ADJOINT': 'orange',
-            'QUESTEUR': 'purple'
-        };
-        return colors[role] || 'gray';
-    };
-
-    const getPartiColor = (parti) => {
-        const colors = {
-            'PPRD': 'volcano',
-            'UDPS': 'geekblue',
-            'UNC': 'green',
-            'AFDC': 'orange'
-        };
-        return colors[parti] || 'gray';
-    };
-
-    const handleAdd = () => {
-        setCurrentMembre(null);
-        form.resetFields();
-        setIsModalVisible(true);
-    };
-
-    const handleEdit = (index) => {
-        setCurrentMembre({ ...bureau[index], index });
-        form.setFieldsValue({
-            role: bureau[index].role.name,
-            membreId: bureau[index].membre.id
-        });
-        setIsModalVisible(true);
-    };
-
-    const handleDelete = async (index) => {
-        const membreASupprimer = bureau[index];
-        await deleteMember(membreASupprimer.id);
-    };
-
-    const handleSubmit = () => {
-        form.validateFields().then(async (values) => {
-            const membreSelectionne = deputes.find(d => d.id === values.membreId);
-
-            const newMember ={
-                deputyId: membreSelectionne.id,
-                roleId: values.role,
-                description: values.description
-            };
-
-            if (currentMembre !== null) {
-                message.success("Membre modifié avec succès");
-            } else {
-                if (bureau.some(m => m.role.id === values.role)) {
-                    message.error("Ce rôle est déjà attribué à un autre membre");
-                    return;
-                }
-
-                await createMember(newMember);
-            }
-
-            setIsModalVisible(false);
-            form.resetFields();
-        });
-    };
-
-    const handleCreateRole = () => {
-        roleForm.validateFields().then(async (values) => {
-            await createRole(values);
-            setIsRoleModalVisible(false);
-            roleForm.resetFields();
-        });
-    };
-
-    const handleDeleteRole = async (roleId) => {
-        await deleteRole(roleId);
-    };
-
-    const handlePublier = async () => {
-        const rolesManquants = roles.filter(role => !bureau.some(m => m.role.id === role.id));
-        if (rolesManquants.length > 0) {
-            message.error(`Certains rôles ne sont pas attribués : ${rolesManquants.map(r => r.name).join(', ')}`);
-            return;
+    // Colonnes pour le tableau des Commissions
+    const commissionColumns = [
+        {
+            title: 'Nom',
+            dataIndex: 'title',
+            key: 'title',
+            render: (text, record) => (
+                <Space>
+                    <Tag icon={<TeamOutlined />} color={record.active ? 'green' : 'red'}>
+                        {text}
+                    </Tag>
+                </Space>
+            )
+        },
+        {
+            title: 'Domaine',
+            dataIndex: 'domain',
+            key: 'domain',
+            render: (domain) => <Tag color="blue">{domain}</Tag>
+        },
+        {
+            title: 'Membres',
+            dataIndex: 'members',
+            key: 'members',
+            render: (members) => `${members} députés`
+        },
+        {
+            title: 'Statut',
+            dataIndex: 'active',
+            key: 'active',
+            render: (active) => (
+                <Badge
+                    status={active ? 'success' : 'error'}
+                    text={active ? 'Active' : 'Inactive'}
+                />
+            )
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_, record) => (
+                <Space>
+                    <Button
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditCommission(record)}
+                    />
+                    <Popconfirm
+                        title="Êtes-vous sûr de vouloir supprimer cette commission ?"
+                        onConfirm={() => handleDeleteCommission(record.id)}
+                    >
+                        <Button icon={<DeleteOutlined />} danger />
+                    </Popconfirm>
+                </Space>
+            )
         }
-        await publishBureau(true)
-        message.success('Le bureau collégial a été publié avec succès');
-    };
+    ];
 
     return (
         <div className="assemblee-page">
@@ -203,110 +308,153 @@ const Assemblee = () => {
             >
                 Retour
             </Button>
-            <Card
-                title="Création du Bureau Collégial"
-                bordered={false}
-                extra={
-                    <Space>
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={() => setIsRoleModalVisible(true)}
-                            disabled={isPublie}
-                        >
-                            Créer un rôle
-                        </Button>
-                        <Button
-                            type="primary"
-                            icon={<SaveOutlined />}
-                            onClick={handlePublier}
-                            disabled={isPublie || bureau.length === 0}
-                        >
-                            {isPublie ? 'Publié' : (onPublishBureau ? 'Publication du bureau en cours....' : 'Publier le bureau')}
-                        </Button>
-                        {isPublie && <Tag icon={<CheckOutlined />} color="success">Publié</Tag>}
-                    </Space>
-                }
-            >
-                <div className="bureau-header">
-                    <div className="instructions">
-                        <p>
-                            Créez ici le bureau collégial de l'Assemblée en attribuant les différents rôles aux députés.
-                            Tous les rôles doivent être attribués avant publication.
-                        </p>
-                    </div>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAdd}
-                        disabled={isPublie}
+
+            <Tabs activeKey={activeTab} onChange={setActiveTab}>
+                {/* Onglet Bureau Collégial */}
+                <TabPane
+                    tab={
+                        <span>
+              <AppstoreOutlined /> Bureau Collégial
+            </span>
+                    }
+                    key="bureau"
+                >
+                    <Card
+                        title="Création du Bureau Collégial"
+                        bordered={false}
+                        extra={
+                            <Space>
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={() => setIsRoleModalVisible(true)}
+                                    disabled={isPublie}
+                                >
+                                    Créer un rôle
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    icon={<SaveOutlined />}
+                                    onClick={handlePublier}
+                                    disabled={isPublie || bureau.length === 0}
+                                >
+                                    {isPublie ? 'Publié' : (onPublishBureau ? 'Publication en cours...' : 'Publier le bureau')}
+                                </Button>
+                                {isPublie && <Tag icon={<CheckOutlined />} color="success">Publié</Tag>}
+                            </Space>
+                        }
                     >
-                        Ajouter un membre
-                    </Button>
-                </div>
-
-                {/* Liste des rôles disponibles */}
-                <div style={{ marginBottom: 24 }}>
-                    <h3>Rôles disponibles</h3>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        {roles.map(role => (
-                            <Tag
-                                key={role.id}
-                                color={getRoleColor(role.name)}
-                                closable
-                                onClose={(e) => {
-                                    e.preventDefault();
-                                    handleDeleteRole(role.id);
-                                }}
+                        <div className="bureau-header">
+                            <div className="instructions">
+                                <p>
+                                    Créez ici le bureau collégial de l'Assemblée en attribuant les différents rôles aux députés.
+                                    Tous les rôles doivent être attribués avant publication.
+                                </p>
+                            </div>
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={handleAdd}
+                                disabled={isPublie}
                             >
-                                {role.name}
-                            </Tag>
-                        ))}
-                    </div>
-                </div>
+                                Ajouter un membre
+                            </Button>
+                        </div>
 
-                <Table
-                    columns={columns}
-                    dataSource={bureau}
-                    rowKey="role"
-                    bordered
-                    pagination={false}
-                    className="bureau-table"
-                    locale={{
-                        emptyText: 'Aucun membre ajouté au bureau collégial'
-                    }}
-                />
+                        <div style={{ marginBottom: 24 }}>
+                            <h3>Rôles disponibles</h3>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                {bureauRoles.map(role => (
+                                    <Tag
+                                        key={role.id}
+                                        color={getRoleColor(role.name)}
+                                        closable
+                                        onClose={(e) => {
+                                            e.preventDefault();
+                                            handleDeleteRole(role.id);
+                                        }}
+                                    >
+                                        {role.name}
+                                    </Tag>
+                                ))}
+                            </div>
+                        </div>
 
-                {/* Aperçu du bureau */}
-                {bureau.length > 0 && (
-                    <div className="bureau-preview">
-                        <h3>Aperçu du bureau collégial</h3>
-                        <Row gutter={[16, 16]}>
-                            {bureau.map((membre, index) => (
-                                <Col xs={24} sm={12} md={8} lg={6} key={index}>
-                                    <Card className="membre-card">
-                                        <div className="membre-role">
-                                            <Tag color={getRoleColor(membre.role.name)}>{membre.role.name}</Tag>
-                                        </div>
-                                        <div className="membre-content">
-                                            <Avatar size={64} src={membre.membre.photo} icon={<UserOutlined />} />
-                                            <h4>{membre.membre.nom}</h4>
-                                            <Tag color={getPartiColor(membre.membre.parti)}>
-                                                {membre.membre.parti}
-                                            </Tag>
-                                            {membre.membre.description && (
-                                                <p className="membre-description">{membre.membre.description}</p>
-                                            )}
-                                        </div>
-                                    </Card>
-                                </Col>
-                            ))}
-                        </Row>
-                    </div>
-                )}
-            </Card>
+                        <Table
+                            columns={bureauColumns}
+                            dataSource={bureau}
+                            rowKey="id"
+                            bordered
+                            pagination={false}
+                            className="bureau-table"
+                            locale={{
+                                emptyText: 'Aucun membre ajouté au bureau collégial'
+                            }}
+                        />
 
-            {/* Modal pour ajouter/modifier un membre */}
+                        {bureau.length > 0 && (
+                            <div className="bureau-preview">
+                                <h3>Aperçu du bureau collégial</h3>
+                                <Row gutter={[16, 16]}>
+                                    {bureau.map((membre, index) => (
+                                        <Col xs={24} sm={12} md={8} lg={6} key={index}>
+                                            <Card className="membre-card">
+                                                <div className="membre-role">
+                                                    <Tag color={getRoleColor(membre.role.name)}>{membre.role.name}</Tag>
+                                                </div>
+                                                <div className="membre-content">
+                                                    <Avatar size={64} src={membre.membre.photo} icon={<UserOutlined />} />
+                                                    <h4>{membre.membre.nom}</h4>
+                                                    <Tag color={getPartiColor(membre.membre.parti)}>
+                                                        {membre.membre.parti}
+                                                    </Tag>
+                                                    {membre.description && (
+                                                        <p className="membre-description">{membre.description}</p>
+                                                    )}
+                                                </div>
+                                            </Card>
+                                        </Col>
+                                    ))}
+                                </Row>
+                            </div>
+                        )}
+                    </Card>
+                </TabPane>
+
+                {/* Onglet Commissions */}
+                <TabPane
+                    tab={
+                        <span>
+              <AuditOutlined /> Commissions
+            </span>
+                    }
+                    key="commissions"
+                >
+                    <Card
+                        title="Gestion des Commissions"
+                        bordered={false}
+                        extra={
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={handleAddCommission}
+                            >
+                                Créer une commission
+                            </Button>
+                        }
+                    >
+                        <Table
+                            columns={commissionColumns}
+                            dataSource={commissions}
+                            rowKey="id"
+                            bordered
+                            pagination={{ pageSize: 5 }}
+                        />
+                    </Card>
+                </TabPane>
+            </Tabs>
+
+            {/* Modal pour les membres du Bureau */}
             <Modal
                 title={currentMembre ? "Modifier le membre" : "Ajouter un membre au bureau"}
                 visible={isModalVisible}
@@ -335,7 +483,7 @@ const Assemblee = () => {
                                 rules={[{ required: true, message: 'Veuillez sélectionner un rôle' }]}
                             >
                                 <Select placeholder="Sélectionnez un rôle">
-                                    {roles.map(role => (
+                                    {bureauRoles.map(role => (
                                         <Option
                                             key={role.id}
                                             value={role.id}
@@ -361,7 +509,7 @@ const Assemblee = () => {
                                         option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                                     }
                                 >
-                                    {deputes.map(depute => (
+                                    {deputies.map(depute => (
                                         <Option key={depute.id} value={depute.id}>
                                             <div className="depute-option">
                                                 <Avatar size="small" src={depute.photo} icon={<UserOutlined />} />
@@ -387,7 +535,7 @@ const Assemblee = () => {
                 </Form>
             </Modal>
 
-            {/* Modal pour créer un nouveau rôle */}
+            {/* Modal pour les rôles */}
             <Modal
                 title="Créer un nouveau rôle"
                 visible={isRoleModalVisible}
@@ -422,6 +570,67 @@ const Assemblee = () => {
                         <TextArea
                             rows={3}
                             placeholder="Description du rôle et de ses responsabilités..."
+                        />
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            {/* Modal pour les commissions */}
+            <Modal
+                title={currentCommission ? "Modifier la commission" : "Créer une nouvelle commission"}
+                visible={isCommissionModalVisible}
+                onCancel={() => setIsCommissionModalVisible(false)}
+                footer={[
+                    <Button key="cancel" onClick={() => setIsCommissionModalVisible(false)}>
+                        Annuler
+                    </Button>,
+                    <Button
+                        key="submit"
+                        type="primary"
+                        onClick={handleCommissionSubmit}
+                    >
+                        {currentCommission ? "Modifier" : "Créer"}
+                    </Button>
+                ]}
+            >
+                <Form form={commissionForm} layout="vertical">
+                    <Form.Item
+                        name="title"
+                        label="Nom de la commission"
+                        rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                    >
+                        <Input placeholder="Ex: Commission Budget" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="domain"
+                        label="Domaine"
+                        rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                    >
+                        <Select placeholder="Sélectionnez un domaine">
+                            {commissionDomains.map(domain => (
+                                <Option key={domain} value={domain}>{domain}</Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                        name="members"
+                        label="Nombre de membres"
+                        rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                    >
+                        <Input type="number" min="1" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="active"
+                        label="Statut"
+                        valuePropName="checked"
+                    >
+                        <Switch
+                            checkedChildren="Active"
+                            unCheckedChildren="Inactive"
+                            defaultChecked
                         />
                     </Form.Item>
                 </Form>

@@ -1,0 +1,65 @@
+/* Styles pour la page Agenda */
+.agenda-admin-page {
+    padding: 20px;
+}
+
+.agenda-admin-page .filters-bar {
+    margin-bottom: 20px;
+}
+
+.event-preview {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.event-preview .event-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.event-preview .event-dates {
+    font-weight: 500;
+    color: #555;
+}
+
+.event-preview .event-description h3 {
+    color: #1890ff;
+    margin-bottom: 15px;
+}
+
+.event-preview .event-meta h4 {
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.event-preview .event-meta p,
+.event-preview .event-meta ul {
+    margin-left: 20px;
+    color: #666;
+}
+
+/* Styles pour le formulaire */
+.agenda-form .ant-form-item-label {
+    font-weight: 500;
+}
+
+.agenda-form .ant-collapse {
+    background: #fff;
+    border-radius: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .agenda-admin-page .filters-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .event-preview .event-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}

@@ -9,7 +9,7 @@ import {
     FileTextOutlined,
     VideoCameraOutlined,
     UserOutlined,
-    AppstoreAddOutlined
+    AppstoreAddOutlined, CalendarOutlined
 } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 import '../styles/sidebar.css';
@@ -44,9 +44,14 @@ const Sidebar = ({
             label: <Link to="/deputes">Gestion des Députés</Link>,
         },
         {
-            key: 'assemblee', // Nouveau menu
+            key: 'assemblee',
             icon: <AppstoreAddOutlined />,
             label: <Link to="/assemblee">Création Assemblée</Link>,
+        },
+        {
+            key: 'agenda',
+            icon: <CalendarOutlined />,  // Nouvelle icône
+            label: <Link to="/agenda">Agenda Parlementaire</Link>,
         },
         {
             key: 'sondages',

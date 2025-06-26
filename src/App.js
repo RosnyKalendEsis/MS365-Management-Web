@@ -18,6 +18,7 @@ import {ActualityProvider} from "./providers/ActualityProvider";
 import {AssemblyProvider} from "./providers/AssemblyProvider";
 import {DeputyProvider} from "./providers/DeputyProvider";
 import {BureauProvider} from "./providers/BureauProvider";
+import AgendaAdmin from "./pages/AgendaAdmin";
 
 
 function AppWrapper() {
@@ -51,6 +52,7 @@ function App() {
                 } />
                 <Route path="/deputes" element={<Deputes />} />
                 <Route path="/assemblee" element={<Assemblee />} />
+                <Route path="/agenda" element={<AgendaAdmin />} />
                 <Route path="/actualites" element={<Actualites />} />
                 <Route path="/sessions" element={<SessionsDirect />} />
                 <Route path="/documents" element={<DocumentsOfficiels />} />
