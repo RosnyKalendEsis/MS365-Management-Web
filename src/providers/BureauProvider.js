@@ -3,7 +3,6 @@ import {Ajax} from "../services/ajax";
 import { AssemblyContext } from "./AssemblyProvider";
 import {hosts} from "../env/Environment";
 import {message} from "antd";
-import {DeputyContext} from "./DeputyProvider";
 
 const BureauContext = createContext();
 
