@@ -19,14 +19,14 @@ const { Text } = Typography;
 
 const Sidebar = ({
                      appName = "Admin Gouvernemental",
-                     version = "2.2.0",
+                     version = "2.2.1",
                      user = {
                          name: "Admin RDC",
                          role: "Super Administrateur",
                          avatar: null
                      },
                      onLogout,
-                     unreadMessages = 3,
+                     unreadMessages = 10,
                      pendingActions = 2
                  }) => {
     const [collapsed, ] = useState(false);

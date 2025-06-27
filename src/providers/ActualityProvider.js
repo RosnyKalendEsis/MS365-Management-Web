@@ -141,7 +141,7 @@ const ActualityProvider = ({ children }) => {
     }, [loading, provincialAssembly]);
 
     return (
-        <ActualityContext.Provider value={{ actualityLoading,lastActualities, actualities, error,createActuality,onCreateActuality,deleteActuality}}>
+        <ActualityContext.Provider value={{ actualityLoading,lastActualities, actualities, error,createActuality,onCreateActuality,deleteActuality,onDeleteActuality}}>
             {children}
         </ActualityContext.Provider>
     );

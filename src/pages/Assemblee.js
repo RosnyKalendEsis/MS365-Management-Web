@@ -33,8 +33,6 @@ const Assemblee = () => {
         commissions,
         createCommission,
         deleteCommission,
-        onCreatingCommission,
-        onDeletingCommission
     } = useContext(BureauContext);
 
     const { deputies } = useContext(DeputyContext);

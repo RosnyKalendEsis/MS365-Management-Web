@@ -9,7 +9,6 @@ const BureauContext = createContext();
 
 const BureauProvider = ({ children }) => {
     const { loading, provincialAssembly } = useContext(AssemblyContext);
-    const {deputies} = useContext(DeputyContext);
     const [bureauLoading, setBureauLoading] = useState(true);
     const [ onCreateBureau,setOnCreateBureau] = useState(false);
     const [onUpdatingBureau, setOnUpdatingBureau] = useState(false);
