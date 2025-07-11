@@ -30,7 +30,7 @@ export default function LoginPremium() {
                     return;
             }
         }
-    },[isAuthenticate])
+    },[isAuthenticate, navigate, setError, user.role])
 
     // const handleSubmit = async (e) => {
     //     e.preventDefault();
