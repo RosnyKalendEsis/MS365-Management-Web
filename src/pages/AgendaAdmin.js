@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
     Card,
     Table,
@@ -32,8 +32,12 @@ import {
     ArrowLeftOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
+import 'moment/locale/fr';
 import '../styles/Agenda.css';
 import Search from "antd/es/input/Search";
+import {useAgendaEvent} from "../providers/AgendaEventProvider";
+import {DeputyContext} from "../providers/DeputyProvider";
+import {BureauContext} from "../providers/BureauProvider";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -60,31 +64,24 @@ const EVENT_STATUS = [
 ];
 
 const AgendaAdmin = () => {
+    moment.locale('fr');
+    const { createEvent,events,onCreatingAgenda,deleteEvent } = useAgendaEvent();
+    const {deputies} = useContext(DeputyContext);
+    const {members} = useContext(BureauContext);
+    const [cover,setCover] = useState({});
     // États
-    const [agendaEvents, setAgendaEvents] = useState([
-        {
-            id: 1,
-            type: 'seance',
-            title: "Séance publique",
-            dateRange: ["2025-03-31", "2025-04-02"],
-            description: "Examen des projets de loi sur les collectivités territoriales",
-            details: [
-                { title: "Délégations", content: "Situation financière des collectivités territoriales" },
-                { title: "Ordre du jour", content: "Vote sur la réforme fiscale locale" }
-            ],
-            imageUrl: "https://img.freepik.com/photos-gratuite/personnes-prenant-part-evenement-haut-protocole_23-2150951243.jpg",
-            status: 'confirmed',
-            isPublic: true,
-            location: "Hémicycle",
-            participants: ["Président de l'Assemblée", "Ministre des Collectivités"]
-        }
-    ]);
+    const [agendaEvents, setAgendaEvents] = useState(events);
+
+    useEffect(() => {
+        setAgendaEvents(events);
+    },[events]);
 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [currentEvent, setCurrentEvent] = useState(null);
     const [previewVisible, setPreviewVisible] = useState(false);
     const [activeTab, setActiveTab] = useState('all');
     const [searchText, setSearchText] = useState('');
+    const [dateRange, setDateRange] = useState(null);
     const [form] = Form.useForm();
 
     // Colonnes du tableau
@@ -160,6 +157,7 @@ const AgendaAdmin = () => {
     // Handlers
     const handleAdd = () => {
         setCurrentEvent(null);
+        setCover({})
         form.resetFields();
         setIsModalVisible(true);
     };
@@ -173,8 +171,8 @@ const AgendaAdmin = () => {
         setIsModalVisible(true);
     };
 
-    const handleDelete = (id) => {
-        setAgendaEvents(agendaEvents.filter(event => event.id !== id));
+    const handleDelete = async (id) => {
+        await deleteEvent(id);
         message.success('Événement supprimé avec succès');
     };
 
@@ -183,7 +181,7 @@ const AgendaAdmin = () => {
         setPreviewVisible(true);
     };
 
-    const handleSubmit = (values) => {
+    const handleSubmit = async (values) => {
         const eventData = {
             ...values,
             dateRange: [values.dateRange[0].format('YYYY-MM-DD'), values.dateRange[1].format('YYYY-MM-DD')],
@@ -193,16 +191,12 @@ const AgendaAdmin = () => {
         if (currentEvent) {
             // Édition
             setAgendaEvents(agendaEvents.map(e =>
-                e.id === currentEvent.id ? { ...e, ...eventData } : e
+                e.id === currentEvent.id ? {...e, ...eventData} : e
             ));
             message.success('Événement mis à jour avec succès');
         } else {
-            // Création
-            const newEvent = {
-                id: Math.max(...agendaEvents.map(e => e.id), 0) + 1,
-                ...eventData
-            };
-            setAgendaEvents([...agendaEvents, newEvent]);
+            delete eventData.imageUrl;
+            await createEvent(eventData, cover.photoFile);
             message.success('Événement créé avec succès');
         }
 
@@ -227,7 +221,11 @@ const AgendaAdmin = () => {
         const matchesSearch = event.title.toLowerCase().includes(searchText.toLowerCase()) ||
             event.description.toLowerCase().includes(searchText.toLowerCase());
         const matchesTab = activeTab === 'all' || event.status === activeTab;
-        return matchesSearch && matchesTab;
+        const matchDate = !dateRange || (
+            moment(event.dateRange[0]).isSameOrBefore(dateRange[1], 'day') &&
+            moment(event.dateRange[1]).isSameOrAfter(dateRange[0], 'day')
+        );
+        return matchesSearch && matchesTab  && matchDate;
     });
 
     return (
@@ -261,7 +259,10 @@ const AgendaAdmin = () => {
                             style={{ width: 300 }}
                             onChange={e => setSearchText(e.target.value)}
                         />
-                        <RangePicker />
+                        <RangePicker
+                            onChange={(dates) => setDateRange(dates)}
+                            value={dateRange}
+                        />
                         <Button icon={<FilterOutlined />}>Filtres Avancés</Button>
                     </Space>
                 </div>
@@ -412,12 +413,29 @@ const AgendaAdmin = () => {
                                 label="Participants principaux"
                             >
                                 <Select
-                                    mode="tags"
                                     placeholder="Ajoutez les participants"
+                                    mode="tags"
                                     tokenSeparators={[',']}
-                                />
+                                >
+                                    {deputies.map(deputy => {
+                                        const matchingMember = members.find(
+                                            m => m.membre.id === deputy.id
+                                        );
+
+                                        const label = matchingMember
+                                            ? `${deputy.nom} (${matchingMember.role.name})`
+                                            : `${deputy.nom} (${deputy.commission})`;
+
+                                        return (
+                                            <Option key={deputy.id} value={label}>
+                                                {label}
+                                            </Option>
+                                        );
+                                    })}
+                                </Select>
                             </Form.Item>
                         </Col>
+
 
                         <Col span={24}>
                             <Form.Item
@@ -427,12 +445,25 @@ const AgendaAdmin = () => {
                                 <Upload
                                     listType="picture-card"
                                     showUploadList={false}
-                                    beforeUpload={() => false}
+                                    beforeUpload={(file) => {
+                                        console.log("file photo:", file);
+                                        // On capture le fichier ici ✅
+                                        setCover({
+                                            ...cover,
+                                            photo: URL.createObjectURL(file),
+                                            photoFile: file
+                                        });
+                                        return false; // empêcher le chargement automatique
+                                    }}
                                 >
-                                    <div>
-                                        <PlusOutlined />
-                                        <div style={{ marginTop: 8 }}>Uploader</div>
-                                    </div>
+                                    {cover.photo ? (
+                                        <img src={cover.photo} alt="avatar" style={{ width: '100%' }} />
+                                    ) : (
+                                        <div>
+                                            <PlusOutlined />
+                                            <div style={{ marginTop: 8 }}>Uploader</div>
+                                        </div>
+                                    )}
                                 </Upload>
                             </Form.Item>
                         </Col>
@@ -489,7 +520,12 @@ const AgendaAdmin = () => {
                             <Button onClick={() => setIsModalVisible(false)}>
                                 Annuler
                             </Button>
-                            <Button type="primary" htmlType="submit">
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={onCreatingAgenda} // affiche un spinner si true
+                                disabled={onCreatingAgenda}
+                            >
                                 {currentEvent ? 'Mettre à jour' : 'Créer'}
                             </Button>
                         </Space>

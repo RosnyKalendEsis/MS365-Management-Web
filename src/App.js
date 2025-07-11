@@ -19,21 +19,27 @@ import {AssemblyProvider} from "./providers/AssemblyProvider";
 import {DeputyProvider} from "./providers/DeputyProvider";
 import {BureauProvider} from "./providers/BureauProvider";
 import AgendaAdmin from "./pages/AgendaAdmin";
+import {AgendaEventProvider} from "./providers/AgendaEventProvider";
+import {AuthProvider} from "./providers/AuthProvider";
 
 
 function AppWrapper() {
     return (
-        <AssemblyProvider>
-            <DeputyProvider>
-                <BureauProvider>
-                    <ActualityProvider>
-                        <EventProvider>
-                            <App />
-                        </EventProvider>
-                    </ActualityProvider>
-                </BureauProvider>
-            </DeputyProvider>
-        </AssemblyProvider>
+        <AuthProvider>
+            <AssemblyProvider>
+                <DeputyProvider>
+                    <BureauProvider>
+                        <ActualityProvider>
+                            <AgendaEventProvider>
+                                <EventProvider>
+                                    <App />
+                                </EventProvider>
+                            </AgendaEventProvider>
+                        </ActualityProvider>
+                    </BureauProvider>
+                </DeputyProvider>
+            </AssemblyProvider>
+        </AuthProvider>
     );
 }
 

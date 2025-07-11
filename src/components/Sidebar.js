@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useContext, useState} from 'react';
 import { Layout, Menu, Avatar, Typography, Badge } from 'antd';
 import {
     DashboardOutlined,
@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 import '../styles/sidebar.css';
+import {AuthContext} from "../providers/AuthProvider";
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -20,17 +21,13 @@ const { Text } = Typography;
 const Sidebar = ({
                      appName = "Admin Gouvernemental",
                      version = "2.2.1",
-                     user = {
-                         name: "Admin RDC",
-                         role: "Super Administrateur",
-                         avatar: null
-                     },
                      onLogout,
                      unreadMessages = 10,
                      pendingActions = 2
                  }) => {
     const [collapsed, ] = useState(false);
     const location = useLocation();
+    const {user}= useContext(AuthContext);
 
     const menuItems = [
         {
@@ -130,7 +127,7 @@ const Sidebar = ({
                 {!collapsed && (
                     <div className="profile-info">
                         <Text strong className="profile-name">
-                            {user.name}
+                            {user.email}
                         </Text>
                         <Text type="secondary" className="profile-role">
                             {user.role}

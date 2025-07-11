@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/espace-citoyen-admin.iml" filepath="$PROJECT_DIR$/.idea/espace-citoyen-admin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/gouv-rdc-essembleprovincial-web-admin.iml" filepath="$PROJECT_DIR$/.idea/gouv-rdc-essembleprovincial-web-admin.iml" />
     </modules>
   </component>
 </project>

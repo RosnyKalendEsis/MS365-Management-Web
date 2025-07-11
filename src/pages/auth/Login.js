@@ -1,32 +1,50 @@
-import React, { useState } from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import { Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayoutPremium from "../../layouts/AuthLayoutPremium";
 import { Eye, EyeSlash, Lock, Envelope } from 'react-bootstrap-icons';
+import {AuthContext} from "../../providers/AuthProvider";
 
 export default function LoginPremium() {
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
     const navigate = useNavigate();
+    const {loading, login, error,setError,isAuthenticate,user} = useContext(AuthContext);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
-        setError('');
-
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            navigate('/dashboard');
-        } catch (err) {
-            setError('Identifiants incorrects. Veuillez réessayer.');
-        } finally {
-            setIsLoading(false);
-        }
+        await login(email, password);
     };
+
+    useEffect(() => {
+        if(isAuthenticate) {
+            switch (user.role) {
+                case "ADMIN":
+                    navigate('/dashboard');
+                    setError("")
+                    break;
+                default:
+                    console.error("Rôle non pris en charge:", user.role);
+                    return;
+            }
+        }
+    },[isAuthenticate])
+
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+    //     setError('');
+    //
+    //     try {
+    //         await new Promise(resolve => setTimeout(resolve, 1500));
+    //         navigate('/dashboard');
+    //     } catch (err) {
+    //         setError('Identifiants incorrects. Veuillez réessayer.');
+    //     } finally {
+    //         setIsLoading(false);
+    //     }
+    // };
 
     return (
         <AuthLayoutPremium title="Connexion Administrateur">
@@ -121,9 +139,9 @@ export default function LoginPremium() {
                     <Button
                         type="submit"
                         className="auth-btn-premium"
-                        disabled={isLoading}
+                        disabled={loading}
                     >
-                        {isLoading ? (
+                        {loading ? (
                             <>
                                 <Spinner
                                     as="span"

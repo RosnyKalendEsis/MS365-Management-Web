@@ -105,12 +105,12 @@ const ActualityProvider = ({ children }) => {
                 const { data } = await Ajax.getRequest(`/exposed/actualities/assembly/${provincialAssembly.id}`);
                 if (!data.error) {
                     const formatted = data.object
-                        .sort((a, b) => new Date(b.date) - new Date(a.date)) // 1. Tri du plus récent au plus ancien
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
                         .map(actu => ({
-                            id: actu.id, // ou actu.id si tu veux garder l'UUID
+                            id: actu.id,
                             type: actu.type,
                             title: actu.title,
-                            date: actu.date, // ou formatDateFr(actu.date) si souhaité
+                            date: actu.date,
                             description: actu.description,
                             details: actu.details,
                             imageUrl: `${hosts.image}/${actu.imageUrl}`,
@@ -123,7 +123,7 @@ const ActualityProvider = ({ children }) => {
 
                     setActualities(formatted);
                     console.log("actualite: ",formatted)
-                    setLastActualities(formatted.slice(0, 2)); // Garde uniquement les deux plus récentes
+                    setLastActualities(formatted.slice(0, 2));
                 } else {
                     setError("Erreur lors du chargement des actualités.");
                 }

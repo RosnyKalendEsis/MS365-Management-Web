@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, {memo, useCallback, useContext, useEffect, useState} from 'react';
 import {
     Navbar,
     Badge,
@@ -21,10 +21,10 @@ import { motion } from 'framer-motion';
 import PropTypes from 'prop-types';
 import logo from '../assets/images/admin-logo.png';
 import '../styles/HeaderAdmin.css';
+import {AuthContext} from "../providers/AuthProvider";
 
 const HeaderAdmin = memo(({
                               appName = "Espace Citoyen",
-                              user = { name: "Admin", email: "admin@gouv.cd", role: "Administrateur" },
                               version = "2.2.0",
                               onLogout = () => {},
                               language = 'fr',
@@ -35,11 +35,12 @@ const HeaderAdmin = memo(({
     const [showOffcanvas, setShowOffcanvas] = useState(false);
     const [, setActiveLink] = useState('dashboard');
     const navigate = useNavigate();
+    const {user,logout}= useContext(AuthContext);
 
     const handleLogout = useCallback(() => {
-        onLogout();
-        navigate('/login');
-    }, [onLogout, navigate]);
+        logout();
+        navigate('/');
+    }, [logout, navigate]);
     // Simulate real-time notifications
     useEffect(() => {
         const interval = setInterval(() => {
@@ -241,7 +242,7 @@ const UserDropdown = memo(({ user, onLogout }) => (
                 <FaUserCircle size={28} />
             </div>
             <span className="user-name d-none d-lg-inline">
-        {user.name}
+        {user.email}
                 {user.role && <small className="d-block text-muted user-role">{user.role}</small>}
       </span>
         </Dropdown.Toggle>
@@ -253,7 +254,7 @@ const UserDropdown = memo(({ user, onLogout }) => (
                         <FaUserCircle size={48} />
                     </div>
                     <div>
-                        <h6 className="mb-0 profile-name">{user.name}</h6>
+                        <h6 className="mb-0 profile-name">{user.email}</h6>
                         <small className="text-muted profile-email">{user.email}</small>
                         {user.role && <div className="profile-role-badge">{user.role}</div>}
                     </div>
