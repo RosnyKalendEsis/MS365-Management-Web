@@ -49,7 +49,6 @@ import {ActualityContext} from "../providers/ActualityProvider";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-const { RangePicker } = DatePicker;
 const { TabPane } = Tabs;
 
 // Types d'actualités avec icônes et couleurs
