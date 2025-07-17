@@ -967,7 +967,7 @@ const Actualites = () => {
                                     <List.Item>
                                         <List.Item.Meta
                                             avatar={item.avatar}
-                                            title={<a>{item.author}</a>}
+                                            title={item.author}
                                             description={
                                                 <>
                                                     <p>{item.content}</p>
