@@ -20,7 +20,10 @@ import {
     Badge,
     List,
     Image,
-    Switch
+    Switch,
+    Avatar,
+    Tooltip,
+    Typography
 } from 'antd';
 import {
     SearchOutlined,
@@ -34,13 +37,17 @@ import {
     ArrowLeftOutlined,
     VideoCameraOutlined,
     NotificationOutlined,
-    TeamOutlined
+    TeamOutlined,
+    LikeOutlined,
+    MessageOutlined,
+    UserOutlined
 } from '@ant-design/icons';
 import moment from 'moment';
 import '../styles/Actualites.css';
 import Search from "antd/es/input/Search";
 import {ActualityContext} from "../providers/ActualityProvider";
 
+const { Title, Text } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { TabPane } = Tabs;
@@ -86,27 +93,72 @@ const STATUTS = [
     { value: 'archive', label: 'Archivé', color: 'gray' }
 ];
 
-const Actualites = () => {
-    // États
-    const [searchText, setSearchText] = useState('');
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [currentActualite, setCurrentActualite] = useState(null);
-    const [activeTab, setActiveTab] = useState('tous');
-    const [previewVisible, setPreviewVisible] = useState(false);
-    const [cover,setCover] = useState({});
-    const [attachments, setAttachments] = useState([]);
-    const {actualities,createActuality,deleteActuality } = useContext(ActualityContext)
-    const [form] = Form.useForm();
+const ACTIVITY_CATEGORIES = [
+    { value: 'emploi', label: 'Emploi', color: 'blue' },
+    { value: 'sante', label: 'Santé', color: 'green' },
+    { value: 'education', label: 'Éducation', color: 'orange' },
+    { value: 'infrastructure', label: 'Infrastructure', color: 'purple' },
+    { value: 'agriculture', label: 'Agriculture', color: 'cyan' },
+    { value: 'social', label: 'Social', color: 'red' }
+];
 
-    // Données initiales
+const DEPUTIES = [
+    {
+        id: 1,
+        name: "Hon. Albert Kapende",
+        constituency: "Kolwezi Centre",
+        image: "https://img.freepik.com/psd-gratuit/portrait-homme-age-dans-vieillesse_23-2151685152.jpg"
+    },
+    {
+        id: 2,
+        name: "Hon. Marie Lumbu",
+        constituency: "Kolwezi Ouest",
+        image: "https://img.freepik.com/photos-gratuite/femme-affaires-confiantes_23-2147688057.jpg"
+    }
+];
+
+const Actualites = () => {
+    // États pour les actualités
+    const [searchText, setSearchText] = useState('');
+    const [isActualiteModalVisible, setIsActualiteModalVisible] = useState(false);
+    const [currentActualite, setCurrentActualite] = useState(null);
+    const [previewActualiteVisible, setPreviewActualiteVisible] = useState(false);
+    const [cover, setCover] = useState({});
+    const [attachments, setAttachments] = useState([]);
+    const {actualities, createActuality, deleteActuality} = useContext(ActualityContext);
+    const [actualiteForm] = Form.useForm();
     const [actualites, setActualites] = useState(actualities);
+
+    // États pour les activités
+    const [activities, setActivities] = useState([
+        {
+            id: 1,
+            deputyId: 1,
+            title: "Lancement d'un centre de formation professionnelle",
+            date: "2025-03-12",
+            location: "Kolwezi",
+            category: "emploi",
+            description: "Inauguration d'un centre dédié à la formation des jeunes aux métiers techniques (soudure, électricité, mécanique), avec une capacité de 300 apprenants par an.",
+            images: [
+                "https://img.freepik.com/photos-gratuite/portrait-professeur-au-travail-dans-systeme-educatif_23-2151737271.jpg",
+                "https://img.freepik.com/photos-premium/vue-laterale-groupe-diversifie-hommes-affaires-assistant-seminaire-dans-bureau_1308175-181285.jpg"
+            ],
+            likes: 207,
+            comments: 36
+        }
+    ]);
+    const [isActivityModalVisible, setIsActivityModalVisible] = useState(false);
+    const [currentActivity, setCurrentActivity] = useState(null);
+    const [activityImages, setActivityImages] = useState([]);
+    const [activityForm] = Form.useForm();
+    const [activeTab, setActiveTab] = useState('actualites');
 
     useEffect(() => {
         setActualites(actualities);
-    },[actualities]);
+    }, [actualities]);
 
-    // Colonnes du tableau
-    const columns = [
+    // Colonnes du tableau des actualités
+    const actualiteColumns = [
         {
             title: 'Titre',
             dataIndex: 'title',
@@ -126,9 +178,7 @@ const Actualites = () => {
             render: (type) => {
                 const typeInfo = ACTUALITE_TYPES.find(t => t.value === type);
                 return <Tag color={typeInfo.color}>{typeInfo.label}</Tag>;
-            },
-            filters: ACTUALITE_TYPES.map(t => ({ text: t.label, value: t.value })),
-            onFilter: (value, record) => record.type === value,
+            }
         },
         {
             title: 'Date',
@@ -144,20 +194,18 @@ const Actualites = () => {
             render: (statut) => {
                 const status = STATUTS.find(s => s.value === statut);
                 return <Badge color={status.color} text={status.label} />;
-            },
-            filters: STATUTS.map(s => ({ text: s.label, value: s.value })),
-            onFilter: (value, record) => record.statut === value,
+            }
         },
         {
             title: 'Actions',
             key: 'actions',
             render: (_, record) => (
                 <Space size="middle">
-                    <Button icon={<EyeOutlined />} onClick={() => handlePreview(record)} />
-                    <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+                    <Button icon={<EyeOutlined />} onClick={() => handlePreviewActualite(record)} />
+                    <Button icon={<EditOutlined />} onClick={() => handleEditActualite(record)} />
                     <Popconfirm
                         title="Êtes-vous sûr de vouloir supprimer cette actualité ?"
-                        onConfirm={() => handleDelete(record.id)}
+                        onConfirm={() => handleDeleteActualite(record.id)}
                     >
                         <Button icon={<DeleteOutlined />} danger />
                     </Popconfirm>
@@ -166,47 +214,104 @@ const Actualites = () => {
         },
     ];
 
-    // Handlers
-    const handleAdd = () => {
+    // Colonnes du tableau des activités
+    const activityColumns = [
+        {
+            title: 'Titre',
+            dataIndex: 'title',
+            key: 'title',
+            render: (text, record) => (
+                <Space>
+                    <Tag color={ACTIVITY_CATEGORIES.find(c => c.value === record.category)?.color}>
+                        {ACTIVITY_CATEGORIES.find(c => c.value === record.category)?.label}
+                    </Tag>
+                    <span>{text}</span>
+                </Space>
+            )
+        },
+        {
+            title: 'Député',
+            dataIndex: 'deputyId',
+            key: 'deputy',
+            render: (deputyId) => {
+                const deputy = DEPUTIES.find(d => d.id === deputyId);
+                return (
+                    <Space>
+                        <Avatar src={deputy?.image} size="small" />
+                        <span>{deputy?.name}</span>
+                    </Space>
+                );
+            }
+        },
+        {
+            title: 'Date',
+            dataIndex: 'date',
+            key: 'date',
+            render: (date) => moment(date).format('DD/MM/YYYY'),
+            sorter: (a, b) => new Date(a.date) - new Date(b.date),
+        },
+        {
+            title: 'Lieu',
+            dataIndex: 'location',
+            key: 'location'
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_, record) => (
+                <Space size="middle">
+                    <Button icon={<EyeOutlined />} onClick={() => handlePreviewActivity(record)} />
+                    <Button icon={<EditOutlined />} onClick={() => handleEditActivity(record)} />
+                    <Popconfirm
+                        title="Êtes-vous sûr de vouloir supprimer cette activité ?"
+                        onConfirm={() => handleDeleteActivity(record.id)}
+                    >
+                        <Button icon={<DeleteOutlined />} danger />
+                    </Popconfirm>
+                </Space>
+            ),
+        },
+    ];
+
+    // Handlers pour les actualités
+    const handleAddActualite = () => {
         setCurrentActualite(null);
-        form.resetFields();
-        setIsModalVisible(true);
+        actualiteForm.resetFields();
+        setIsActualiteModalVisible(true);
     };
 
-    const handleEdit = (actualite) => {
+    const handleEditActualite = (actualite) => {
         setCurrentActualite(actualite);
-        form.setFieldsValue({
+        actualiteForm.setFieldsValue({
             ...actualite,
             date: moment(actualite.date)
         });
-        setIsModalVisible(true);
+        setIsActualiteModalVisible(true);
     };
 
-    const handleDelete = async (id) => {
+    const handleDeleteActualite = async (id) => {
         await deleteActuality(id);
         message.success('Actualité supprimée avec succès');
     };
 
-    const handlePreview = (actualite) => {
+    const handlePreviewActualite = (actualite) => {
         setCurrentActualite(actualite);
-        setPreviewVisible(true);
+        setPreviewActualiteVisible(true);
     };
 
-    const handleSubmit = async (values) => {
+    const handleSubmitActualite = async (values) => {
         const actualiteData = {
             ...values,
-            date: values.date.format('YYYY-MM-DDTHH:mm:ss'), // ISO sans offset
+            date: values.date.format('YYYY-MM-DDTHH:mm:ss'),
             auteur: "Admin Assemblée"
         };
 
         if (currentActualite) {
-            // Édition
             setActualites(actualites.map(a =>
                 a.id === currentActualite.id ? {...a, ...actualiteData} : a
             ));
             message.success('Actualité mise à jour avec succès');
         } else {
-            // Création
             const newActualite = {
                 id: Math.max(...actualites.map(a => a.id), 0) + 1,
                 ...actualiteData,
@@ -215,16 +320,84 @@ const Actualites = () => {
             message.success('Actualité créée avec succès');
         }
 
-        setIsModalVisible(false);
-        form.resetFields();
+        setIsActualiteModalVisible(false);
+        actualiteForm.resetFields();
     };
 
-    const filteredActualites = actualites.filter(actualite => {
-        const matchesSearch = actualite.title.toLowerCase().includes(searchText.toLowerCase()) ||
-            actualite.description.toLowerCase().includes(searchText.toLowerCase());
-        const matchesTab = activeTab === 'tous' || actualite.statut === activeTab;
-        return matchesSearch && matchesTab;
-    });
+    // Handlers pour les activités
+    const handleAddActivity = () => {
+        setCurrentActivity(null);
+        activityForm.resetFields();
+        setIsActivityModalVisible(true);
+    };
+
+    const handleEditActivity = (activity) => {
+        setCurrentActivity(activity);
+        activityForm.setFieldsValue({
+            ...activity,
+            date: moment(activity.date)
+        });
+        setActivityImages(activity.images || []);
+        setIsActivityModalVisible(true);
+    };
+
+    const handleDeleteActivity = (id) => {
+        setActivities(activities.filter(a => a.id !== id));
+        message.success('Activité supprimée avec succès');
+    };
+
+    const handlePreviewActivity = (activity) => {
+        setCurrentActivity(activity);
+    };
+
+    const handleSubmitActivity = (values) => {
+        const activityData = {
+            ...values,
+            date: values.date.format('YYYY-MM-DD'),
+            images: activityImages,
+            likes: currentActivity?.likes || 0,
+            comments: currentActivity?.comments || 0
+        };
+
+        if (currentActivity) {
+            setActivities(activities.map(a =>
+                a.id === currentActivity.id ? {...a, ...activityData} : a
+            ));
+            message.success('Activité mise à jour avec succès');
+        } else {
+            const newActivity = {
+                id: Math.max(...activities.map(a => a.id), 0) + 1,
+                ...activityData,
+                deputyId: values.deputyId || 1
+            };
+            setActivities([...activities, newActivity]);
+            message.success('Activité créée avec succès');
+        }
+
+        setIsActivityModalVisible(false);
+        activityForm.resetFields();
+        setActivityImages([]);
+    };
+
+    const handleActivityImageUpload = (file) => {
+        const imageUrl = URL.createObjectURL(file);
+        setActivityImages(prev => [...prev, imageUrl]);
+        return false;
+    };
+
+    const handleActivityImageRemove = (file) => {
+        setActivityImages(prev => prev.filter(img => img !== file.url));
+    };
+
+    const filteredActualites = actualites.filter(actualite =>
+        actualite.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        actualite.description.toLowerCase().includes(searchText.toLowerCase())
+    );
+
+    const filteredActivities = activities.filter(activity =>
+        activity.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        activity.description.toLowerCase().includes(searchText.toLowerCase())
+    );
 
     return (
         <div className="page-actualites">
@@ -238,67 +411,113 @@ const Actualites = () => {
             </Button>
 
             <Card
-                title="Gestion des Actualités"
+                title={
+                    <Space>
+                        <Title level={4} style={{ margin: 0 }}>
+                            {activeTab === 'actualites' ? 'Gestion des Actualités' : 'Activités en Circonscription'}
+                        </Title>
+                        <Text type="secondary">
+                            {activeTab === 'actualites'
+                                ? 'Gérez les actualités de l\'assemblée'
+                                : 'Suivez les activités des députés'}
+                        </Text>
+                    </Space>
+                }
                 bordered={false}
                 extra={
-                    <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-                        Nouvelle Actualité
-                    </Button>
+                    activeTab === 'actualites' ? (
+                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddActualite}>
+                            Nouvelle Actualité
+                        </Button>
+                    ) : (
+                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddActivity}>
+                            Nouvelle Activité
+                        </Button>
+                    )
                 }
             >
-                {/* Filtres */}
-                <div className="filters-bar">
-                    <Space size="large">
-                        <Search
-                            placeholder="Rechercher..."
-                            allowClear
-                            enterButton={<SearchOutlined />}
-                            size="large"
-                            style={{ width: 300 }}
-                            onChange={e => setSearchText(e.target.value)}
-                        />
-                        <RangePicker showTime />
-                        <Button icon={<FilterOutlined />}>Filtres avancés</Button>
-                    </Space>
-                </div>
-
-                {/* Onglets */}
-                <Tabs activeKey={activeTab} onChange={setActiveTab} style={{ marginTop: 16 }}>
-                    <TabPane tab="Tous" key="tous" />
-                    {STATUTS.map(statut => (
-                        <TabPane
-                            tab={<Badge count={actualites.filter(a => a.statut === statut.value).length}>{statut.label}</Badge>}
-                            key={statut.value}
-                        />
-                    ))}
+                {/* Navigation par onglets */}
+                <Tabs
+                    activeKey={activeTab}
+                    onChange={setActiveTab}
+                    style={{ marginBottom: 24 }}
+                    tabBarExtraContent={
+                        <Space size="large">
+                            <Search
+                                placeholder={`Rechercher ${activeTab === 'actualites' ? 'actualités' : 'activités'}...`}
+                                allowClear
+                                enterButton={<SearchOutlined />}
+                                size="large"
+                                style={{ width: 300 }}
+                                onChange={e => setSearchText(e.target.value)}
+                            />
+                            <Button icon={<FilterOutlined />}>Filtres</Button>
+                        </Space>
+                    }
+                >
+                    <TabPane
+                        tab={
+                            <Space>
+                                <TeamOutlined />
+                                Actualités
+                                <Badge count={actualites.length} style={{ backgroundColor: '#1890ff' }} />
+                            </Space>
+                        }
+                        key="actualites"
+                    />
+                    <TabPane
+                        tab={
+                            <Space>
+                                <UserOutlined />
+                                Activités en Circonscription
+                                <Badge count={activities.length} style={{ backgroundColor: '#52c41a' }} />
+                            </Space>
+                        }
+                        key="activites"
+                    />
                 </Tabs>
 
-                {/* Tableau */}
-                <Table
-                    columns={columns}
-                    dataSource={filteredActualites}
-                    rowKey="id"
-                    pagination={{ pageSize: 10 }}
-                    scroll={{ x: true }}
-                />
+                {/* Contenu des onglets */}
+                {activeTab === 'actualites' ? (
+                    <Table
+                        columns={actualiteColumns}
+                        dataSource={filteredActualites}
+                        rowKey="id"
+                        pagination={{ pageSize: 10 }}
+                        scroll={{ x: true }}
+                    />
+                ) : (
+                    <Table
+                        columns={activityColumns}
+                        dataSource={filteredActivities}
+                        rowKey="id"
+                        pagination={{ pageSize: 10 }}
+                        scroll={{ x: true }}
+                    />
+                )}
             </Card>
 
-            {/* Modal d'édition/création */}
+            {/* Modal pour les actualités */}
             <Modal
-                title={currentActualite ? 'Modifier une actualité' : 'Créer une nouvelle actualité'}
-                visible={isModalVisible}
+                title={
+                    <Space>
+                        <TeamOutlined />
+                        {currentActualite ? 'Modifier une actualité' : 'Créer une nouvelle actualité'}
+                    </Space>
+                }
+                visible={isActualiteModalVisible}
                 onCancel={() => {
-                    setIsModalVisible(false);
-                    form.resetFields();
+                    setIsActualiteModalVisible(false);
+                    actualiteForm.resetFields();
                 }}
                 footer={null}
                 width={800}
                 destroyOnClose
             >
                 <Form
-                    form={form}
+                    form={actualiteForm}
                     layout="vertical"
-                    onFinish={handleSubmit}
+                    onFinish={handleSubmitActualite}
                     initialValues={{
                         statut: 'brouillon',
                         isImportant: false
@@ -398,19 +617,16 @@ const Actualites = () => {
                                 name="imageUrl"
                                 label="Image principale"
                             >
-
                                 <Upload
                                     listType="picture-card"
                                     showUploadList={false}
                                     beforeUpload={(file) => {
-                                        console.log("file photo:", file);
-                                        // On capture le fichier ici ✅
                                         setCover({
                                             ...cover,
                                             photo: URL.createObjectURL(file),
                                             photoFile: file
                                         });
-                                        return false; // empêcher le chargement automatique
+                                        return false;
                                     }}
                                 >
                                     {cover.photo ? (
@@ -433,9 +649,8 @@ const Actualites = () => {
                                 <Upload
                                     multiple
                                     beforeUpload={(file) => {
-                                        // 🔁 Ajoute le fichier à l'état
                                         setAttachments(prev => [...prev, file]);
-                                        return false; // empêche l'upload automatique
+                                        return false;
                                     }}
                                     fileList={attachments.map((file, index) => ({
                                         uid: index,
@@ -450,14 +665,13 @@ const Actualites = () => {
                                 </Upload>
                             </Form.Item>
                         </Col>
-
                     </Row>
 
                     <Divider />
 
                     <Form.Item style={{ textAlign: 'right' }}>
                         <Space>
-                            <Button onClick={() => setIsModalVisible(false)}>
+                            <Button onClick={() => setIsActualiteModalVisible(false)}>
                                 Annuler
                             </Button>
                             <Button type="primary" htmlType="submit">
@@ -468,11 +682,156 @@ const Actualites = () => {
                 </Form>
             </Modal>
 
-            {/* Modal de prévisualisation */}
+            {/* Modal pour les activités */}
+            <Modal
+                title={
+                    <Space>
+                        <UserOutlined />
+                        {currentActivity ? 'Modifier une activité' : 'Créer une nouvelle activité'}
+                    </Space>
+                }
+                visible={isActivityModalVisible}
+                onCancel={() => {
+                    setIsActivityModalVisible(false);
+                    activityForm.resetFields();
+                    setActivityImages([]);
+                }}
+                footer={null}
+                width={800}
+                destroyOnClose
+            >
+                <Form
+                    form={activityForm}
+                    layout="vertical"
+                    onFinish={handleSubmitActivity}
+                >
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="deputyId"
+                                label="Député"
+                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                            >
+                                <Select placeholder="Sélectionnez un député">
+                                    {DEPUTIES.map(deputy => (
+                                        <Option key={deputy.id} value={deputy.id}>
+                                            <Space>
+                                                <Avatar src={deputy.image} size="small" />
+                                                {deputy.name} ({deputy.constituency})
+                                            </Space>
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={12}>
+                            <Form.Item
+                                name="category"
+                                label="Catégorie"
+                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                            >
+                                <Select placeholder="Sélectionnez une catégorie">
+                                    {ACTIVITY_CATEGORIES.map(category => (
+                                        <Option key={category.value} value={category.value}>
+                                            <Tag color={category.color}>{category.label}</Tag>
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={24}>
+                            <Form.Item
+                                name="title"
+                                label="Titre de l'activité"
+                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                            >
+                                <Input placeholder="Titre de l'activité" />
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={12}>
+                            <Form.Item
+                                name="date"
+                                label="Date"
+                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                            >
+                                <DatePicker
+                                    format="DD/MM/YYYY"
+                                    style={{ width: '100%' }}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={12}>
+                            <Form.Item
+                                name="location"
+                                label="Lieu"
+                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                            >
+                                <Input placeholder="Lieu de l'activité" />
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={24}>
+                            <Form.Item
+                                name="description"
+                                label="Description"
+                                rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
+                            >
+                                <Input.TextArea rows={4} placeholder="Description détaillée de l'activité" />
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={24}>
+                            <Form.Item
+                                label="Images"
+                            >
+                                <Upload
+                                    multiple
+                                    listType="picture-card"
+                                    fileList={activityImages.map((img, index) => ({
+                                        uid: index,
+                                        name: `image-${index}.jpg`,
+                                        status: 'done',
+                                        url: img
+                                    }))}
+                                    beforeUpload={handleActivityImageUpload}
+                                    onRemove={handleActivityImageRemove}
+                                    accept="image/*"
+                                >
+                                    {activityImages.length < 5 && (
+                                        <div>
+                                            <PlusOutlined />
+                                            <div style={{ marginTop: 8 }}>Ajouter des images</div>
+                                        </div>
+                                    )}
+                                </Upload>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Divider />
+
+                    <Form.Item style={{ textAlign: 'right' }}>
+                        <Space>
+                            <Button onClick={() => setIsActivityModalVisible(false)}>
+                                Annuler
+                            </Button>
+                            <Button type="primary" htmlType="submit">
+                                {currentActivity ? 'Mettre à jour' : 'Créer'}
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            {/* Modal de prévisualisation des actualités */}
             <Modal
                 title={currentActualite?.title}
-                visible={previewVisible}
-                onCancel={() => setPreviewVisible(false)}
+                visible={previewActualiteVisible}
+                onCancel={() => setPreviewActualiteVisible(false)}
                 footer={null}
                 width={800}
             >
@@ -483,8 +842,8 @@ const Actualites = () => {
                                 {ACTUALITE_TYPES.find(t => t.value === currentActualite.type)?.label}
                             </Tag>
                             <span className="actualite-date">
-                {moment(currentActualite.date).format('dddd D MMMM YYYY [à] HH[h]mm')}
-              </span>
+                                {moment(currentActualite.date).format('dddd D MMMM YYYY [à] HH[h]mm')}
+                            </span>
                             {currentActualite.isImportant && <Tag color="red">Important</Tag>}
                         </div>
 
@@ -522,6 +881,105 @@ const Actualites = () => {
                                 />
                             </>
                         )}
+                    </div>
+                )}
+            </Modal>
+
+            {/* Modal de prévisualisation des activités */}
+            <Modal
+                title={currentActivity?.title}
+                visible={!!currentActivity}
+                onCancel={() => setCurrentActivity(null)}
+                footer={null}
+                width={800}
+            >
+                {currentActivity && (
+                    <div className="activity-preview">
+                        <div className="activity-header">
+                            <Space>
+                                <Avatar
+                                    src={DEPUTIES.find(d => d.id === currentActivity.deputyId)?.image}
+                                    size="large"
+                                />
+                                <div>
+                                    <h4>{DEPUTIES.find(d => d.id === currentActivity.deputyId)?.name}</h4>
+                                    <p>{DEPUTIES.find(d => d.id === currentActivity.deputyId)?.constituency}</p>
+                                </div>
+                            </Space>
+
+                            <Divider />
+
+                            <Tag color={ACTIVITY_CATEGORIES.find(c => c.value === currentActivity.category)?.color}>
+                                {ACTIVITY_CATEGORIES.find(c => c.value === currentActivity.category)?.label}
+                            </Tag>
+                            <span className="activity-date">
+                                {moment(currentActivity.date).format('dddd D MMMM YYYY')}
+                            </span>
+                            <p><strong>Lieu:</strong> {currentActivity.location}</p>
+                        </div>
+
+                        {currentActivity.images?.length > 0 && (
+                            <Image.PreviewGroup>
+                                <Row gutter={[16, 16]} style={{ margin: '16px 0' }}>
+                                    {currentActivity.images.map((img, index) => (
+                                        <Col span={8} key={index}>
+                                            <Image src={img} />
+                                        </Col>
+                                    ))}
+                                </Row>
+                            </Image.PreviewGroup>
+                        )}
+
+                        <div className="activity-content">
+                            <p>{currentActivity.description}</p>
+                        </div>
+
+                        <Divider />
+
+                        <div className="activity-engagement">
+                            <Space size="large">
+                                <Button icon={<LikeOutlined />}>
+                                    {currentActivity.likes} J'aime
+                                </Button>
+                                <Button icon={<MessageOutlined />}>
+                                    {currentActivity.comments} Commentaires
+                                </Button>
+                            </Space>
+                        </div>
+
+                        <Divider />
+
+                        <div className="activity-comments">
+                            <List
+                                itemLayout="horizontal"
+                                dataSource={[
+                                    {
+                                        author: 'Utilisateur Anonyme',
+                                        avatar: <Avatar icon={<UserOutlined />} />,
+                                        content: 'Très belle initiative! Cela va beaucoup aider les jeunes de la circonscription.',
+                                        datetime: (
+                                            <Tooltip title={moment().format('YYYY-MM-DD HH:mm:ss')}>
+                                                <span>{moment().fromNow()}</span>
+                                            </Tooltip>
+                                        )
+                                    }
+                                ]}
+                                renderItem={(item) => (
+                                    <List.Item>
+                                        <List.Item.Meta
+                                            avatar={item.avatar}
+                                            title={<a>{item.author}</a>}
+                                            description={
+                                                <>
+                                                    <p>{item.content}</p>
+                                                    {item.datetime}
+                                                </>
+                                            }
+                                        />
+                                    </List.Item>
+                                )}
+                            />
+                        </div>
                     </div>
                 )}
             </Modal>

@@ -63,7 +63,7 @@ const Deputes = () => {
 
     // Options pour les filtres
     const regions = ['Kinshasa', 'Kongo-Central', 'Nord-Kivu', 'Haut-Katanga', 'Kasaï-Oriental'];
-    const partis = ['PPRD', 'UDPS', 'UNC', 'AFDC', 'MLC'];
+    const partis = ['UDPS', 'UNC', 'AFDC', 'MLC'];
     const statuts = ['actif', 'inactif', 'en congé'];
     //const commissions = ['Budget et Finances', 'Affaires Étrangères', 'Défense Nationale', 'Santé Publique'];
 
@@ -257,7 +257,6 @@ const Deputes = () => {
     // Fonctions utilitaires
     const getPartiColor = (parti) => {
         const colors = {
-            'PPRD': 'volcano',
             'UDPS': 'geekblue',
             'UNC': 'green',
             'AFDC': 'orange',

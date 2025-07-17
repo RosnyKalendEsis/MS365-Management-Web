@@ -50,10 +50,8 @@ const BureauProvider = ({ children }) => {
                         published: data.object.deputy.published
                     },
                 };
-
                 setMembers(prev => [...prev, newMember]);
             }
-
             return data;
         } catch (error) {
             console.error("Erreur lors de la création du membre :", error);
@@ -62,7 +60,6 @@ const BureauProvider = ({ children }) => {
             setOnCreateBureau(false);
         }
     };
-
     const deleteMember = async (id) => {
         try {
             await Ajax.deleteRequest(`/admin/assembly-bureau-members/${id}`);
@@ -75,7 +72,6 @@ const BureauProvider = ({ children }) => {
             setBureauError("Erreur lors de la suppression");
         }
     };
-
     const publishBureau = async (isPublish) => {
         setOnPublishBureau(true);
         try {
@@ -85,7 +81,6 @@ const BureauProvider = ({ children }) => {
             }else{
                 setBureauError(data.message);
             }
-
         } catch (error) {
             setBureauError("Erreur lors de la publication");
         }finally {
@@ -96,7 +91,6 @@ const BureauProvider = ({ children }) => {
         setOnCreatingRole(true);
         try {
             const { data } = await Ajax.postRequest("/admin/bureau-roles", roleData);
-
             if (!data.error) {
                 setBureauRoles(prev => [...prev, data.object]);
                 message.success("Rôle créé avec succès");
@@ -113,13 +107,11 @@ const BureauProvider = ({ children }) => {
             setOnCreatingRole(false);
         }
     };
-
     // Nouvelle fonction pour supprimer un rôle
     const deleteRole = async (roleId) => {
         setOnDeletingRole(true);
         try {
             const { data } = await Ajax.deleteRequest(`/admin/bureau-roles/${roleId}`);
-
             if (!data.error) {
                 setBureauRoles(prev => prev.filter(role => role.id !== roleId));
                 // Supprimer aussi les membres qui ont ce rôle
@@ -190,13 +182,11 @@ const BureauProvider = ({ children }) => {
             setOnDeletingCommission(false);
         }
     };
-
     useEffect(() => {
         const fetchBureauData = async () => {
             if (!provincialAssembly) return;
             setBureauLoading(true);
             setBureauError(null);
-
             try {
                 const [rolesResponse, membersResponse, bureauResponse, commissionResponse] = await Promise.all([
                     Ajax.getRequest(`/admin/bureau-roles`),

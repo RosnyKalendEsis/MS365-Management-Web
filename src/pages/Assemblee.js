@@ -34,9 +34,7 @@ const Assemblee = () => {
         createCommission,
         deleteCommission,
     } = useContext(BureauContext);
-
     const { deputies } = useContext(DeputyContext);
-
     // États pour le Bureau Collégial
     const [bureau, setBureau] = useState(members);
     const [roles, setRoles] = useState(bureauRoles);
@@ -46,7 +44,6 @@ const Assemblee = () => {
     const [isPublie, setIsPublie] = useState(bureauProvincial ? bureauProvincial.published : false);
     const [form] = Form.useForm();
     const [roleForm] = Form.useForm();
-
     // États pour les Commissions
     const [commissionList, setCommissionList] = useState([]);
     const [isCommissionModalVisible, setIsCommissionModalVisible] = useState(false);
@@ -95,7 +92,6 @@ const Assemblee = () => {
 
     const getPartiColor = (parti) => {
         const colors = {
-            'PPRD': 'volcano',
             'UDPS': 'geekblue',
             'UNC': 'green',
             'AFDC': 'orange'
@@ -350,7 +346,7 @@ const Assemblee = () => {
                                     type="primary"
                                     icon={<PlusOutlined />}
                                     onClick={() => setIsRoleModalVisible(true)}
-                                    disabled={isPublie}
+                                    //disabled={isPublie}
                                 >
                                     Créer un rôle
                                 </Button>
@@ -377,7 +373,7 @@ const Assemblee = () => {
                                 type="primary"
                                 icon={<PlusOutlined />}
                                 onClick={handleAdd}
-                                disabled={isPublie}
+                                //disabled={isPublie}
                             >
                                 Ajouter un membre
                             </Button>
