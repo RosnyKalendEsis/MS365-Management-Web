@@ -8,8 +8,6 @@ import Actualites from "./pages/Actualites";
 import SessionsDirect from "./pages/SessionsDirect";
 import DocumentsOfficiels from "./pages/DocumentsOfficiels";
 import Messages from "./pages/Messages";
-import ConsultationInterne from "./pages/ConsultationInterne";
-import ConsultationPublique from "./pages/ConsultationPublique";
 import ProfileAdmin from "./pages/ProfileAdmin";
 import Assemblee from "./pages/Assemblee";
 import SettingsPage from "./pages/SettingsPage";
@@ -21,6 +19,7 @@ import {BureauProvider} from "./providers/BureauProvider";
 import AgendaAdmin from "./pages/AgendaAdmin";
 import {AgendaEventProvider} from "./providers/AgendaEventProvider";
 import {AuthProvider} from "./providers/AuthProvider";
+import SurveyAdmin from "./pages/SurveyAdmin";
 
 
 function AppWrapper() {
@@ -63,8 +62,7 @@ function App() {
                 <Route path="/sessions" element={<SessionsDirect />} />
                 <Route path="/documents" element={<DocumentsOfficiels />} />
                 <Route path="/messages" element={<Messages />} />
-                <Route path="/sondages/internes" element={<ConsultationInterne />} />
-                <Route path="/sondages/publics" element={<ConsultationPublique />} />
+                <Route path="/sondages" element={<SurveyAdmin />} />
                 <Route path="/profile" element={<ProfileAdmin />} />
                 <Route path="/settings" element={<SettingsPage />} />
             </Routes>
