@@ -8,8 +8,6 @@ import Actualites from "./pages/Actualites";
 import SessionsDirect from "./pages/SessionsDirect";
 import DocumentsOfficiels from "./pages/DocumentsOfficiels";
 import Messages from "./pages/Messages";
-import ConsultationInterne from "./pages/ConsultationInterne";
-import ConsultationPublique from "./pages/ConsultationPublique";
 import ProfileAdmin from "./pages/ProfileAdmin";
 import Assemblee from "./pages/Assemblee";
 import SettingsPage from "./pages/SettingsPage";
@@ -21,46 +19,30 @@ import {BureauProvider} from "./providers/BureauProvider";
 import AgendaAdmin from "./pages/AgendaAdmin";
 import {AgendaEventProvider} from "./providers/AgendaEventProvider";
 import {AuthProvider} from "./providers/AuthProvider";
-import {SettingsProvider, useSettings} from "./providers/SettingsProvider";
-import {useEffect} from "react";
-import {ActivityProvider} from "./providers/ActivityProvider";
+import SurveyAdmin from "./pages/SurveyAdmin";
 
 
 function AppWrapper() {
     return (
         <AuthProvider>
-            <SettingsProvider>
-                <AssemblyProvider>
-                    <DeputyProvider>
-                        <BureauProvider>
-                            <ActualityProvider>
-                                <ActivityProvider>
-                                    <AgendaEventProvider>
-                                        <EventProvider>
-                                            <App />
-                                        </EventProvider>
-                                    </AgendaEventProvider>
-                                </ActivityProvider>
-                            </ActualityProvider>
-                        </BureauProvider>
-                    </DeputyProvider>
-                </AssemblyProvider>
-            </SettingsProvider>
+            <AssemblyProvider>
+                <DeputyProvider>
+                    <BureauProvider>
+                        <ActualityProvider>
+                            <AgendaEventProvider>
+                                <EventProvider>
+                                    <App />
+                                </EventProvider>
+                            </AgendaEventProvider>
+                        </ActualityProvider>
+                    </BureauProvider>
+                </DeputyProvider>
+            </AssemblyProvider>
         </AuthProvider>
     );
 }
 
 function App() {
-    const { settings,updateSiteMeta } = useSettings();
-
-    useEffect(() => {
-        if (settings) {
-            updateSiteMeta({
-                title: settings.siteTitle,
-                favicon: `${settings.faviconUrl}`,
-            });
-        }
-    }, [settings]);
     return (
         <BrowserRouter>
             <Routes>
@@ -80,8 +62,7 @@ function App() {
                 <Route path="/sessions" element={<SessionsDirect />} />
                 <Route path="/documents" element={<DocumentsOfficiels />} />
                 <Route path="/messages" element={<Messages />} />
-                <Route path="/sondages/internes" element={<ConsultationInterne />} />
-                <Route path="/sondages/publics" element={<ConsultationPublique />} />
+                <Route path="/sondages" element={<SurveyAdmin />} />
                 <Route path="/profile" element={<ProfileAdmin />} />
                 <Route path="/settings" element={<SettingsPage />} />
             </Routes>

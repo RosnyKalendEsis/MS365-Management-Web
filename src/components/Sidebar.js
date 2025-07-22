@@ -53,17 +53,7 @@ const Sidebar = ({
         {
             key: 'sondages',
             icon: <BarChartOutlined />,
-            label: <Link to="/sondages">Consultations</Link>,
-            children: [
-                {
-                    key: 'sondages-publics',
-                    label: <Link to="/sondages/publics">Publics</Link>,
-                },
-                {
-                    key: 'sondages-internes',
-                    label: <Link to="/sondages/internes">Internes</Link>,
-                },
-            ],
+            label: <Link to="/sondages">Sondage</Link>,
         },
         {
             key: 'actualites',
