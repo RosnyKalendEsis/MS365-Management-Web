@@ -20,6 +20,7 @@ import AgendaAdmin from "./pages/AgendaAdmin";
 import {AgendaEventProvider} from "./providers/AgendaEventProvider";
 import {AuthProvider} from "./providers/AuthProvider";
 import SurveyAdmin from "./pages/SurveyAdmin";
+import {ActivityProvider} from "./providers/ActivityProvider";
 
 
 function AppWrapper() {
@@ -28,13 +29,15 @@ function AppWrapper() {
             <AssemblyProvider>
                 <DeputyProvider>
                     <BureauProvider>
-                        <ActualityProvider>
-                            <AgendaEventProvider>
-                                <EventProvider>
-                                    <App />
-                                </EventProvider>
-                            </AgendaEventProvider>
-                        </ActualityProvider>
+                        <ActivityProvider>
+                            <ActualityProvider>
+                                <AgendaEventProvider>
+                                    <EventProvider>
+                                        <App />
+                                    </EventProvider>
+                                </AgendaEventProvider>
+                            </ActualityProvider>
+                        </ActivityProvider>
                     </BureauProvider>
                 </DeputyProvider>
             </AssemblyProvider>
