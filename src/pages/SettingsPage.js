@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useContext, useState} from 'react';
 import {
     Card,
     Form,
@@ -33,6 +33,7 @@ import {
     SaveOutlined, PlusOutlined, ArrowLeftOutlined
 } from '@ant-design/icons';
 import '../styles/Settings.css';
+import {useSettings} from "../providers/SettingsProvider";
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -43,6 +44,9 @@ const SettingsPage = () => {
     const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [logo,setLogo] = useState({});
+    const [favicon,setFavicon] = useState({});
+    const {updateSettings,settings} = useSettings();
 
     // Données de l'administrateur (simulées)
     const adminData = {
@@ -54,26 +58,10 @@ const SettingsPage = () => {
         permissions: ['full_access']
     };
 
-    // Paramètres de l'application
-    const [settings, setSettings] = useState({
-        siteTitle: 'Portail Gouvernemental RDC',
-        siteUrl: 'https://gouv.cd',
-        maintenanceMode: false,
-        timezone: 'Africa/Kinshasa',
-        dateFormat: 'DD/MM/YYYY',
-        apiEnabled: true,
-        notificationEnabled: true,
-        backupFrequency: 'weekly'
-    });
-
-    const handleSaveSettings = (values) => {
+    const handleSaveSettings = async (values) => {
         setLoading(true);
-        // Simulation de sauvegarde
-        setTimeout(() => {
-            setSettings({ ...settings, ...values });
-            message.success('Paramètres sauvegardés avec succès');
-            setLoading(false);
-        }, 1000);
+        await updateSettings(values, logo.photoFile, favicon.photoFile);
+        setLoading(false);
     };
 
     const handlePasswordChange = (values) => {
@@ -228,34 +216,54 @@ const SettingsPage = () => {
                                 <Col span={12}>
                                     <Form.Item label="Logo du site">
                                         <Upload
-                                            name="logo"
-                                            action="/upload"
                                             listType="picture-card"
                                             showUploadList={false}
-                                            beforeUpload={beforeUpload}
-                                            onChange={handleUpload}
+                                            beforeUpload={(file) => {
+                                                console.log("logo file photo:", file);
+                                                // On capture le fichier ici ✅
+                                                setLogo({
+                                                    ...logo,
+                                                    photo: URL.createObjectURL(file),
+                                                    photoFile: file
+                                                });
+                                                return false;
+                                            }}
                                         >
-                                            <div>
-                                                <CloudUploadOutlined />
-                                                <div style={{ marginTop: 8 }}>Uploader</div>
-                                            </div>
+                                            {logo.photo ? (
+                                                <img src={logo.photo} alt="avatar" style={{ width: '100%' }} />
+                                            ) : (
+                                                <div>
+                                                    <PlusOutlined />
+                                                    <div style={{ marginTop: 8 }}>Uploader</div>
+                                                </div>
+                                            )}
                                         </Upload>
                                     </Form.Item>
                                 </Col>
                                 <Col span={12}>
                                     <Form.Item label="Favicon">
                                         <Upload
-                                            name="favicon"
-                                            action="/upload"
                                             listType="picture-card"
                                             showUploadList={false}
-                                            beforeUpload={beforeUpload}
-                                            onChange={handleUpload}
+                                            beforeUpload={(file) => {
+                                                console.log("favicon file photo:", file);
+                                                // On capture le fichier ici ✅
+                                                setFavicon({
+                                                    ...favicon,
+                                                    photo: URL.createObjectURL(file),
+                                                    photoFile: file
+                                                });
+                                                return false; // empêcher le chargement automatique
+                                            }}
                                         >
-                                            <div>
-                                                <CloudUploadOutlined />
-                                                <div style={{ marginTop: 8 }}>Uploader</div>
-                                            </div>
+                                            {favicon.photo ? (
+                                                <img src={favicon.photo} alt="avatar" style={{ width: '100%' }} />
+                                            ) : (
+                                                <div>
+                                                    <PlusOutlined />
+                                                    <div style={{ marginTop: 8 }}>Uploader</div>
+                                                </div>
+                                            )}
                                         </Upload>
                                     </Form.Item>
                                 </Col>

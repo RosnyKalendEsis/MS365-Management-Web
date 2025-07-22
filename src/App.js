@@ -21,29 +21,46 @@ import {BureauProvider} from "./providers/BureauProvider";
 import AgendaAdmin from "./pages/AgendaAdmin";
 import {AgendaEventProvider} from "./providers/AgendaEventProvider";
 import {AuthProvider} from "./providers/AuthProvider";
+import {SettingsProvider, useSettings} from "./providers/SettingsProvider";
+import {useEffect} from "react";
+import {ActivityProvider} from "./providers/ActivityProvider";
 
 
 function AppWrapper() {
     return (
         <AuthProvider>
-            <AssemblyProvider>
-                <DeputyProvider>
-                    <BureauProvider>
-                        <ActualityProvider>
-                            <AgendaEventProvider>
-                                <EventProvider>
-                                    <App />
-                                </EventProvider>
-                            </AgendaEventProvider>
-                        </ActualityProvider>
-                    </BureauProvider>
-                </DeputyProvider>
-            </AssemblyProvider>
+            <SettingsProvider>
+                <AssemblyProvider>
+                    <DeputyProvider>
+                        <BureauProvider>
+                            <ActualityProvider>
+                                <ActivityProvider>
+                                    <AgendaEventProvider>
+                                        <EventProvider>
+                                            <App />
+                                        </EventProvider>
+                                    </AgendaEventProvider>
+                                </ActivityProvider>
+                            </ActualityProvider>
+                        </BureauProvider>
+                    </DeputyProvider>
+                </AssemblyProvider>
+            </SettingsProvider>
         </AuthProvider>
     );
 }
 
 function App() {
+    const { settings,updateSiteMeta } = useSettings();
+
+    useEffect(() => {
+        if (settings) {
+            updateSiteMeta({
+                title: settings.siteTitle,
+                favicon: `${settings.faviconUrl}`,
+            });
+        }
+    }, [settings]);
     return (
         <BrowserRouter>
             <Routes>

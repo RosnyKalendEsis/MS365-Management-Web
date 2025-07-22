@@ -46,6 +46,8 @@ import moment from 'moment';
 import '../styles/Actualites.css';
 import Search from "antd/es/input/Search";
 import {ActualityContext} from "../providers/ActualityProvider";
+import {useActivity} from "../providers/ActivityProvider";
+import {DeputyContext} from "../providers/DeputyProvider";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -101,21 +103,6 @@ const ACTIVITY_CATEGORIES = [
     { value: 'social', label: 'Social', color: 'red' }
 ];
 
-const DEPUTIES = [
-    {
-        id: 1,
-        name: "Hon. Albert Kapende",
-        constituency: "Kolwezi Centre",
-        image: "https://img.freepik.com/psd-gratuit/portrait-homme-age-dans-vieillesse_23-2151685152.jpg"
-    },
-    {
-        id: 2,
-        name: "Hon. Marie Lumbu",
-        constituency: "Kolwezi Ouest",
-        image: "https://img.freepik.com/photos-gratuite/femme-affaires-confiantes_23-2147688057.jpg"
-    }
-];
-
 const Actualites = () => {
     // États pour les actualités
     const [searchText, setSearchText] = useState('');
@@ -124,28 +111,15 @@ const Actualites = () => {
     const [previewActualiteVisible, setPreviewActualiteVisible] = useState(false);
     const [cover, setCover] = useState({});
     const [attachments, setAttachments] = useState([]);
+    const [imagesAttachments, setImagesAttachments] = useState([]);
     const {actualities, createActuality, deleteActuality} = useContext(ActualityContext);
+    const {createActivity, activities,deleteActivity} = useActivity();
     const [actualiteForm] = Form.useForm();
     const [actualites, setActualites] = useState(actualities);
+    const {deputies} = useContext(DeputyContext);
 
     // États pour les activités
-    const [activities, setActivities] = useState([
-        {
-            id: 1,
-            deputyId: 1,
-            title: "Lancement d'un centre de formation professionnelle",
-            date: "2025-03-12",
-            location: "Kolwezi",
-            category: "emploi",
-            description: "Inauguration d'un centre dédié à la formation des jeunes aux métiers techniques (soudure, électricité, mécanique), avec une capacité de 300 apprenants par an.",
-            images: [
-                "https://img.freepik.com/photos-gratuite/portrait-professeur-au-travail-dans-systeme-educatif_23-2151737271.jpg",
-                "https://img.freepik.com/photos-premium/vue-laterale-groupe-diversifie-hommes-affaires-assistant-seminaire-dans-bureau_1308175-181285.jpg"
-            ],
-            likes: 207,
-            comments: 36
-        }
-    ]);
+    const [activityList, setActivityList] = useState(activities);
     const [isActivityModalVisible, setIsActivityModalVisible] = useState(false);
     const [currentActivity, setCurrentActivity] = useState(null);
     const [activityImages, setActivityImages] = useState([]);
@@ -154,7 +128,8 @@ const Actualites = () => {
 
     useEffect(() => {
         setActualites(actualities);
-    }, [actualities]);
+        setActivityList(activities);
+    }, [actualities, activities]);
 
     // Colonnes du tableau des actualités
     const actualiteColumns = [
@@ -233,11 +208,11 @@ const Actualites = () => {
             dataIndex: 'deputyId',
             key: 'deputy',
             render: (deputyId) => {
-                const deputy = DEPUTIES.find(d => d.id === deputyId);
+                const deputy = deputies.find(d => d.id === deputyId);
                 return (
                     <Space>
-                        <Avatar src={deputy?.image} size="small" />
-                        <span>{deputy?.name}</span>
+                        <Avatar src={deputy?.photo} size="small" />
+                        <span>{deputy?.nom}</span>
                     </Space>
                 );
             }
@@ -340,8 +315,8 @@ const Actualites = () => {
         setIsActivityModalVisible(true);
     };
 
-    const handleDeleteActivity = (id) => {
-        setActivities(activities.filter(a => a.id !== id));
+    const handleDeleteActivity = async (id) => {
+        await deleteActivity(id);
         message.success('Activité supprimée avec succès');
     };
 
@@ -349,27 +324,25 @@ const Actualites = () => {
         setCurrentActivity(activity);
     };
 
-    const handleSubmitActivity = (values) => {
+    const handleSubmitActivity = async (values) => {
         const activityData = {
             ...values,
             date: values.date.format('YYYY-MM-DD'),
-            images: activityImages,
-            likes: currentActivity?.likes || 0,
-            comments: currentActivity?.comments || 0
         };
 
         if (currentActivity) {
-            setActivities(activities.map(a =>
+            setActivityList(activityList.map(a =>
                 a.id === currentActivity.id ? {...a, ...activityData} : a
             ));
             message.success('Activité mise à jour avec succès');
         } else {
             const newActivity = {
-                id: Math.max(...activities.map(a => a.id), 0) + 1,
-                ...activityData,
-                deputyId: values.deputyId || 1
+                ...values,
+                date: values.date.format('YYYY-MM-DD'),
+                deputyId: values.deputyId
             };
-            setActivities([...activities, newActivity]);
+
+            await createActivity(newActivity, imagesAttachments);
             message.success('Activité créée avec succès');
         }
 
@@ -379,8 +352,8 @@ const Actualites = () => {
     };
 
     const handleActivityImageUpload = (file) => {
-        const imageUrl = URL.createObjectURL(file);
-        setActivityImages(prev => [...prev, imageUrl]);
+        setImagesAttachments(prevState => [...prevState, file]);
+        setActivityImages(prev => [...prev, URL.createObjectURL(file)]);
         return false;
     };
 
@@ -393,7 +366,7 @@ const Actualites = () => {
         actualite.description.toLowerCase().includes(searchText.toLowerCase())
     );
 
-    const filteredActivities = activities.filter(activity =>
+    const filteredActivities = activityList.filter(activity =>
         activity.title.toLowerCase().includes(searchText.toLowerCase()) ||
         activity.description.toLowerCase().includes(searchText.toLowerCase())
     );
@@ -469,7 +442,7 @@ const Actualites = () => {
                             <Space>
                                 <UserOutlined />
                                 Activités en Circonscription
-                                <Badge count={activities.length} style={{ backgroundColor: '#52c41a' }} />
+                                <Badge count={activityList.length} style={{ backgroundColor: '#52c41a' }} />
                             </Space>
                         }
                         key="activites"
@@ -712,11 +685,11 @@ const Actualites = () => {
                                 rules={[{ required: true, message: 'Ce champ est obligatoire' }]}
                             >
                                 <Select placeholder="Sélectionnez un député">
-                                    {DEPUTIES.map(deputy => (
+                                    {deputies.map(deputy => (
                                         <Option key={deputy.id} value={deputy.id}>
                                             <Space>
-                                                <Avatar src={deputy.image} size="small" />
-                                                {deputy.name} ({deputy.constituency})
+                                                <Avatar src={deputy.photo} size="small" />
+                                                {deputy.nom} ({deputy.circonscription})
                                             </Space>
                                         </Option>
                                     ))}
@@ -792,7 +765,7 @@ const Actualites = () => {
                                     listType="picture-card"
                                     fileList={activityImages.map((img, index) => ({
                                         uid: index,
-                                        name: `image-${index}.jpg`,
+                                        name: `image-${index}`,
                                         status: 'done',
                                         url: img
                                     }))}
@@ -897,12 +870,12 @@ const Actualites = () => {
                         <div className="activity-header">
                             <Space>
                                 <Avatar
-                                    src={DEPUTIES.find(d => d.id === currentActivity.deputyId)?.image}
+                                    src={deputies.find(d => d.id === currentActivity.deputyId)?.photo}
                                     size="large"
                                 />
                                 <div>
-                                    <h4>{DEPUTIES.find(d => d.id === currentActivity.deputyId)?.name}</h4>
-                                    <p>{DEPUTIES.find(d => d.id === currentActivity.deputyId)?.constituency}</p>
+                                    <h4>{deputies.find(d => d.id === currentActivity.deputyId)?.nom}</h4>
+                                    <p>{deputies.find(d => d.id === currentActivity.deputyId)?.circonscription}</p>
                                 </div>
                             </Space>
 
