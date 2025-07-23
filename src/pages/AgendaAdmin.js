@@ -43,7 +43,7 @@ import {
     ClockCircleOutlined,
     EnvironmentOutlined,
     CheckCircleOutlined,
-    ExclamationCircleOutlined
+    ExclamationCircleOutlined, FilePdfOutlined
 } from '@ant-design/icons';
 import moment from 'moment';
 import 'moment/locale/fr';
@@ -52,13 +52,14 @@ import Search from "antd/es/input/Search";
 import {useAgendaEvent} from "../providers/AgendaEventProvider";
 import {DeputyContext} from "../providers/DeputyProvider";
 import {BureauContext} from "../providers/BureauProvider";
+import {usePlenarySession} from "../providers/PlenarySessionProvider";
 
 const { Option } = Select;
 const { TextArea } = Input;
 const { RangePicker } = DatePicker;
 const { TabPane } = Tabs;
 const { Panel } = Collapse;
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 // Types d'événements parlementaires
 const EVENT_TYPES = [
@@ -112,44 +113,6 @@ const COMMISSION_TYPES = [
     { value: 'enquete', label: 'Enquête', color: 'purple' }
 ];
 
-// Données mockées pour les séances plénières
-const mockPlenarySessions = [
-    {
-        id: 1,
-        title: "Session Ordinaire de Mars 2024",
-        date: "2024-03-15",
-        time: "10:00 - 16:00",
-        type: "ordinaire",
-        location: "Hémicycle Principal",
-        description: "Examen et adoption du projet de loi sur la gestion des ressources minières dans la province.",
-        points: [
-            "Lecture du procès-verbal de la dernière séance",
-            "Examen du projet de loi minière",
-            "Questions orales aux commissaires provinciaux",
-            "Vote des résolutions"
-        ],
-        documents: ["Projet de loi n°145", "Rapport de commission"],
-        status: "terminee",
-        featured: true
-    },
-    {
-        id: 2,
-        title: "Session Extraordinaire Budget",
-        date: "2024-03-20",
-        time: "09:00 - 12:00",
-        type: "budgetaire",
-        location: "Hémicycle Principal",
-        description: "Session dédiée à l'adoption du budget provincial 2024.",
-        points: [
-            "Présentation du rapport budgétaire",
-            "Débat général sur le budget",
-            "Vote du budget"
-        ],
-        documents: ["Projet de budget 2024"],
-        status: "planifiee",
-        featured: true
-    }
-];
 
 // Données mockées pour les réunions de commissions
 const mockCommissionMeetings = [
@@ -246,16 +209,15 @@ const AgendaAdmin = () => {
     const { createEvent, events, onCreatingAgenda, deleteEvent } = useAgendaEvent();
     const { deputies } = useContext(DeputyContext);
     const { members } = useContext(BureauContext);
+    const {createSession,sessions,deleteSession} = usePlenarySession();
     const [cover, setCover] = useState({});
+    const [attachments, setAttachments] = useState([]);
 
     // États pour les événements
     const [agendaEvents, setAgendaEvents] = useState(events);
-    useEffect(() => {
-        setAgendaEvents(events);
-    }, [events]);
 
     // États pour les séances plénières
-    const [plenarySessions, setPlenarySessions] = useState(mockPlenarySessions);
+    const [plenarySessions, setPlenarySessions] = useState(sessions);
     const [isPlenaryModalVisible, setIsPlenaryModalVisible] = useState(false);
     const [currentPlenarySession, setCurrentPlenarySession] = useState(null);
     const [plenaryForm] = Form.useForm();
@@ -280,6 +242,11 @@ const AgendaAdmin = () => {
     const [searchText, setSearchText] = useState('');
     const [dateRange, setDateRange] = useState(null);
     const [form] = Form.useForm();
+
+    useEffect(() => {
+        setAgendaEvents(events);
+        setPlenarySessions(sessions);
+    }, [events, sessions]);
 
     // Colonnes du tableau des événements (existant)
     const columns = [
@@ -571,8 +538,8 @@ const AgendaAdmin = () => {
         setIsPlenaryModalVisible(true);
     };
 
-    const handlePlenaryDelete = (id) => {
-        setPlenarySessions(plenarySessions.filter(s => s.id !== id));
+    const handlePlenaryDelete = async (id) => {
+        await deleteSession(id);
         message.success('Séance plénière supprimée avec succès');
     };
 
@@ -581,7 +548,7 @@ const AgendaAdmin = () => {
         setPreviewVisible(true);
     };
 
-    const handlePlenarySubmit = (values) => {
+    const handlePlenarySubmit = async (values) => {
         const sessionData = {
             ...values,
             id: currentPlenarySession ? currentPlenarySession.id : Date.now(),
@@ -595,7 +562,9 @@ const AgendaAdmin = () => {
             ));
             message.success('Séance plénière mise à jour avec succès');
         } else {
-            setPlenarySessions([...plenarySessions, sessionData]);
+            //setPlenarySessions([...plenarySessions, sessionData]);
+            console.log("session pleniere: ", sessionData);
+            await createSession(sessionData, attachments);
             message.success('Séance plénière créée avec succès');
         }
 
@@ -1321,11 +1290,23 @@ const AgendaAdmin = () => {
                                 name="documents"
                                 label="Documents associés"
                             >
-                                <Select
-                                    mode="tags"
-                                    placeholder="Ajoutez les documents"
-                                    tokenSeparators={[',']}
-                                />
+                                <Upload
+                                    multiple
+                                    beforeUpload={(file) => {
+                                        setAttachments(prev => [...prev, file]);
+                                        return false;
+                                    }}
+                                    fileList={attachments.map((file, index) => ({
+                                        uid: index,
+                                        name: file.name,
+                                        status: 'done'
+                                    }))}
+                                    onRemove={(file) => {
+                                        setAttachments(prev => prev.filter(f => f.name !== file.name));
+                                    }}
+                                >
+                                    <Button icon={<FilePdfOutlined />}>Ajouter des documents</Button>
+                                </Upload>
                             </Form.Item>
                         </Col>
                     </Row>
@@ -1765,7 +1746,7 @@ const AgendaAdmin = () => {
                                     renderItem={(document) => (
                                         <List.Item>
                                             <FileTextOutlined style={{ marginRight: 8 }} />
-                                            {document}
+                                            {document.split('/').pop()}
                                         </List.Item>
                                     )}
                                 />

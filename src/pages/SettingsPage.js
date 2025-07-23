@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useState} from 'react';
 import {
     Card,
     Form,
@@ -68,7 +68,7 @@ const SettingsPage = () => {
         setLoading(true);
         // Simulation de changement de mot de passe
         setTimeout(() => {
-            message.success('Mot de passe changé avec succès');
+            message.success(`Mot de passe changé avec succès ${values}.`);
             setIsPasswordModalVisible(false);
             setLoading(false);
         }, 1500);

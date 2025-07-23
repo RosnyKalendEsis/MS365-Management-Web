@@ -303,71 +303,71 @@ const SurveyAdmin = () => {
     }));
 
     // Configuration des graphiques
-    const getPieConfig = (data, angleField, colorField, colors) => ({
-        data,
-        angleField,
-        colorField,
-        radius: 0.8,
-        height: 300,
-        color: colors,
-        label: {
-            type: 'inner',
-            offset: '-30%',
-            content: ({ percent }) => `${(percent * 100).toFixed(0)}%`,
-            style: {
-                fontSize: 14,
-                textAlign: 'center',
-            },
-        },
-        interactions: [{ type: 'element-selected' }, { type: 'element-active' }],
-        statistic: {
-            title: false,
-            content: {
-                style: {
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                },
-                content: 'Total',
-            },
-        },
-    });
-
-    const getColumnConfig = (data, xField, yField) => ({
-        data,
-        xField,
-        yField,
-        height: 300,
-        color: '#1890ff',
-        columnStyle: {
-            radius: [6, 6, 0, 0],
-            cursor: 'pointer'
-        },
-        xAxis: {
-            label: {
-                style: {
-                    fill: '#595959',
-                    fontSize: 12
-                }
-            }
-        },
-        yAxis: {
-            label: {
-                style: {
-                    fill: '#595959',
-                    fontSize: 12
-                }
-            }
-        },
-        tooltip: {
-            showTitle: false,
-            domStyles: {
-                'g2-tooltip': {
-                    borderRadius: 8,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                }
-            }
-        }
-    });
+    // const getPieConfig = (data, angleField, colorField, colors) => ({
+    //     data,
+    //     angleField,
+    //     colorField,
+    //     radius: 0.8,
+    //     height: 300,
+    //     color: colors,
+    //     label: {
+    //         type: 'inner',
+    //         offset: '-30%',
+    //         content: ({ percent }) => `${(percent * 100).toFixed(0)}%`,
+    //         style: {
+    //             fontSize: 14,
+    //             textAlign: 'center',
+    //         },
+    //     },
+    //     interactions: [{ type: 'element-selected' }, { type: 'element-active' }],
+    //     statistic: {
+    //         title: false,
+    //         content: {
+    //             style: {
+    //                 fontSize: '16px',
+    //                 fontWeight: 'bold',
+    //             },
+    //             content: 'Total',
+    //         },
+    //     },
+    // });
+    //
+    // const getColumnConfig = (data, xField, yField) => ({
+    //     data,
+    //     xField,
+    //     yField,
+    //     height: 300,
+    //     color: '#1890ff',
+    //     columnStyle: {
+    //         radius: [6, 6, 0, 0],
+    //         cursor: 'pointer'
+    //     },
+    //     xAxis: {
+    //         label: {
+    //             style: {
+    //                 fill: '#595959',
+    //                 fontSize: 12
+    //             }
+    //         }
+    //     },
+    //     yAxis: {
+    //         label: {
+    //             style: {
+    //                 fill: '#595959',
+    //                 fontSize: 12
+    //             }
+    //         }
+    //     },
+    //     tooltip: {
+    //         showTitle: false,
+    //         domStyles: {
+    //             'g2-tooltip': {
+    //                 borderRadius: 8,
+    //                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+    //             }
+    //         }
+    //     }
+    // });
 
     return (
         <div style={{ padding: 24, backgroundColor: '#f0f2f5' }}>
@@ -483,7 +483,7 @@ const SurveyAdmin = () => {
                                     style={{ marginBottom: 24 }}
                                 />
 
-                                {selectedSurvey.questions.map((question, qIndex) => (
+                                {selectedSurvey.questions.map((question) => (
                                     <Card
                                         key={question.id}
                                         style={{ marginBottom: 24, borderRadius: 8 }}
