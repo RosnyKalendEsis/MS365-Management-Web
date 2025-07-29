@@ -1,36 +1,31 @@
 stages:
   - build
   - deploy
-
+# Variables globales
 variables:
   BUILD_DIR: build
 
+# Cache pour accélérer les builds
 cache:
-  key: "enabel-web-node-module"
+  key: "tshopo-admin-node-module"
   paths:
     - node_modules/
-
 before_script:
   - export NVM_DIR=$HOME/.nvm;
   - source $NVM_DIR/nvm.sh;
-
-# 🔧 BUILD ENVIRONNEMENT DEV (branche "backend")
 build_dev:
   stage: build
   tags:
     - web
   environment: development
   only:
-    - backend
+    - tshopo-admin
   script:
     - npm install
     - npm run build
-    - ls -la $BUILD_DIR
   artifacts:
     paths:
       - $BUILD_DIR/
-
-
 build_prod:
   stage: build
   tags:
@@ -39,76 +34,29 @@ build_prod:
   only:
     - main
   script:
+    # Construire le projet Ember.js
     - node --version
     - npm install
     - npm run build
-    - ls -la $BUILD_DIR
   artifacts:
     paths:
       - $BUILD_DIR/
-
-# 🔧 BUILD SPÉCIFIQUE POUR TSHOPO (branche "tshopo-admin")
-build_tshopo:
-  stage: build
-  tags:
-    - web
-  environment: production
-  only:
-    - tshopo-admin
-  script:
-    - npm install
-    - npm run build:tshopo
-    - ls -la $BUILD_DIR
-  artifacts:
-    paths:
-      - $BUILD_DIR/
-    expire_in: 1 hour
-
-# 🚀 DÉPLOIEMENT ENV DEV
 deploy_dev:
   stage: deploy
   tags:
     - web
   environment: development
   only:
-    - backend
-  dependencies:
-    - build_dev
+    - tshopo-admin
   script:
-    - scp -r $BUILD_DIR/* root@172.16.18.210:/var/www/enabel_admin
-
-# 🚀 DÉPLOIEMENT ENV PROD
+    # Copier les fichiers buildés sur le serveur distant
+    - scp -r $BUILD_DIR/* root@180.149.199.23:/var/www/tshopo.admin/html/
 deploy_prod:
   stage: deploy
   tags:
     - web
   environment: production
   only:
-    - main
-  dependencies:
-    - build_prod
+    - main  # Déployer uniquement depuis la branche main
   script:
     - scp -r $BUILD_DIR/* root@172.16.18.26:/var/www/devbuy
-
-# 🚀 DÉPLOIEMENT SPÉCIFIQUE POUR TSHOPO
-deploy_tshopo_admin:
-  stage: deploy
-  tags:
-    - web
-  environment: production
-  only:
-    - tshopo-admin
-  dependencies:
-    - build_tshopo
-  before_script:
-    - mkdir -p ~/.ssh
-    - cp .ci-ssh/deploy.key ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - echo -e "Host *\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
-  script:
-    - echo "📦 Contenu du dossier build avant envoi :"
-    - ls -la $BUILD_DIR
-    - echo "Envoi vers le serveur distant..."
-    - scp -r $BUILD_DIR/* root@180.149.199.23:/var/www/tshopo.admin/html/
-  after_script:
-    - rm -f ~/.ssh/id_rsa
