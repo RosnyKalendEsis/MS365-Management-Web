@@ -37,6 +37,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "node --max-old-space-size=8192 ./node_modules/.bin/react-scripts build",
+    "build:tshopo": "env-cmd -f .env.tshopo react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -57,5 +58,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "env-cmd": "^10.1.0"
   }
 }
