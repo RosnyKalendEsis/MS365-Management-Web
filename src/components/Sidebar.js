@@ -2,14 +2,10 @@ import React, {useContext, useState} from 'react';
 import { Layout, Menu, Avatar, Typography, Badge } from 'antd';
 import {
     DashboardOutlined,
-    BarChartOutlined,
     TeamOutlined,
-    NotificationOutlined,
     MessageOutlined,
     FileTextOutlined,
-    VideoCameraOutlined,
     UserOutlined,
-    AppstoreAddOutlined, CalendarOutlined
 } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 import '../styles/sidebar.css';
@@ -36,48 +32,24 @@ const Sidebar = ({
             label: <Link to="/dashboard">Tableau de bord</Link>,
         },
         {
-            key: 'deputes',
+            key: 'users',
             icon: <TeamOutlined />,
-            label: <Link to="/deputes">Gestion des Députés</Link>,
+            label: <Link to="/users">Gestion des utilisateurs</Link>,
         },
+
         {
-            key: 'assemblee',
-            icon: <AppstoreAddOutlined />,
-            label: <Link to="/assemblee">Création Assemblée</Link>,
-        },
-        {
-            key: 'agenda',
-            icon: <CalendarOutlined />,  // Nouvelle icône
-            label: <Link to="/agenda">Agenda Parlementaire</Link>,
-        },
-        {
-            key: 'sondages',
-            icon: <BarChartOutlined />,
-            label: <Link to="/sondages">Sondage</Link>,
-        },
-        {
-            key: 'actualites',
-            icon: <NotificationOutlined />,
-            label: <Link to="/actualites">Actualités</Link>,
-        },
-        {
-            key: 'sessions',
-            icon: <VideoCameraOutlined />,
-            label: <Link to="/sessions">Sessions en Direct</Link>,
-        },
-        {
-            key: 'documents',
+            key: 'rapports',
             icon: <FileTextOutlined />,
-            label: <Link to="/documents">Documents Officiels</Link>,
+            label: <Link to="/rapports">Rapports</Link>,
         },
         {
-            key: 'messages',
+            key: 'notifications',
             icon: (
                 <Badge count={unreadMessages} size="small" offset={[5, 0]}>
                     <MessageOutlined />
                 </Badge>
             ),
-            label: <Link to="/messages">Messagerie</Link>,
+            label: <Link to="/notifications">Notifications</Link>,
         }
     ];
 

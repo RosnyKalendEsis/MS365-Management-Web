@@ -39,7 +39,7 @@ const { Option } = Select;
 const { TextArea } = Input;
 const { TabPane } = Tabs;
 
-const Messages = () => {
+const Notifications = () => {
     // États
     const [searchText, setSearchText] = useState('');
     const [activeTab, setActiveTab] = useState('inbox');
@@ -386,4 +386,4 @@ const Messages = () => {
     );
 };
 
-export default Messages;
+export default Notifications;

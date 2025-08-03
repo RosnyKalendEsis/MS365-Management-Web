@@ -63,10 +63,10 @@ const AuthLayoutPremium = ({ children, title }) => {
                                     className="text-content"
                                 >
                                     <h2 className="text-white text-center mb-3">
-                                        Plateforme citoyenne de la RDC
+                                        Tableau de bord de gestion automatique des licences MS 365
                                     </h2>
                                     <p className="text-white-50 text-center">
-                                        Connectez-vous pour accéder à l'espace d'administration
+                                        Connectez-vous pour accéder au Dashboard
                                     </p>
                                 </motion.div>
                             </motion.div>
@@ -120,7 +120,7 @@ const AuthLayoutPremium = ({ children, title }) => {
                                             transition={{delay: 0.6}}
                                         >
                                             <small>
-                                                © {new Date().getFullYear()} Gouvernement de la RDC - Tous droits
+                                                © {new Date().getFullYear()} ITM HR - Tous droits
                                                 réservés
                                             </small>
                                             <div className="mt-2">

@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { AssemblyContext } from "./AssemblyProvider";
 import { hosts } from "../env/Environment";
 import { Ajax } from "../services/ajax";
 
 const DeputyContext = createContext();
 
-const DeputyProvider = ({ children }) => {
-    const { loading, provincialAssembly } = useContext(AssemblyContext);
+const UserProvider = ({ children }) => {
+    const [loading, setLoading] = useState(false);
+    const [provincialAssembly, setProvincialAssembly] = useState(null);
     const [deputyLoading, setDeputyLoading] = useState(true);
     const [deputies, setDeputies] = useState([]);
     const [onCreateDeputy, setOnCreateDeputy] = useState(false);
@@ -181,4 +181,4 @@ const DeputyProvider = ({ children }) => {
     );
 };
 
-export { DeputyProvider, DeputyContext };
+export { UserProvider, DeputyContext };

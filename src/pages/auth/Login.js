@@ -32,20 +32,6 @@ export default function LoginPremium() {
         }
     },[isAuthenticate, navigate, setError, user.role])
 
-    // const handleSubmit = async (e) => {
-    //     e.preventDefault();
-    //     setError('');
-    //
-    //     try {
-    //         await new Promise(resolve => setTimeout(resolve, 1500));
-    //         navigate('/dashboard');
-    //     } catch (err) {
-    //         setError('Identifiants incorrects. Veuillez réessayer.');
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // };
-
     return (
         <AuthLayoutPremium title="Connexion Administrateur">
             {error && (

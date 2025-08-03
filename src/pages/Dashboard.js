@@ -1,12 +1,11 @@
 import React, { useContext } from 'react';
-import {Card, Row, Col, Progress, Table, Tag, Button, Divider, Statistic, Select} from 'antd';
+import {Card, Row, Col, Progress, Table, Tag, Button, Divider, Statistic, Select, Popconfirm, Avatar,Space,Tooltip} from 'antd';
 import {
     LineChart,
     Line,
     XAxis,
     YAxis,
     CartesianGrid,
-    Tooltip,
     Legend,
     ResponsiveContainer,
     PieChart,
@@ -25,72 +24,378 @@ import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     TeamOutlined,
-    NotificationOutlined
+    NotificationOutlined,
+    DeleteOutlined,
+    EditOutlined,
+    MinusCircleOutlined,
+    PlusCircleOutlined,
+    InfoCircleOutlined,
+    ExclamationCircleOutlined
 } from '@ant-design/icons';
 import HeaderAdmin from "../components/HeaderAdmin";
 import '../styles/admin-layout.css';
-import { DeputyContext } from '../providers/DeputyProvider';
-import { ActualityContext } from '../providers/ActualityProvider';
-import { usePlenarySession } from '../providers/PlenarySessionProvider';
+import { DeputyContext } from '../providers/UserProvider';
 
 const { Option } = Select;
 
+const licences = [
+    {
+        "DisplayName": "John Doe",
+        "UserPrincipalName": "john.doe@entreprise.com",
+        "isLicensed": true,
+        "Licenses": [
+            {
+                "AccountSkuId": "microsoft:ENTERPRISEPACK",
+                "ServiceStatus": [
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "EXCHANGE_S_ENTERPRISE",
+                            "ProvisioningStatus": "Success"
+                        }
+                    },
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "SHAREPOINTWAC",
+                            "ProvisioningStatus": "PendingInput"
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "DisplayName": "Alice Smith",
+        "UserPrincipalName": "alice.smith@entreprise.com",
+        "isLicensed": true,
+        "Licenses": [
+            {
+                "AccountSkuId": "microsoft:BUSINESS_PREMIUM",
+                "ServiceStatus": [
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "MCOSTANDARD",
+                            "ProvisioningStatus": "Success"
+                        }
+                    },
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "SHAREPOINTWAC",
+                            "ProvisioningStatus": "Success"
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "DisplayName": "Bob Johnson",
+        "UserPrincipalName": "bob.johnson@entreprise.com",
+        "isLicensed": false,
+        "Licenses": []
+    },
+    {
+        "DisplayName": "Chloe Brown",
+        "UserPrincipalName": "chloe.brown@entreprise.com",
+        "isLicensed": true,
+        "Licenses": [
+            {
+                "AccountSkuId": "microsoft:ENTERPRISEPREMIUM",
+                "ServiceStatus": [
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "EXCHANGE_S_ENTERPRISE",
+                            "ProvisioningStatus": "Success"
+                        }
+                    },
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "OFFICESUBSCRIPTION",
+                            "ProvisioningStatus": "Success"
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "DisplayName": "Daniel Lee",
+        "UserPrincipalName": "daniel.lee@entreprise.com",
+        "isLicensed": true,
+        "Licenses": [
+            {
+                "AccountSkuId": "microsoft:F3",
+                "ServiceStatus": [
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "MCOSTANDARD",
+                            "ProvisioningStatus": "Disabled"
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "DisplayName": "Ella Davis",
+        "UserPrincipalName": "ella.davis@entreprise.com",
+        "isLicensed": false,
+        "Licenses": []
+    },
+    {
+        "DisplayName": "Frank Moore",
+        "UserPrincipalName": "frank.moore@entreprise.com",
+        "isLicensed": true,
+        "Licenses": [
+            {
+                "AccountSkuId": "microsoft:VISIOCLIENT",
+                "ServiceStatus": [
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "VISIOCLIENT",
+                            "ProvisioningStatus": "Success"
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "DisplayName": "Grace Wilson",
+        "UserPrincipalName": "grace.wilson@entreprise.com",
+        "isLicensed": true,
+        "Licenses": [
+            {
+                "AccountSkuId": "microsoft:PROJECTPLAN3",
+                "ServiceStatus": [
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "PROJECTWORKMANAGEMENT",
+                            "ProvisioningStatus": "Success"
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "DisplayName": "Henry Clark",
+        "UserPrincipalName": "henry.clark@entreprise.com",
+        "isLicensed": false,
+        "Licenses": []
+    },
+    {
+        "DisplayName": "Isabelle Martin",
+        "UserPrincipalName": "isabelle.martin@entreprise.com",
+        "isLicensed": true,
+        "Licenses": [
+            {
+                "AccountSkuId": "microsoft:ENTERPRISEPACK",
+                "ServiceStatus": [
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "EXCHANGE_S_ENTERPRISE",
+                            "ProvisioningStatus": "Success"
+                        }
+                    },
+                    {
+                        "ServicePlan": {
+                            "ServiceName": "MCOSTANDARD",
+                            "ProvisioningStatus": "PendingInput"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]
+
+
+
 export default function Dashboard() {
-    // Utilisation des contextes
-    const { deputies } = useContext(DeputyContext);
-    const { actualities } = useContext(ActualityContext);
-    const { sessions } = usePlenarySession();
+
+    function showUserDetails(record) {
+        console.log("Afficher les détails de l'utilisateur :", record);
+    }
+
+    function assignLicense(record) {
+        console.log("Attribution de licence à l'utilisateur :", record);
+    }
+
+    function removeLicense(record) {
+        console.log("Suppression de licence pour l'utilisateur :", record);
+    }
+
+    function editUser(record) {
+        console.log("Modification de l'utilisateur :", record);
+    }
+
+    function deleteUser(record) {
+        console.log("Suppression de l'utilisateur :", record);
+    }
+
 
     // Données pour les statistiques - maintenant dynamiques
     const statsData = [
         {
             id: 1,
-            title: "Députés actifs",
-            value: deputies?.length || 0,
-            change: +2.3,
+            title: "Utilisateurs",
+            value: licences?.length || 0,
+            change: +3.1,
             icon: <TeamOutlined />,
             color: "#1890ff"
         },
         {
             id: 2,
-            title: "Sondages actifs",
-            value: 0, // Reste à 0 comme demandé
-            change: +1.2,
-            icon: <BarChartOutlined />,
+            title: "Licences attribuées",
+            value: licences?.filter(lic => lic.Licenses && lic.Licenses.length > 0).length || 0,
+            change: +1.5,
+            icon: <CheckCircleOutlined />,
             color: "#52c41a"
         },
         {
             id: 3,
-            title: "Actualités",
-            value: actualities?.length || 0,
-            change: -0.8,
-            icon: <NotificationOutlined />,
-            color: "#faad14"
+            title: "Utilisateurs sans licence",
+            value: licences?.filter(lic => !lic.Licenses || lic.Licenses.length === 0).length || 0,
+            change: -0.7,
+            icon: <CloseCircleOutlined />,
+            color: "#fa541c"
         },
         {
             id: 4,
-            title: "Sessions programmées",
-            value: sessions?.length || 0,
+            title: "Licences expirées",
+            value: licences?.filter(lic => lic.isLicenseExpired).length || 0,
             change: 0,
-            icon: <ClockCircleOutlined />,
+            icon: <ExclamationCircleOutlined />,
             color: "#722ed1"
         }
     ];
 
+    const columns = [
+        {
+            title: 'Utilisateur',
+            dataIndex: 'DisplayName',
+            key: 'DisplayName',
+            render: (text, record) => (
+                <Space>
+                    <Avatar
+                        size="large"
+                        icon={<UserOutlined />}
+                        style={{
+                            backgroundColor: '#1a3a8f',
+                            color: '#fff'
+                        }}
+                    />
+                    <div>
+                        <div style={{ fontWeight: 500 }}>{text}</div>
+                        <div style={{ fontSize: 12, color: '#666' }}>{record.UserPrincipalName}</div>
+                    </div>
+                </Space>
+            )
+        },
+        {
+            title: 'Licencié',
+            dataIndex: 'isLicensed',
+            key: 'isLicensed',
+            render: (licensed) => (
+                <Tag color={licensed ? 'green' : 'red'}>
+                    {licensed ? 'Oui' : 'Non'}
+                </Tag>
+            ),
+            filters: [
+                { text: 'Oui', value: true },
+                { text: 'Non', value: false }
+            ],
+            onFilter: (value, record) => record.isLicensed === value
+        },
+        {
+            title: 'Licences',
+            dataIndex: 'Licenses',
+            key: 'Licenses',
+            render: (licenses) => {
+                if (!licenses || licenses.length === 0) return <Tag color="default">Aucune</Tag>;
+                return licenses.map((lic, idx) => (
+                    <Tag color="blue" key={idx}>{lic.AccountSkuId}</Tag>
+                ));
+            }
+        },
+        {
+            title: 'Services actifs',
+            key: 'ServiceStatus',
+            render: (_, record) => {
+                const services = record.Licenses?.flatMap(lic =>
+                    lic.ServiceStatus?.filter(s => s.ServicePlan.ProvisioningStatus === 'Success')
+                ) || [];
+                return services.map((s, i) => (
+                    <Tag color="green" key={i}>{s.ServicePlan.ServiceName}</Tag>
+                ));
+            }
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_, record) => (
+                <Space size="middle">
+                    <Tooltip title="Détails utilisateur">
+                        <Button
+                            type="link"
+                            icon={<InfoCircleOutlined />}
+                            onClick={() => showUserDetails(record)}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Attribuer une licence">
+                        <Button
+                            type="link"
+                            icon={<PlusCircleOutlined />}
+                            onClick={() => assignLicense(record)}
+                            disabled={record.isLicensed}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Retirer licence">
+                        <Button
+                            type="link"
+                            icon={<MinusCircleOutlined />}
+                            onClick={() => removeLicense(record)}
+                            disabled={!record.isLicensed}
+                            danger
+                        />
+                    </Tooltip>
+                    <Tooltip title="Modifier l'utilisateur">
+                        <Button
+                            type="link"
+                            icon={<EditOutlined />}
+                            onClick={() => editUser(record)}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Supprimer l'utilisateur">
+                        <Popconfirm
+                            title="Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
+                            onConfirm={() => deleteUser(record)}
+                            okText="Oui"
+                            cancelText="Non"
+                        >
+                            <Button type="link" danger icon={<DeleteOutlined />} />
+                        </Popconfirm>
+                    </Tooltip>
+                </Space>
+            )
+        }
+    ];
+
+
     // Données pour les sondages récents (statiques comme avant)
     const recentPolls = [
-        { id: 1, title: "Réforme constitutionnelle", date: "15/06/2023", participants: 1250, status: "active", target: "Députés" },
-        { id: 2, title: "Budget national 2024", date: "10/06/2023", participants: 892, status: "closed", target: "Public" },
-        { id: 3, title: "Politique éducative", date: "05/06/2023", participants: 756, status: "closed", target: "Députés" },
-        { id: 4, title: "Infrastructures urbaines", date: "01/06/2023", participants: 1843, status: "active", target: "Public" }
+        // { id: 1, title: "Réforme constitutionnelle", date: "15/06/2023", participants: 1250, status: "active", target: "Députés" },
+        // { id: 2, title: "Budget national 2024", date: "10/06/2023", participants: 892, status: "closed", target: "Public" },
+        // { id: 3, title: "Politique éducative", date: "05/06/2023", participants: 756, status: "closed", target: "Députés" },
+        // { id: 4, title: "Infrastructures urbaines", date: "01/06/2023", participants: 1843, status: "active", target: "Public" }
     ];
 
     // Activité récente (peut aussi être rendue dynamique si nécessaire)
     const recentActivity = [
-        { id: 1, time: "10:45", user: "Président Collégial", action: "a publié un nouveau projet de loi", entity: "Réforme constitutionnelle" },
-        { id: 2, time: "09:30", user: "Admin Technique", action: "a ajouté un nouveau député", entity: "Jean K. (Kinshasa)" },
-        { id: 3, time: "Hier", user: "Secrétaire Général", action: "a planifié une session", entity: "Session plénière du 20/06" },
-        { id: 4, time: "Hier", user: "Admin Content", action: "a publié une actualité", entity: "Communiqué officiel" }
+        // { id: 1, time: "10:45", user: "Président Collégial", action: "a publié un nouveau projet de loi", entity: "Réforme constitutionnelle" },
+        // { id: 2, time: "09:30", user: "Admin Technique", action: "a ajouté un nouveau député", entity: "Jean K. (Kinshasa)" },
+        // { id: 3, time: "Hier", user: "Secrétaire Général", action: "a planifié une session", entity: "Session plénière du 20/06" },
+        // { id: 4, time: "Hier", user: "Admin Content", action: "a publié une actualité", entity: "Communiqué officiel" }
     ];
 
     // Données pour les graphiques (restent statiques pour l'exemple)
@@ -182,7 +487,7 @@ export default function Dashboard() {
         <div className="admin-dashboard">
             <HeaderAdmin
                 user={{ name: "Super Admin", role: "Administrateur Principal" }}
-                version="2.2.0"
+                version="1.1.0"
                 onLogout={handleLogout}
             />
 
@@ -191,17 +496,11 @@ export default function Dashboard() {
                 <div className="dashboard-header">
                     <div>
                         <h1>Tableau de Bord Administratif</h1>
-                        <p className="text-muted">Aperçu complet des activités gouvernementales</p>
+                        <p className="text-muted">Aperçu complet des utilisations des licences MS 365 et leur etat actuel</p>
                     </div>
                     <div className="dashboard-actions">
-                        <Select defaultValue="24h" style={{ width: 120 }}>
-                            <Option value="24h">Dernières 24h</Option>
-                            <Option value="7d">7 derniers jours</Option>
-                            <Option value="30d">30 derniers jours</Option>
-                            <Option value="custom">Période personnalisée</Option>
-                        </Select>
                         <Button type="primary" icon={<DownloadOutlined />}>
-                            Exporter
+                            Generer rapport
                         </Button>
                     </div>
                 </div>
@@ -338,7 +637,7 @@ export default function Dashboard() {
                                         </div>
                                         <div className="metric-text">
                                             <div className="metric-title">Engagement</div>
-                                            <div className="metric-value">78%</div>
+                                            <div className="metric-value">0%</div>
                                             <div className="metric-description">Taux de participation moyen</div>
                                         </div>
                                     </div>
@@ -352,7 +651,7 @@ export default function Dashboard() {
                                         </div>
                                         <div className="metric-text">
                                             <div className="metric-title">Documents</div>
-                                            <div className="metric-value">24</div>
+                                            <div className="metric-value">0</div>
                                             <div className="metric-description">Nouveaux cette semaine</div>
                                         </div>
                                     </div>
@@ -367,30 +666,30 @@ export default function Dashboard() {
                             <Row gutter={16}>
                                 <Col xs={24} sm={12} md={6}>
                                     <div className="kpi-item">
-                                        <div className="kpi-value">92%</div>
+                                        <div className="kpi-value">0%</div>
                                         <div className="kpi-label">Taux de réponse</div>
-                                        <Progress percent={92} status="active" showInfo={false} strokeColor="#52c41a" />
+                                        <Progress percent={0} status="active" showInfo={false} strokeColor="#52c41a" />
                                     </div>
                                 </Col>
                                 <Col xs={24} sm={12} md={6}>
                                     <div className="kpi-item">
-                                        <div className="kpi-value">4.8</div>
-                                        <div className="kpi-label">Satisfaction (sur 5)</div>
-                                        <Progress percent={96} status="active" showInfo={false} strokeColor="#1890ff" />
+                                        <div className="kpi-value">0</div>
+                                        <div className="kpi-label">Satisfaction (sur 0)</div>
+                                        <Progress percent={0} status="active" showInfo={false} strokeColor="#1890ff" />
                                     </div>
                                 </Col>
                                 <Col xs={24} sm={12} md={6}>
                                     <div className="kpi-item">
-                                        <div className="kpi-value">24h</div>
+                                        <div className="kpi-value">0h</div>
                                         <div className="kpi-label">Temps moyen de réponse</div>
-                                        <Progress percent={75} status="active" showInfo={false} strokeColor="#faad14" />
+                                        <Progress percent={0} status="active" showInfo={false} strokeColor="#faad14" />
                                     </div>
                                 </Col>
                                 <Col xs={24} sm={12} md={6}>
                                     <div className="kpi-item">
-                                        <div className="kpi-value">87%</div>
+                                        <div className="kpi-value">0%</div>
                                         <div className="kpi-label">Engagement des députés</div>
-                                        <Progress percent={87} status="active" showInfo={false} strokeColor="#722ed1" />
+                                        <Progress percent={0} status="active" showInfo={false} strokeColor="#722ed1" />
                                     </div>
                                 </Col>
                             </Row>
@@ -400,14 +699,17 @@ export default function Dashboard() {
 
                 {/* Tableau des sondages */}
                 <Card
-                    title="Consultations Récentes"
-                    extra={<Button type="primary">Voir toutes les consultations</Button>}
+                    title="Listes des utilisateurs"
                     className="polls-table"
                 >
                     <Table
-                        columns={pollColumns}
-                        dataSource={recentPolls}
-                        pagination={false}
+                        columns={columns}
+                        dataSource={licences}
+                        pagination={{
+                            pageSize: 5,
+                            showSizeChanger: true,
+                            showTotal: (total) => `${total} députés`,
+                        }}
                         rowKey="id"
                     />
                 </Card>

@@ -24,11 +24,9 @@ import '../styles/HeaderAdmin.css';
 import {AuthContext} from "../providers/AuthProvider";
 
 const HeaderAdmin = memo(({
-                              appName = "Espace Citoyen",
-                              version = "2.2.0",
+                              appName = "Dashboard",
+                              version = "1.1.0",
                               onLogout = () => {},
-                              language = 'fr',
-                              onLanguageChange = () => {},
                               unreadNotifications = 0
                           }) => {
     const [notifications, setNotifications] = useState(unreadNotifications);
@@ -94,7 +92,7 @@ const HeaderAdmin = memo(({
                             className="me-2 brand-logo"
                         />
                         <span className="brand-text">
-              {appName} <strong className="brand-highlight">Admin+</strong>
+              {appName} <strong className="brand-highlight">Admin</strong>
               <small className="version-badge ms-2">v{version}</small>
             </span>
                     </Navbar.Brand>
@@ -103,11 +101,6 @@ const HeaderAdmin = memo(({
                 {/* Right-side controls */}
                 <div className="d-flex align-items-center controls-container">
                     {/* Language Selector */}
-                    <LanguageSelector
-                        language={language}
-                        onChange={onLanguageChange}
-                        className="me-2"
-                    />
 
                     {/* Notifications */}
                     <NotificationsDropdown
@@ -134,32 +127,6 @@ const HeaderAdmin = memo(({
         </Navbar>
     );
 });
-
-// Language Selector Component
-const LanguageSelector = memo(({ language, onChange, className }) => (
-    <Dropdown className={`language-selector ${className}`}>
-        <Dropdown.Toggle variant="transparent" className="language-toggle">
-            <FaGlobe className="me-1" />
-            <span>{language === 'fr' ? 'FR' : 'EN'}</span>
-        </Dropdown.Toggle>
-        <Dropdown.Menu className="language-menu">
-            <Dropdown.Item
-                active={language === 'fr'}
-                onClick={() => onChange('fr')}
-                className="language-item"
-            >
-                Français
-            </Dropdown.Item>
-            <Dropdown.Item
-                active={language === 'en'}
-                onClick={() => onChange('en')}
-                className="language-item"
-            >
-                English
-            </Dropdown.Item>
-        </Dropdown.Menu>
-    </Dropdown>
-));
 
 // Notifications Dropdown Component
 const NotificationsDropdown = memo(({ count, items, className }) => {
@@ -288,8 +255,6 @@ HeaderAdmin.propTypes = {
     }),
     version: PropTypes.string,
     onLogout: PropTypes.func,
-    language: PropTypes.oneOf(['fr', 'en']),
-    onLanguageChange: PropTypes.func,
     unreadNotifications: PropTypes.number
 };
 
@@ -300,10 +265,8 @@ HeaderAdmin.defaultProps = {
         email: "admin@gouv.cd",
         role: "Administrateur"
     },
-    version: "2.2.0",
+    version: "1.1.0",
     onLogout: () => {},
-    language: 'fr',
-    onLanguageChange: () => {},
     unreadNotifications: 0
 };
 

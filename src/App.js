@@ -3,47 +3,21 @@ import Dashboard from './pages/Dashboard'
 import Login from './pages/auth/Login'
 import Sidebar from "./components/Sidebar";
 import '../src/App.css'
-import Deputes from "./pages/Deputes";
-import Actualites from "./pages/Actualites";
-import SessionsDirect from "./pages/SessionsDirect";
+import Users from "./pages/Users";
 import DocumentsOfficiels from "./pages/DocumentsOfficiels";
-import Messages from "./pages/Messages";
+import Notifications from "./pages/Notifications";
 import ProfileAdmin from "./pages/ProfileAdmin";
-import Assemblee from "./pages/Assemblee";
 import SettingsPage from "./pages/SettingsPage";
-import {EventProvider} from "./providers/EventProvider";
-import {ActualityProvider} from "./providers/ActualityProvider";
-import {AssemblyProvider} from "./providers/AssemblyProvider";
-import {DeputyProvider} from "./providers/DeputyProvider";
-import {BureauProvider} from "./providers/BureauProvider";
-import AgendaAdmin from "./pages/AgendaAdmin";
-import {AgendaEventProvider} from "./providers/AgendaEventProvider";
+import {UserProvider} from "./providers/UserProvider";
 import {AuthProvider} from "./providers/AuthProvider";
-import SurveyAdmin from "./pages/SurveyAdmin";
-import {ActivityProvider} from "./providers/ActivityProvider";
-import {PlenarySessionProvider} from "./providers/PlenarySessionProvider";
 
 
 function AppWrapper() {
     return (
         <AuthProvider>
-            <AssemblyProvider>
-                <DeputyProvider>
-                    <BureauProvider>
-                        <ActivityProvider>
-                            <PlenarySessionProvider>
-                                <ActualityProvider>
-                                    <AgendaEventProvider>
-                                        <EventProvider>
-                                            <App />
-                                        </EventProvider>
-                                    </AgendaEventProvider>
-                                </ActualityProvider>
-                            </PlenarySessionProvider>
-                        </ActivityProvider>
-                    </BureauProvider>
-                </DeputyProvider>
-            </AssemblyProvider>
+            <UserProvider>
+                <App />
+            </UserProvider>
         </AuthProvider>
     );
 }
@@ -61,14 +35,9 @@ function App() {
                         </div>
                     </div>
                 } />
-                <Route path="/deputes" element={<Deputes />} />
-                <Route path="/assemblee" element={<Assemblee />} />
-                <Route path="/agenda" element={<AgendaAdmin />} />
-                <Route path="/actualites" element={<Actualites />} />
-                <Route path="/sessions" element={<SessionsDirect />} />
-                <Route path="/documents" element={<DocumentsOfficiels />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/sondages" element={<SurveyAdmin />} />
+                <Route path="/users" element={<Users />} />
+                <Route path="/rapports" element={<DocumentsOfficiels />} />
+                <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile" element={<ProfileAdmin />} />
                 <Route path="/settings" element={<SettingsPage />} />
             </Routes>

@@ -5,23 +5,35 @@ import {
     Modal, List, Timeline, Dropdown, Menu, Upload, Tooltip
 } from 'antd';
 import {
-    SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
-    SyncOutlined, UserOutlined, FileExcelOutlined, FilePdfOutlined,
-    InfoCircleOutlined, AppstoreOutlined, UnorderedListOutlined,
-    HistoryOutlined, ArrowDownOutlined, CheckOutlined, SendOutlined, CloseOutlined, ArrowLeftOutlined
+    SearchOutlined,
+    PlusOutlined,
+    EditOutlined,
+    DeleteOutlined,
+    SyncOutlined,
+    UserOutlined,
+    FileExcelOutlined,
+    FilePdfOutlined,
+    InfoCircleOutlined,
+    AppstoreOutlined,
+    UnorderedListOutlined,
+    HistoryOutlined,
+    ArrowDownOutlined,
+    CheckOutlined,
+    SendOutlined,
+    CloseOutlined,
+    ArrowLeftOutlined,
+    PlusCircleOutlined, MinusCircleOutlined
 } from '@ant-design/icons';
 import '../styles/Deputes.css';
 import { Form } from 'antd';
-import {AssemblyContext} from "../providers/AssemblyProvider";
-import {DeputyContext} from "../providers/DeputyProvider";
-import {BureauContext} from "../providers/BureauProvider";
+import {DeputyContext} from "../providers/UserProvider";
 
 const { Option } = Select;
 const { Search } = Input;
 const { TabPane } = Tabs;
 const { Meta } = Card;
 
-const Deputes = () => {
+const Users = () => {
     // États
     const [, setSearchText] = useState('');
     const [selectedRegion, setSelectedRegion] = useState(null);
@@ -35,8 +47,8 @@ const Deputes = () => {
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const { deputies,createDeputy,publishDeputy,deleteDeputy,onCreateDeputy,onUpdateDeputy } = useContext(DeputyContext);
-    const { provincialAssembly } = useContext(AssemblyContext);
-    const {commissions} = useContext(BureauContext);
+    const provincialAssembly = {};
+    const [commissions, setCommissions] = useState( []);
     const [newDepute, setNewDepute] = useState({
         nom: '',
         circonscription: '',
@@ -138,120 +150,138 @@ const Deputes = () => {
         }
     };
 
+    function showUserDetails(record) {
+        console.log("Afficher les détails de l'utilisateur :", record);
+    }
+
+    function assignLicense(record) {
+        console.log("Attribution de licence à l'utilisateur :", record);
+    }
+
+    function removeLicense(record) {
+        console.log("Suppression de licence pour l'utilisateur :", record);
+    }
+
+    function editUser(record) {
+        console.log("Modification de l'utilisateur :", record);
+    }
+
+    function deleteUser(record) {
+        console.log("Suppression de l'utilisateur :", record);
+    }
+
+
 
     // Colonnes du tableau
     const columns = [
         {
-            title: 'Député',
-            dataIndex: 'nom',
-            key: 'nom',
+            title: 'Utilisateur',
+            dataIndex: 'DisplayName',
+            key: 'DisplayName',
             render: (text, record) => (
                 <Space>
                     <Avatar
                         size="large"
-                        src={record.photo}
                         icon={<UserOutlined />}
                         style={{
                             backgroundColor: '#1a3a8f',
-                            border: record.published ? '2px solid #52c41a' : 'none'
+                            color: '#fff'
                         }}
                     />
                     <div>
                         <div style={{ fontWeight: 500 }}>{text}</div>
-                        <div style={{ fontSize: 12, color: '#666' }}>{record.circonscription}</div>
+                        <div style={{ fontSize: 12, color: '#666' }}>{record.UserPrincipalName}</div>
                     </div>
                 </Space>
+            )
+        },
+        {
+            title: 'Licencié',
+            dataIndex: 'isLicensed',
+            key: 'isLicensed',
+            render: (licensed) => (
+                <Tag color={licensed ? 'green' : 'red'}>
+                    {licensed ? 'Oui' : 'Non'}
+                </Tag>
             ),
+            filters: [
+                { text: 'Oui', value: true },
+                { text: 'Non', value: false }
+            ],
+            onFilter: (value, record) => record.isLicensed === value
         },
         {
-            title: 'Parti',
-            dataIndex: 'parti',
-            key: 'parti',
-            render: (parti) => <Tag color={getPartiColor(parti)}>{parti}</Tag>,
-            filters: partis.map(p => ({ text: p, value: p })),
-            onFilter: (value, record) => record.parti === value,
+            title: 'Licences',
+            dataIndex: 'Licenses',
+            key: 'Licenses',
+            render: (licenses) => {
+                if (!licenses || licenses.length === 0) return <Tag color="default">Aucune</Tag>;
+                return licenses.map((lic, idx) => (
+                    <Tag color="blue" key={idx}>{lic.AccountSkuId}</Tag>
+                ));
+            }
         },
         {
-            title: 'Région',
-            dataIndex: 'region',
-            key: 'region',
-            filters: regions.map(r => ({ text: r, value: r })),
-            onFilter: (value, record) => record.region === value,
-        },
-        {
-            title: 'Commission',
-            dataIndex: 'commission',
-            key: 'commission',
-            filters: commissions.map(c => ({ text: c, value: c })),
-            onFilter: (value, record) => record.commission === value,
-        },
-        {
-            title: 'Statut',
-            dataIndex: 'statut',
-            key: 'statut',
-            render: (statut, record) => (
-                <Badge
-                    status={statut === 'actif' ? 'success' : statut === 'inactif' ? 'error' : 'warning'}
-                    text={
-                        <span>
-                            {statut === 'actif' ? 'Actif' : statut === 'inactif' ? 'Inactif' : 'En congé'}
-                            {record.published && (
-                                <Tag icon={<CheckOutlined />} color="success" style={{ marginLeft: 8 }}>
-                                    Publié
-                                </Tag>
-                            )}
-                        </span>
-                    }
-                />
-            ),
+            title: 'Services actifs',
+            key: 'ServiceStatus',
+            render: (_, record) => {
+                const services = record.Licenses?.flatMap(lic =>
+                    lic.ServiceStatus?.filter(s => s.ServicePlan.ProvisioningStatus === 'Success')
+                ) || [];
+                return services.map((s, i) => (
+                    <Tag color="green" key={i}>{s.ServicePlan.ServiceName}</Tag>
+                ));
+            }
         },
         {
             title: 'Actions',
             key: 'actions',
             render: (_, record) => (
                 <Space size="middle">
-                    <Tooltip title="Détails">
+                    <Tooltip title="Détails utilisateur">
                         <Button
                             type="link"
                             icon={<InfoCircleOutlined />}
-                            onClick={() => showDeputeDetails(record)}
+                            onClick={() => showUserDetails(record)}
                         />
                     </Tooltip>
-                    <Tooltip title="Modifier">
+                    <Tooltip title="Attribuer une licence">
+                        <Button
+                            type="link"
+                            icon={<PlusCircleOutlined />}
+                            onClick={() => assignLicense(record)}
+                            disabled={record.isLicensed}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Retirer licence">
+                        <Button
+                            type="link"
+                            icon={<MinusCircleOutlined />}
+                            onClick={() => removeLicense(record)}
+                            disabled={!record.isLicensed}
+                            danger
+                        />
+                    </Tooltip>
+                    <Tooltip title="Modifier l'utilisateur">
                         <Button
                             type="link"
                             icon={<EditOutlined />}
-                            onClick={() => handleEdit(record.id)}
+                            onClick={() => editUser(record)}
                         />
                     </Tooltip>
-                    <Tooltip title="Supprimer">
+                    <Tooltip title="Supprimer l'utilisateur">
                         <Popconfirm
-                            title="Êtes-vous sûr de vouloir supprimer ce député ?"
-                            onConfirm={() => handleDelete(record.id)}
+                            title="Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
+                            onConfirm={() => deleteUser(record)}
                             okText="Oui"
                             cancelText="Non"
                         >
                             <Button type="link" danger icon={<DeleteOutlined />} />
                         </Popconfirm>
                     </Tooltip>
-                    <Tooltip title="Historique">
-                        <Button
-                            type="link"
-                            icon={<HistoryOutlined />}
-                            onClick={() => showHistory(record.id)}
-                        />
-                    </Tooltip>
-                    <Tooltip title={record.published ? "Retirer de la publication" : "Publier"}>
-                        <Button
-                            type="link"
-                            icon={record.published ? <CloseOutlined /> : <SendOutlined />}
-                            onClick={() => handleTogglePublish(record.id)}
-                            style={{ color: record.published ? '#ff4d4f' : '#52c41a' }}
-                        />
-                    </Tooltip>
                 </Space>
-            ),
-        },
+            )
+        }
     ];
 
     // Fonctions utilitaires
@@ -862,4 +892,4 @@ const Deputes = () => {
     );
 };
 
-export default Deputes;
+export default Users;
