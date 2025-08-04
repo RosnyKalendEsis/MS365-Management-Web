@@ -20,6 +20,7 @@ const AuthProvider = ({ children }) => {
             if (response.status === 200) {
                 sessionStorage.setItem('token', response.data.token);
                 sessionStorage.setItem('user', JSON.stringify(response.data.user));
+                console.log("Je suis la personne connecte: ",response.data.user);
                 setUser(response.data.user);
                 setIsAuthenticate(true);
             }

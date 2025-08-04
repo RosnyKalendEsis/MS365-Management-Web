@@ -5,11 +5,12 @@ import {
     TeamOutlined,
     MessageOutlined,
     FileTextOutlined,
-    UserOutlined,
+    UserOutlined, NotificationOutlined,
 } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 import '../styles/sidebar.css';
 import {AuthContext} from "../providers/AuthProvider";
+import {useNotification} from "../providers/AlertProvider";
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -24,6 +25,7 @@ const Sidebar = ({
     const [collapsed, ] = useState(false);
     const location = useLocation();
     const {user}= useContext(AuthContext);
+    const {unreadNotifications} = useNotification();
 
     const menuItems = [
         {
@@ -44,12 +46,13 @@ const Sidebar = ({
         },
         {
             key: 'notifications',
-            icon: (
-                <Badge count={unreadMessages} size="small" offset={[5, 0]}>
-                    <MessageOutlined />
-                </Badge>
+            icon: <NotificationOutlined />,
+            label: (
+                <Link to="/notifications" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    Notifications
+                    <Badge count={unreadNotifications} overflowCount={99} showZero={false} />
+                </Link>
             ),
-            label: <Link to="/notifications">Notifications</Link>,
         }
     ];
 
@@ -63,18 +66,6 @@ const Sidebar = ({
             className="admin-sidebar"
             theme="light"
         >
-            {/* Logo et bouton de réduction */}
-            {/*<div className="sidebar-header">*/}
-            {/*    <div className="sidebar-logo-container">*/}
-            {/*        <Link to="/dashboard">*/}
-            {/*            {!collapsed && (*/}
-            {/*                <Text strong className="app-name">*/}
-            {/*                    {appName}*/}
-            {/*                </Text>*/}
-            {/*            )}*/}
-            {/*        </Link>*/}
-            {/*    </div>*/}
-            {/*</div>*/}
 
             {/* Profil utilisateur */}
             <div className={`sidebar-profile ${collapsed ? 'collapsed' : ''}`}>

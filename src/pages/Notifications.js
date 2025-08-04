@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     Card,
     List,
@@ -34,6 +34,7 @@ import {
 import Search from "antd/es/input/Search";
 import moment from "moment";
 import '../styles/Message.css'
+import {useNotification} from "../providers/AlertProvider";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -46,46 +47,14 @@ const Notifications = () => {
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [isComposing, setIsComposing] = useState(false);
     const [form] = Form.useForm();
+    const {notifications,markAsRead} = useNotification();
 
     // Données des messages
-    const [messages, setMessages] = useState([
-        {
-            id: 1,
-            from: 'ministre@interieur.gouv',
-            to: 'admin@assemblee.rdc',
-            subject: 'Urgent: Sécurité session plénière',
-            content: 'Nous devons renforcer les mesures de sécurité pour la session du 15 juillet...',
-            date: '2023-07-10 14:30',
-            read: false,
-            starred: true,
-            labels: ['urgent', 'securité'],
-            attachments: ['security_protocol.pdf']
-        },
-        {
-            id: 2,
-            from: 'secretariat@assemblee.rdc',
-            to: 'admin@assemblee.rdc',
-            subject: 'Ordre du jour confirmé',
-            content: 'Veuillez trouver ci-joint l\'ordre du jour définitif...',
-            date: '2023-07-09 09:15',
-            read: true,
-            starred: false,
-            labels: ['procedure'],
-            attachments: ['agenda_july15.docx']
-        },
-        {
-            id: 3,
-            from: 'president@assemblee.rdc',
-            to: 'admin@assemblee.rdc',
-            subject: 'Réunion bureau',
-            content: 'Merci de confirmer votre disponibilité pour la réunion...',
-            date: '2023-07-08 16:45',
-            read: true,
-            starred: true,
-            labels: ['interne'],
-            attachments: []
-        }
-    ]);
+    const [messages, setMessages] = useState(notifications);
+
+    useEffect(() => {
+        setMessages(notifications);
+    },[notifications])
 
     // Options
     const expediteurs = [
@@ -114,11 +83,6 @@ const Notifications = () => {
         message.success('Message supprimé');
     };
 
-    const markAsRead = (id) => {
-        setMessages(messages.map(msg =>
-            msg.id === id ? { ...msg, read: true } : msg
-        ));
-    };
 
     const handleReply = () => {
         setIsComposing(true);
@@ -150,8 +114,8 @@ const Notifications = () => {
             msg.content.toLowerCase().includes(searchText.toLowerCase());
 
         if (activeTab === 'inbox') return matchesSearch;
-        if (activeTab === 'starred') return matchesSearch && msg.starred;
         if (activeTab === 'unread') return matchesSearch && !msg.read;
+        if (activeTab === 'read') return matchesSearch && msg.read;
         return matchesSearch;
     });
 
@@ -218,8 +182,7 @@ const Notifications = () => {
                         >
                             <TabPane tab="Boîte de réception" key="inbox" />
                             <TabPane tab="Non lus" key="unread" />
-                            <TabPane tab="Favoris" key="starred" />
-                            <TabPane tab="Envoyés" key="sent" />
+                            <TabPane tab="Lus" key="read" />
                         </Tabs>
 
                         <List
@@ -287,9 +250,6 @@ const Notifications = () => {
                                 }
                                 extra={
                                     <Space>
-                                        <Button icon={<EditOutlined />} onClick={handleReply}>
-                                            Répondre
-                                        </Button>
                                         <Popconfirm
                                             title="Supprimer ce message ?"
                                             onConfirm={() => deleteMessage(selectedMessage.id)}

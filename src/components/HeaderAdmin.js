@@ -22,14 +22,14 @@ import PropTypes from 'prop-types';
 import logo from '../assets/images/admin-logo.png';
 import '../styles/HeaderAdmin.css';
 import {AuthContext} from "../providers/AuthProvider";
+import {useNotification} from "../providers/AlertProvider";
 
 const HeaderAdmin = memo(({
                               appName = "Dashboard",
                               version = "1.1.0",
                               onLogout = () => {},
-                              unreadNotifications = 0
                           }) => {
-    const [notifications, setNotifications] = useState(unreadNotifications);
+    const {notifications,unreadNotifications, notificationItems} = useNotification();
     const [showOffcanvas, setShowOffcanvas] = useState(false);
     const [, setActiveLink] = useState('dashboard');
     const navigate = useNavigate();
@@ -39,40 +39,6 @@ const HeaderAdmin = memo(({
         logout();
         navigate('/');
     }, [logout, navigate]);
-    // Simulate real-time notifications
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setNotifications(prev => Math.max(0, prev + Math.floor(Math.random() * 2 - 0.8)));
-        }, 30000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const notificationItems = [
-        {
-            id: 1,
-            icon: <FaUsers size={14} />,
-            iconBg: "info",
-            text: "5 nouveaux utilisateurs inscrits",
-            time: "Il y a 10 minutes",
-            read: false
-        },
-        {
-            id: 2,
-            icon: <FaPoll size={14} />,
-            iconBg: "warning",
-            text: 'Sondage "Infrastructures" clôturé',
-            time: "Il y a 1 heure",
-            read: true
-        },
-        {
-            id: 3,
-            icon: <FaUserShield size={14} />,
-            iconBg: "danger",
-            text: "Nouvelle demande de vérification",
-            time: "Il y a 2 heures",
-            read: false
-        }
-    ];
 
     return (
         <Navbar bg="primary" variant="dark" expand="lg" className="admin-navbar" sticky="top">
@@ -104,7 +70,7 @@ const HeaderAdmin = memo(({
 
                     {/* Notifications */}
                     <NotificationsDropdown
-                        count={notifications}
+                        count={unreadNotifications}
                         items={notificationItems}
                         className="me-3"
                     />
@@ -131,7 +97,6 @@ const HeaderAdmin = memo(({
 // Notifications Dropdown Component
 const NotificationsDropdown = memo(({ count, items, className }) => {
     const [unreadCount, setUnreadCount] = useState(count);
-
     const markAsRead = useCallback((id) => {
         // In a real app, you would update the backend here
         setUnreadCount(prev => Math.max(0, prev - 1));

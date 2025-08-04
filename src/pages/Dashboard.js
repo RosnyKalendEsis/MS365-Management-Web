@@ -34,7 +34,6 @@ import {
 } from '@ant-design/icons';
 import HeaderAdmin from "../components/HeaderAdmin";
 import '../styles/admin-layout.css';
-import { DeputyContext } from '../providers/UserProvider';
 
 const { Option } = Select;
 
@@ -382,30 +381,18 @@ export default function Dashboard() {
     ];
 
 
-    // Données pour les sondages récents (statiques comme avant)
-    const recentPolls = [
-        // { id: 1, title: "Réforme constitutionnelle", date: "15/06/2023", participants: 1250, status: "active", target: "Députés" },
-        // { id: 2, title: "Budget national 2024", date: "10/06/2023", participants: 892, status: "closed", target: "Public" },
-        // { id: 3, title: "Politique éducative", date: "05/06/2023", participants: 756, status: "closed", target: "Députés" },
-        // { id: 4, title: "Infrastructures urbaines", date: "01/06/2023", participants: 1843, status: "active", target: "Public" }
-    ];
-
-    // Activité récente (peut aussi être rendue dynamique si nécessaire)
-    const recentActivity = [
-        // { id: 1, time: "10:45", user: "Président Collégial", action: "a publié un nouveau projet de loi", entity: "Réforme constitutionnelle" },
-        // { id: 2, time: "09:30", user: "Admin Technique", action: "a ajouté un nouveau député", entity: "Jean K. (Kinshasa)" },
-        // { id: 3, time: "Hier", user: "Secrétaire Général", action: "a planifié une session", entity: "Session plénière du 20/06" },
-        // { id: 4, time: "Hier", user: "Admin Content", action: "a publié une actualité", entity: "Communiqué officiel" }
-    ];
-
     // Données pour les graphiques (restent statiques pour l'exemple)
     const activityData = [
-        { name: 'Jan', participations: 400, utilisateurs: 240 },
-        { name: 'Fév', participations: 300, utilisateurs: 139 },
-        { name: 'Mar', participations: 600, utilisateurs: 380 },
-        { name: 'Avr', participations: 200, utilisateurs: 120 },
-        { name: 'Mai', participations: 500, utilisateurs: 280 },
-        { name: 'Juin', participations: 800, utilisateurs: 450 },
+        {
+            name: "Licensed Users",
+            participations: licences.filter(l => l.isLicensed).length,
+            utilisateurs: licences.length,
+        },
+        {
+            name: "Unlicensed Users",
+            participations: licences.filter(l => !l.isLicensed).length,
+            utilisateurs: licences.length,
+        },
     ];
 
     const participationData = [
@@ -416,68 +403,6 @@ export default function Dashboard() {
     ];
 
     const COLORS = ['#1890ff', '#52c41a', '#faad14', '#722ed1'];
-
-    // Colonnes pour le tableau des sondages (identique)
-    const pollColumns = [
-        {
-            title: 'Titre',
-            dataIndex: 'title',
-            key: 'title',
-            render: (text) => <a href='https://localhost://'>{text}</a>,
-        },
-        {
-            title: 'Date',
-            dataIndex: 'date',
-            key: 'date',
-        },
-        {
-            title: 'Participants',
-            dataIndex: 'participants',
-            key: 'participants',
-            render: (text) => text.toLocaleString(),
-        },
-        {
-            title: 'Cible',
-            dataIndex: 'target',
-            key: 'target',
-            render: (text) => (
-                <Tag color={text === 'Public' ? 'geekblue' : 'purple'}>
-                    {text}
-                </Tag>
-            ),
-        },
-        {
-            title: 'Statut',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status) => (
-                <Tag
-                    icon={status === 'active' ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
-                    color={status === 'active' ? 'success' : 'default'}
-                >
-                    {status === 'active' ? 'Actif' : 'Clôturé'}
-                </Tag>
-            ),
-        },
-        {
-            title: 'Progression',
-            key: 'progress',
-            render: (_, record) => (
-                <Progress
-                    percent={record.status === 'active' ? 65 : 100}
-                    status={record.status === 'active' ? 'active' : 'normal'}
-                    strokeColor={record.status === 'active' ? '#1890ff' : '#52c41a'}
-                />
-            ),
-        },
-        {
-            title: '',
-            key: 'action',
-            render: () => (
-                <Button type="text" icon={<MoreOutlined />} />
-            ),
-        },
-    ];
 
     const handleLogout = () => {
         // Logique de déconnexion
@@ -530,7 +455,7 @@ export default function Dashboard() {
                     ))}
                 </Row>
                 {/* Graphiques et activité */}
-                <Row gutter={[16, 16]} className="charts-row mt-4">
+                <Row gutter={[16, 16]} className="charts-row mt-4 mb-4">
                     <Col xs={24} lg={16}>
                         <Card
                             title="Activité des Consultations"
@@ -594,105 +519,6 @@ export default function Dashboard() {
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>
-                        </Card>
-                    </Col>
-                </Row>
-
-                {/* Activité récente et mini-statistiques */}
-                <Row gutter={[16, 16]} className="activity-row mt-4 mb-4">
-                    <Col xs={24} lg={16}>
-                        <Card title="Activité Récente">
-                            <div className="recent-activity">
-                                {recentActivity.map((activity) => (
-                                    <div key={activity.id} className="activity-item">
-                                        <div className="activity-time">{activity.time}</div>
-                                        <div className="activity-avatar">
-                                            <div className="avatar-circle">
-                                                {activity.user.charAt(0)}
-                                            </div>
-                                        </div>
-                                        <div className="activity-content">
-                                            <div className="activity-user">{activity.user}</div>
-                                            <div className="activity-action">{activity.action}</div>
-                                            {activity.entity && (
-                                                <div className="activity-entity">{activity.entity}</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <Divider />
-                            <div className="text-center">
-                                <Button type="link">Voir toutes les activités</Button>
-                            </div>
-                        </Card>
-                    </Col>
-                    <Col xs={24} lg={8}>
-                        <Row gutter={[16, 16]}>
-                            <Col span={24}>
-                                <Card className="metric-card">
-                                    <div className="metric-content">
-                                        <div className="metric-icon" style={{ backgroundColor: '#1890ff20', color: '#1890ff' }}>
-                                            <UserOutlined />
-                                        </div>
-                                        <div className="metric-text">
-                                            <div className="metric-title">Engagement</div>
-                                            <div className="metric-value">0%</div>
-                                            <div className="metric-description">Taux de participation moyen</div>
-                                        </div>
-                                    </div>
-                                </Card>
-                            </Col>
-                            <Col span={24}>
-                                <Card className="metric-card">
-                                    <div className="metric-content">
-                                        <div className="metric-icon" style={{ backgroundColor: '#52c41a20', color: '#52c41a' }}>
-                                            <FileTextOutlined />
-                                        </div>
-                                        <div className="metric-text">
-                                            <div className="metric-title">Documents</div>
-                                            <div className="metric-value">0</div>
-                                            <div className="metric-description">Nouveaux cette semaine</div>
-                                        </div>
-                                    </div>
-                                </Card>
-                            </Col>
-                        </Row>
-                    </Col>
-                </Row>
-                <Row gutter={[16, 16]} className="kpi-row mt-4 mb-4">
-                    <Col span={24}>
-                        <Card title="Indicateurs Clés">
-                            <Row gutter={16}>
-                                <Col xs={24} sm={12} md={6}>
-                                    <div className="kpi-item">
-                                        <div className="kpi-value">0%</div>
-                                        <div className="kpi-label">Taux de réponse</div>
-                                        <Progress percent={0} status="active" showInfo={false} strokeColor="#52c41a" />
-                                    </div>
-                                </Col>
-                                <Col xs={24} sm={12} md={6}>
-                                    <div className="kpi-item">
-                                        <div className="kpi-value">0</div>
-                                        <div className="kpi-label">Satisfaction (sur 0)</div>
-                                        <Progress percent={0} status="active" showInfo={false} strokeColor="#1890ff" />
-                                    </div>
-                                </Col>
-                                <Col xs={24} sm={12} md={6}>
-                                    <div className="kpi-item">
-                                        <div className="kpi-value">0h</div>
-                                        <div className="kpi-label">Temps moyen de réponse</div>
-                                        <Progress percent={0} status="active" showInfo={false} strokeColor="#faad14" />
-                                    </div>
-                                </Col>
-                                <Col xs={24} sm={12} md={6}>
-                                    <div className="kpi-item">
-                                        <div className="kpi-value">0%</div>
-                                        <div className="kpi-label">Engagement des députés</div>
-                                        <Progress percent={0} status="active" showInfo={false} strokeColor="#722ed1" />
-                                    </div>
-                                </Col>
-                            </Row>
                         </Card>
                     </Col>
                 </Row>

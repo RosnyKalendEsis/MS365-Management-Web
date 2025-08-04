@@ -25,6 +25,10 @@ export default function LoginPremium() {
                     navigate('/dashboard');
                     setError("")
                     break;
+                case "SUPER_ADMIN":
+                    navigate('/dashboard');
+                    setError("")
+                    break;
                 default:
                     console.error("Rôle non pris en charge:", user.role);
                     return;

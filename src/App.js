@@ -10,13 +10,16 @@ import ProfileAdmin from "./pages/ProfileAdmin";
 import SettingsPage from "./pages/SettingsPage";
 import {UserProvider} from "./providers/UserProvider";
 import {AuthProvider} from "./providers/AuthProvider";
+import {AlertProvider} from "./providers/AlertProvider";
 
 
 function AppWrapper() {
     return (
         <AuthProvider>
             <UserProvider>
-                <App />
+                <AlertProvider>
+                    <App />
+                </AlertProvider>
             </UserProvider>
         </AuthProvider>
     );

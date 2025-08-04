@@ -27,6 +27,7 @@ import {
 import '../styles/Deputes.css';
 import { Form } from 'antd';
 import {DeputyContext} from "../providers/UserProvider";
+import UserStats from "../components/UserStats";
 
 const { Option } = Select;
 const { Search } = Input;
@@ -36,30 +37,27 @@ const { Meta } = Card;
 const Users = () => {
     // États
     const [, setSearchText] = useState('');
-    const [selectedRegion, setSelectedRegion] = useState(null);
-    const [selectedParti, setSelectedParti] = useState(null);
-    const [selectedStatut, setSelectedStatut] = useState(null);
-    const [viewMode, setViewMode] = useState('list');
-    const [selectedDepute, setSelectedDepute] = useState(null);
+    const [selectedUser, setSelectedUser] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
     const [, setActiveTab] = useState('1');
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-    const { deputies,createDeputy,publishDeputy,deleteDeputy,onCreateDeputy,onUpdateDeputy } = useContext(DeputyContext);
-    const provincialAssembly = {};
-    const [commissions, setCommissions] = useState( []);
-    const [newDepute, setNewDepute] = useState({
-        nom: '',
-        circonscription: '',
-        region: '',
-        parti: '',
-        commission: '',
-        statut: 'actif',
-        telephone: '',
-        email: '',
-        published: false
+    const { deputies,createUser,publishDeputy} = useContext(DeputyContext);
+    const [newUser, setNewUser] = useState({
+        displayName: '',
+        userPrincipalName: '',
+        jobTitle: '',
+        department: '',
+        officeLocation: '',
+        phoneNumber: '',
+        status: 'ACTIVE',
+        type: 'USER_SIMPLE',
+        password: '',
+        role: '',
     });
+
+
 
     // Données des députés
     const [deputes, setDeputes] = useState(deputies);
@@ -72,24 +70,6 @@ const Users = () => {
         { id: 1, date: '2023-06-15 10:30', action: 'Modification', champ: 'Commission', ancien: 'Santé', nouveau: 'Budget' },
         { id: 2, date: '2023-05-20 14:15', action: 'Ajout', champ: 'Député', nouveau: 'Jean Kabila' },
     ];
-
-    // Options pour les filtres
-    const regions = ['Kinshasa', 'Kongo-Central', 'Nord-Kivu', 'Haut-Katanga', 'Kasaï-Oriental'];
-    const partis = ['UDPS', 'UNC', 'AFDC', 'MLC'];
-    const statuts = ['actif', 'inactif', 'en congé'];
-    //const commissions = ['Budget et Finances', 'Affaires Étrangères', 'Défense Nationale', 'Santé Publique'];
-
-    // Menu déroulant pour export
-    const exportMenu = (
-        <Menu>
-            <Menu.Item key="excel" icon={<FileExcelOutlined />}>
-                Exporter en Excel
-            </Menu.Item>
-            <Menu.Item key="pdf" icon={<FilePdfOutlined />}>
-                Exporter en PDF
-            </Menu.Item>
-        </Menu>
-    );
 
     // Sélection des lignes
     const onSelectChange = (selectedRowKeys) => {
@@ -151,15 +131,8 @@ const Users = () => {
     };
 
     function showUserDetails(record) {
-        console.log("Afficher les détails de l'utilisateur :", record);
-    }
-
-    function assignLicense(record) {
-        console.log("Attribution de licence à l'utilisateur :", record);
-    }
-
-    function removeLicense(record) {
-        console.log("Suppression de licence pour l'utilisateur :", record);
+        setSelectedUser(record);
+        setIsModalVisible(true);
     }
 
     function editUser(record) {
@@ -170,68 +143,130 @@ const Users = () => {
         console.log("Suppression de l'utilisateur :", record);
     }
 
+    const [users, setUsers] = useState([
+        {
+            id: "1",
+            displayName: "Jean Dupont",
+            userPrincipalName: "j.dupont@entreprise.com",
+            jobTitle: "Développeur",
+            department: "Informatique",
+            officeLocation: "Paris",
+            phoneNumber: "+33 6 12 34 56 78",
+            isLicensed: true,
+            isLicenseExpired: false,
+            createdDate: "2025-08-01T10:30:00Z",
+            status: "ACTIVE",
+            manager: {
+                displayName: "Sophie Martin",
+                userPrincipalName: "s.martin@entreprise.com"
+            },
+            licenses: []
+        },
+        {
+            id: "2",
+            displayName: "Alice Durand",
+            userPrincipalName: "a.durand@entreprise.com",
+            jobTitle: "Chef de projet",
+            department: "Gestion de projet",
+            officeLocation: "Lyon",
+            phoneNumber: "+33 6 98 76 54 32",
+            isLicensed: true,
+            isLicenseExpired: false,
+            createdDate: "2025-07-20T09:00:00Z",
+            status: "ACTIVE",
+            manager: null,
+            licenses: []
+        },
+        {
+            id: "3",
+            displayName: "Marc Lemoine",
+            userPrincipalName: "m.lemoine@entreprise.com",
+            jobTitle: null,
+            department: null,
+            officeLocation: null,
+            phoneNumber: null,
+            isLicensed: false,
+            isLicenseExpired: true,
+            createdDate: "2025-06-15T14:45:00Z",
+            status: "INACTIVE",
+            manager: {
+                displayName: "Jean Dupont",
+                userPrincipalName: "j.dupont@entreprise.com"
+            },
+            licenses: []
+        }
+    ]);
+
+
 
 
     // Colonnes du tableau
     const columns = [
         {
             title: 'Utilisateur',
-            dataIndex: 'DisplayName',
-            key: 'DisplayName',
+            dataIndex: 'displayName',
+            key: 'displayName',
             render: (text, record) => (
                 <Space>
                     <Avatar
                         size="large"
                         icon={<UserOutlined />}
-                        style={{
-                            backgroundColor: '#1a3a8f',
-                            color: '#fff'
-                        }}
+                        style={{ backgroundColor: '#1a3a8f', color: '#fff' }}
                     />
                     <div>
                         <div style={{ fontWeight: 500 }}>{text}</div>
-                        <div style={{ fontSize: 12, color: '#666' }}>{record.UserPrincipalName}</div>
+                        <div style={{ fontSize: 12, color: '#666' }}>{record.userPrincipalName}</div>
                     </div>
                 </Space>
             )
         },
         {
-            title: 'Licencié',
-            dataIndex: 'isLicensed',
-            key: 'isLicensed',
-            render: (licensed) => (
-                <Tag color={licensed ? 'green' : 'red'}>
-                    {licensed ? 'Oui' : 'Non'}
+            title: 'Titre du poste',
+            dataIndex: 'jobTitle',
+            key: 'jobTitle',
+            render: (text) => text || <i style={{ color: '#aaa' }}>Non renseigné</i>
+        },
+        {
+            title: 'Département',
+            dataIndex: 'department',
+            key: 'department',
+            render: (text) => text || <i style={{ color: '#aaa' }}>Non renseigné</i>
+        },
+        {
+            title: 'Téléphone',
+            dataIndex: 'phoneNumber',
+            key: 'phoneNumber',
+            render: (text) => text || <i style={{ color: '#aaa' }}>Non renseigné</i>
+        },
+        {
+            title: 'Bureau',
+            dataIndex: 'officeLocation',
+            key: 'officeLocation',
+            render: (text) => text || <i style={{ color: '#aaa' }}>Non renseigné</i>
+        },
+        {
+            title: 'Date de création',
+            dataIndex: 'createdDate',
+            key: 'createdDate',
+            render: (date) => date ? new Date(date).toLocaleString() : '-'
+        },
+        {
+            title: 'Statut',
+            dataIndex: 'status',
+            key: 'status',
+            render: (status) => (
+                <Tag color={status === 'Active' ? 'green' : 'volcano'}>
+                    {status || 'Inconnu'}
                 </Tag>
-            ),
-            filters: [
-                { text: 'Oui', value: true },
-                { text: 'Non', value: false }
-            ],
-            onFilter: (value, record) => record.isLicensed === value
+            )
         },
         {
-            title: 'Licences',
-            dataIndex: 'Licenses',
-            key: 'Licenses',
-            render: (licenses) => {
-                if (!licenses || licenses.length === 0) return <Tag color="default">Aucune</Tag>;
-                return licenses.map((lic, idx) => (
-                    <Tag color="blue" key={idx}>{lic.AccountSkuId}</Tag>
-                ));
-            }
-        },
-        {
-            title: 'Services actifs',
-            key: 'ServiceStatus',
-            render: (_, record) => {
-                const services = record.Licenses?.flatMap(lic =>
-                    lic.ServiceStatus?.filter(s => s.ServicePlan.ProvisioningStatus === 'Success')
-                ) || [];
-                return services.map((s, i) => (
-                    <Tag color="green" key={i}>{s.ServicePlan.ServiceName}</Tag>
-                ));
-            }
+            title: 'Manager',
+            key: 'manager',
+            render: (_, record) =>
+                record.manager?.displayName
+                    ? `${record.manager.displayName} (${record.manager.userPrincipalName})`
+                    : <i style={{ color: '#aaa' }}>Aucun</i>
         },
         {
             title: 'Actions',
@@ -243,23 +278,6 @@ const Users = () => {
                             type="link"
                             icon={<InfoCircleOutlined />}
                             onClick={() => showUserDetails(record)}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Attribuer une licence">
-                        <Button
-                            type="link"
-                            icon={<PlusCircleOutlined />}
-                            onClick={() => assignLicense(record)}
-                            disabled={record.isLicensed}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Retirer licence">
-                        <Button
-                            type="link"
-                            icon={<MinusCircleOutlined />}
-                            onClick={() => removeLicense(record)}
-                            disabled={!record.isLicensed}
-                            danger
                         />
                     </Tooltip>
                     <Tooltip title="Modifier l'utilisateur">
@@ -284,69 +302,23 @@ const Users = () => {
         }
     ];
 
-    // Fonctions utilitaires
-    const getPartiColor = (parti) => {
-        const colors = {
-            'UDPS': 'geekblue',
-            'UNC': 'green',
-            'AFDC': 'orange',
-            'MLC': 'purple'
-        };
-        return colors[parti] || 'gray';
-    };
 
-    const showDeputeDetails = (depute) => {
-        setSelectedDepute(depute);
-        setIsModalVisible(true);
-    };
-
-    const showHistory = (id) => {
-        setIsHistoryVisible(true);
-    };
-
-    const handleEdit = (id) => {
-        const deputeToEdit = deputes.find(d => d.id === id);
-        setNewDepute(deputeToEdit);
-        setIsAddModalVisible(true);
-        message.info(`Modification du député ${id}`);
-    };
-
-    const handleDelete = async (id) => {
-        await deleteDeputy(id);
-        message.success('Député supprimé avec succès');
-    };
-
-    const handleTogglePublish = async (id) => {
-        try {
-            // Trouve le député courant
-            const deputy = deputes.find(d => d.id === id);
-            if (!deputy) return;
-
-            const newPublished = !deputy.published;
-
-            // Appelle l'API pour changer le statut
-            await publishDeputy(id, newPublished);
-
-            // Met à jour localement après succès
-            setDeputes(deputes.map(d =>
-                d.id === id ? { ...d, published: newPublished } : d
-            ));
-
-            message.success(`Député ${newPublished ? 'publié' : 'retiré de la publication'} avec succès`);
-        } catch (error) {
-            message.error("Erreur lors de la mise à jour du statut de publication");
-        }
-    };
 
 
     // Statistiques
+    const now = new Date();
+
     const stats = {
-        total: deputes.length,
-        actifs: deputes.filter(d => d.statut === 'actif').length,
-        regions: [...new Set(deputes.map(d => d.region))].length,
-        commissions: [...new Set(deputes.map(d => d.commission))].length,
-        published: deputes.filter(d => d.published).length,
+        total: users.length,
+        actifs: users.filter(user => user.status === 'ACTIVE').length,
+        departments: new Set(users.map(u => u.department).filter(Boolean)).size,
+        recent: users.filter(user => {
+            const created = new Date(user.createdDate);
+            const diffInDays = (now - created) / (1000 * 60 * 60 * 24);
+            return diffInDays <= 30; // créés il y a moins de 30 jours
+        }).length
     };
+
 
     return (
         <div className="deputes-page">
@@ -359,27 +331,15 @@ const Users = () => {
                 Retour
             </Button>
             <Card
-                title="Gestion des Députés"
+                title="Gestion des Utilisateur"
                 bordered={false}
-                extra={
-                    <Space>
-                        <span>Mode carte</span>
-                        <Switch
-                            checked={viewMode === 'list'}
-                            onChange={(checked) => setViewMode(checked ? 'list' : 'card')}
-                            checkedChildren={<UnorderedListOutlined />}
-                            unCheckedChildren={<AppstoreOutlined />}
-                        />
-                        <span>Mode liste</span>
-                    </Space>
-                }
             >
                 {/* Barre d'outils */}
                 <div style={{ marginBottom: 24 }}>
                     <Row gutter={[16, 16]} justify="space-between" align="middle">
                         <Col xs={24} sm={12} md={8} lg={6}>
                             <Search
-                                placeholder="Rechercher un député..."
+                                placeholder="Rechercher un utilisateur..."
                                 allowClear
                                 enterButton={<SearchOutlined />}
                                 size="large"
@@ -388,53 +348,10 @@ const Users = () => {
                         </Col>
                         <Col xs={24} sm={12} md={16} lg={18} style={{ textAlign: 'right' }}>
                             <Space>
-                                <Select
-                                    placeholder="Région"
-                                    style={{ width: 150 }}
-                                    onChange={setSelectedRegion}
-                                    allowClear
-                                    value={selectedRegion}
-                                >
-                                    {regions.map(region => (
-                                        <Option key={region} value={region}>{region}</Option>
-                                    ))}
-                                </Select>
-                                <Select
-                                    placeholder="Parti politique"
-                                    style={{ width: 180 }}
-                                    onChange={setSelectedParti}
-                                    allowClear
-                                    value={selectedParti}
-                                >
-                                    {partis.map(parti => (
-                                        <Option key={parti} value={parti}>{parti}</Option>
-                                    ))}
-                                </Select>
-                                <Select
-                                    placeholder="Statut"
-                                    style={{ width: 120 }}
-                                    onChange={setSelectedStatut}
-                                    allowClear
-                                    value={selectedStatut}
-                                >
-                                    {statuts.map(statut => (
-                                        <Option key={statut} value={statut}>
-                                            {statut === 'actif' ? 'Actif' : statut === 'inactif' ? 'Inactif' : 'En congé'}
-                                        </Option>
-                                    ))}
-                                </Select>
-                                <Dropdown overlay={exportMenu} trigger={['click']}>
-                                    <Button icon={<ArrowDownOutlined />}>
-                                        Exporter
-                                    </Button>
-                                </Dropdown>
                                 <Button
                                     icon={<SyncOutlined />}
                                     onClick={() => {
                                         setSearchText('');
-                                        setSelectedRegion(null);
-                                        setSelectedParti(null);
-                                        setSelectedStatut(null);
                                     }}
                                 >
                                     Réinitialiser
@@ -444,7 +361,7 @@ const Users = () => {
                                     icon={<PlusOutlined />}
                                     onClick={() => setIsAddModalVisible(true)}
                                 >
-                                    Ajouter
+                                    Ajouter un utilisateur
                                 </Button>
                             </Space>
                         </Col>
@@ -474,189 +391,82 @@ const Users = () => {
                     </div>
                 )}
 
-                {/* Statistiques */}
-                <div style={{ marginBottom: 24 }}>
-                    <Row gutter={16}>
-                        <Col xs={24} sm={12} md={6} lg={6}>
-                            <Card className="stats-card">
-                                <Statistic
-                                    title="Total députés"
-                                    value={stats.total}
-                                    prefix={<UserOutlined />}
-                                />
-                            </Card>
-                        </Col>
-                        <Col xs={24} sm={12} md={6} lg={6}>
-                            <Card className="stats-card">
-                                <Statistic
-                                    title="Députés actifs"
-                                    value={stats.actifs}
-                                    valueStyle={{ color: '#52c41a' }}
-                                />
-                            </Card>
-                        </Col>
-                        <Col xs={24} sm={12} md={6} lg={6}>
-                            <Card className="stats-card">
-                                <Statistic
-                                    title="Régions"
-                                    value={stats.regions}
-                                    prefix={<AppstoreOutlined />}
-                                />
-                            </Card>
-                        </Col>
-                        <Col xs={24} sm={12} md={6} lg={6}>
-                            <Card className="stats-card">
-                                <Statistic
-                                    title="Publiés"
-                                    value={stats.published}
-                                    valueStyle={{ color: '#1890ff' }}
-                                    prefix={<CheckOutlined />}
-                                />
-                            </Card>
-                        </Col>
-                    </Row>
-                </div>
 
-                {/* Contenu principal */}
-                {viewMode === 'list' ? (
-                    <Table
-                        columns={columns}
-                        dataSource={deputes}
-                        rowKey="id"
-                        bordered
-                        size="middle"
-                        rowSelection={rowSelection}
-                        pagination={{
-                            pageSize: 10,
-                            showSizeChanger: true,
-                            showTotal: (total) => `${total} députés`,
-                        }}
-                        className="deputes-table"
-                    />
-                ) : (
-                    <Row gutter={[16, 16]}>
-                        {deputes.map(depute => (
-                            <Col xs={24} sm={12} md={8} lg={6} key={depute.id}>
-                                <Card
-                                    className={`depute-card ${depute.published ? 'published' : ''}`}
-                                    cover={
-                                        <Avatar
-                                            size={128}
-                                            src={depute.photo}
-                                            icon={<UserOutlined />}
-                                            style={{
-                                                backgroundColor: '#1a3a8f',
-                                                margin: '16px auto',
-                                                display: 'block',
-                                                border: depute.published ? '2px solid #52c41a' : 'none'
-                                            }}
-                                        />
-                                    }
-                                    actions={[
-                                        <Tooltip title="Détails" key="info">
-                                            <InfoCircleOutlined onClick={() => showDeputeDetails(depute)} />
-                                        </Tooltip>,
-                                        <Tooltip title="Modifier" key="edit">
-                                            <EditOutlined onClick={() => handleEdit(depute.id)} />
-                                        </Tooltip>,
-                                        <Tooltip title="Historique" key="history">
-                                            <HistoryOutlined onClick={() => showHistory(depute.id)} />
-                                        </Tooltip>,
-                                        <Tooltip title={depute.published ? "Retirer" : "Publier"} key="publish">
-                                            {depute.published ? (
-                                                <CloseOutlined
-                                                    onClick={() => handleTogglePublish(depute.id)}
-                                                    style={{ color: '#ff4d4f' }}
-                                                />
-                                            ) : (
-                                                <SendOutlined
-                                                    onClick={() => handleTogglePublish(depute.id)}
-                                                    style={{ color: '#52c41a' }}
-                                                />
-                                            )}
-                                        </Tooltip>
-                                    ]}
-                                >
-                                    <Meta
-                                        title={depute.nom}
-                                        description={
-                                            <>
-                                                <div>{depute.circonscription}</div>
-                                                <Tag color={getPartiColor(depute.parti)}>{depute.parti}</Tag>
-                                                <Badge
-                                                    status={depute.statut === 'actif' ? 'success' : 'error'}
-                                                    text={depute.statut === 'actif' ? 'Actif' : 'Inactif'}
-                                                />
-                                                {depute.published && (
-                                                    <Tag
-                                                        icon={<CheckOutlined />}
-                                                        color="success"
-                                                        style={{ marginTop: 8, display: 'block' }}
-                                                    >
-                                                        Publié
-                                                    </Tag>
-                                                )}
-                                            </>
-                                        }
-                                    />
-                                </Card>
-                            </Col>
-                        ))}
-                    </Row>
-                )}
+                {/* Statistiques */}
+                <UserStats stats={stats} />
+
+                <Table
+                    columns={columns}
+                    dataSource={users}
+                    rowKey="id"
+                    bordered
+                    size="middle"
+                    rowSelection={rowSelection}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showTotal: (total) => `${total} utilisateurs`,
+                    }}
+                    className="deputes-table"
+                />
             </Card>
 
             {/* Modal de détail */}
             <Modal
-                title={`Fiche détaillée - ${selectedDepute?.nom}`}
+                title={`Fiche détaillée - ${selectedUser?.displayName}`}
                 visible={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
                 footer={null}
                 width={800}
-                className="depute-modal"
+                className="user-modal"
             >
-                {selectedDepute && (
+                {selectedUser && (
                     <Tabs defaultActiveKey="1" onChange={setActiveTab}>
                         <TabPane tab="Informations" key="1">
                             <Descriptions bordered column={2}>
-                                <Descriptions.Item label="Circonscription">{selectedDepute.circonscription}</Descriptions.Item>
-                                <Descriptions.Item label="Région">{selectedDepute.region}</Descriptions.Item>
-                                <Descriptions.Item label="Parti politique">
-                                    <Tag color={getPartiColor(selectedDepute.parti)}>{selectedDepute.parti}</Tag>
-                                </Descriptions.Item>
-                                <Descriptions.Item label="Commission">{selectedDepute.commission}</Descriptions.Item>
+                                <Descriptions.Item label="Nom complet">{selectedUser.displayName}</Descriptions.Item>
+                                <Descriptions.Item label="Email">{selectedUser.userPrincipalName}</Descriptions.Item>
+                                <Descriptions.Item label="Poste">{selectedUser.jobTitle || 'Non spécifié'}</Descriptions.Item>
+                                <Descriptions.Item label="Département">{selectedUser.department || 'Non spécifié'}</Descriptions.Item>
+                                <Descriptions.Item label="Bureau">{selectedUser.officeLocation || 'Non spécifié'}</Descriptions.Item>
+                                <Descriptions.Item label="Téléphone">{selectedUser.phoneNumber || 'Non spécifié'}</Descriptions.Item>
                                 <Descriptions.Item label="Statut">
                                     <Badge
-                                        status={selectedDepute.statut === 'actif' ? 'success' : 'error'}
-                                        text={
-                                            <span>
-                                                {selectedDepute.statut === 'actif' ? 'Actif' : 'Inactif'}
-                                                {selectedDepute.published && (
-                                                    <Tag icon={<CheckOutlined />} color="success" style={{ marginLeft: 8 }}>
-                                                        Publié
-                                                    </Tag>
-                                                )}
-                                            </span>
-                                        }
+                                        status={selectedUser.status === 'actif' ? 'success' : 'default'}
+                                        text={selectedUser.status || 'Inconnu'}
                                     />
                                 </Descriptions.Item>
-                                <Descriptions.Item label="Téléphone">{selectedDepute.telephone}</Descriptions.Item>
-                                <Descriptions.Item label="Email">{selectedDepute.email}</Descriptions.Item>
-                                <Descriptions.Item label="Date d'entrée">{selectedDepute.dateEntree || 'Non spécifiée'}</Descriptions.Item>
-                                <Descriptions.Item label="Biographie" span={2}>
-                                    {selectedDepute.bio || 'Aucune biographie disponible'}
+                                <Descriptions.Item label="Date de création">
+                                    {selectedUser.createdDate
+                                        ? new Date(selectedUser.createdDate).toLocaleString()
+                                        : 'Non spécifiée'}
                                 </Descriptions.Item>
-                                <Descriptions.Item label="Dernière activité" span={2}>
-                                    {selectedDepute.derniereActivite || 'Aucune activité récente'}
+                                <Descriptions.Item label="Manager" span={2}>
+                                    {selectedUser.manager?.displayName || 'Non spécifié'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="Utilisateur licencié">
+                                    {selectedUser.isLicensed ? (
+                                        <Tag color="green">Oui</Tag>
+                                    ) : (
+                                        <Tag color="red">Non</Tag>
+                                    )}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="Licence expirée">
+                                    {selectedUser.isLicenseExpired ? (
+                                        <Tag color="red">Oui</Tag>
+                                    ) : (
+                                        <Tag color="green">Non</Tag>
+                                    )}
                                 </Descriptions.Item>
                             </Descriptions>
                         </TabPane>
+
                         <TabPane tab="Activités" key="2">
                             <List
                                 dataSource={[
-                                    'Vote sur la loi de finances 2023',
-                                    'Participation à la commission du 15/06',
-                                    'Question au gouvernement le 10/06'
+                                    'Connexion au portail le 01/08',
+                                    'Mise à jour du profil le 28/07',
+                                    'Réinitialisation du mot de passe le 15/07'
                                 ]}
                                 renderItem={item => <List.Item>{item}</List.Item>}
                             />
@@ -685,209 +495,181 @@ const Users = () => {
 
             {/* Modal d'ajout */}
             <Modal
-                title={newDepute.id ? "Modifier un député" : "Ajouter un nouveau député"}
+                title={newUser.id ? "Modifier un utilisateur" : "Ajouter un nouvel utilisateur"}
                 visible={isAddModalVisible}
                 onCancel={() => {
                     setIsAddModalVisible(false);
-                    setNewDepute({
-                        nom: '',
-                        circonscription: '',
-                        region: '',
-                        parti: '',
-                        commission: '',
-                        statut: 'actif',
-                        telephone: '',
-                        email: '',
-                        published: false
+                    setNewUser({
+                        displayName: '',
+                        userPrincipalName: '',
+                        jobTitle: '',
+                        department: '',
+                        officeLocation: '',
+                        phoneNumber: '',
+                        status: 'ACTIVE',
+                        type: 'USER_SIMPLE',
+                        password: '',
+                        role: '',
                     });
                 }}
                 onOk={async () => {
-                    if (newDepute.id) {
-                        // ⚠️ Partie modification : à faire plus tard
-                        setDeputes(deputes.map(d => d.id === newDepute.id ? newDepute : d));
-                        message.success('Député modifié avec succès');
-                    } else {
-                        // ✅ Création via API
-                        const deputyData = {
-                            name: newDepute.nom,
-                            constituency: newDepute.circonscription,
-                            region: newDepute.region,
-                            party: newDepute.parti,
-                            commission: newDepute.commission,
-                            status: newDepute.statut,
-                            phone: newDepute.telephone,
-                            email: newDepute.email,
-                            published: newDepute.published,
-                            assemblyId: provincialAssembly?.id // à adapter si nécessaire
-                        };
+                    const userToSave = { ...newUser };
+                    if (newUser.type !== 'ADMIN_IT') {
+                        delete userToSave.password;
+                        delete userToSave.role;
+                    }
 
+                    if (newUser.id) {
+                        // modification
+                        setUsers(users.map(u => u.id === newUser.id ? userToSave : u));
+                        message.success('Utilisateur modifié avec succès');
+                    } else {
                         try {
-                            await createDeputy(deputyData, newDepute.photoFile || null);
-                            message.success("Député ajouté avec succès !");
+                            await createUser(userToSave);
+                            message.success("Utilisateur ajouté avec succès !");
                         } catch (error) {
-                            message.error("Erreur lors de la création du député.");
+                            message.error("Erreur lors de la création de l’utilisateur.");
                         }
                     }
 
                     setIsAddModalVisible(false);
-                    setNewDepute({
-                        nom: '',
-                        circonscription: '',
-                        region: '',
-                        parti: '',
-                        commission: '',
-                        statut: 'actif',
-                        telephone: '',
-                        email: '',
-                        published: false,
-                        photo: null,
-                        photoFile: null,
+                    setNewUser({
+                        displayName: '',
+                        userPrincipalName: '',
+                        jobTitle: '',
+                        department: '',
+                        officeLocation: '',
+                        phoneNumber: '',
+                        status: 'ACTIVE',
+                        type: 'USER_SIMPLE',
+                        password: '',
+                        role: '',
                     });
                 }}
-                okText={newDepute.id ? (onUpdateDeputy ? "Modification en cours..." : "Modifier") : (onCreateDeputy ? "Ajout en cours..." : "Ajouter")}
+                okText={newUser.id ? "Modifier" : "Ajouter"}
                 cancelText="Annuler"
                 width={700}
-                className="add-depute-modal"
             >
-                <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                    <Form layout="vertical">
-                        <Row gutter={16}>
-                            <Col span={12}>
-                                <Form.Item label="Nom complet" required>
-                                    <Input
-                                        value={newDepute.nom}
-                                        onChange={(e) => setNewDepute({...newDepute, nom: e.target.value})}
-                                        placeholder="Jean Kabila"
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item label="Circonscription" required>
-                                    <Input
-                                        value={newDepute.circonscription}
-                                        onChange={(e) => setNewDepute({...newDepute, circonscription: e.target.value})}
-                                        placeholder="Kinshasa"
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                <Form layout="vertical">
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item label="Nom complet" required>
+                                <Input
+                                    value={newUser.displayName}
+                                    onChange={(e) => setNewUser({ ...newUser, displayName: e.target.value })}
+                                    placeholder="Jean Kabila"
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item label="Adresse e-mail (UPN)" required>
+                                <Input
+                                    value={newUser.userPrincipalName}
+                                    onChange={(e) => setNewUser({ ...newUser, userPrincipalName: e.target.value })}
+                                    placeholder="jean.kabila@example.com"
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
 
-                        <Row gutter={16}>
-                            <Col span={12}>
-                                <Form.Item label="Région" required>
-                                    <Select
-                                        value={newDepute.region}
-                                        onChange={(value) => setNewDepute({...newDepute, region: value})}
-                                        placeholder="Sélectionnez une région"
-                                    >
-                                        {regions.map(region => (
-                                            <Option key={region} value={region}>{region}</Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item label="Parti politique" required>
-                                    <Select
-                                        value={newDepute.parti}
-                                        onChange={(value) => setNewDepute({...newDepute, parti: value})}
-                                        placeholder="Sélectionnez un parti"
-                                    >
-                                        {partis.map(parti => (
-                                            <Option key={parti} value={parti}>{parti}</Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item label="Titre du poste">
+                                <Input
+                                    value={newUser.jobTitle}
+                                    onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })}
+                                    placeholder="Développeur"
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item label="Département">
+                                <Input
+                                    value={newUser.department}
+                                    onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
+                                    placeholder="Informatique"
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
 
-                        <Row gutter={16}>
-                            <Col span={12}>
-                                <Form.Item label="Commission" required>
-                                    <Select
-                                        value={newDepute.commission}
-                                        onChange={(value) => setNewDepute({...newDepute, commission: value})}
-                                        placeholder="Sélectionnez une commission"
-                                    >
-                                        {commissions.map(commission => (
-                                            <Option key={commission.id} value={commission.id}>{commission.title}</Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item label="Statut" required>
-                                    <Select
-                                        value={newDepute.statut}
-                                        onChange={(value) => setNewDepute({...newDepute, statut: value})}
-                                    >
-                                        <Option value="actif">Actif</Option>
-                                        <Option value="inactif">Inactif</Option>
-                                        <Option value="en congé">En congé</Option>
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item label="Bureau">
+                                <Input
+                                    value={newUser.officeLocation}
+                                    onChange={(e) => setNewUser({ ...newUser, officeLocation: e.target.value })}
+                                    placeholder="Kinshasa"
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item label="Téléphone">
+                                <Input
+                                    value={newUser.phoneNumber}
+                                    onChange={(e) => setNewUser({ ...newUser, phoneNumber: e.target.value })}
+                                    placeholder="+243 812 345 678"
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
 
-                        <Row gutter={16}>
-                            <Col span={12}>
-                                <Form.Item label="Téléphone">
-                                    <Input
-                                        value={newDepute.telephone}
-                                        onChange={(e) => setNewDepute({...newDepute, telephone: e.target.value})}
-                                        placeholder="+243 81 234 5678"
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item label="Email" required>
-                                    <Input
-                                        value={newDepute.email}
-                                        onChange={(e) => setNewDepute({...newDepute, email: e.target.value})}
-                                        placeholder="jean.kabila@assemblee.rdc"
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item label="Statut" required>
+                                <Select
+                                    value={newUser.status}
+                                    onChange={(value) => setNewUser({ ...newUser, status: value })}
+                                >
+                                    <Select.Option value="ACTIVE">Actif</Select.Option>
+                                    <Select.Option value="INACTIVE">Inactif</Select.Option>
+                                    <Select.Option value="PENDING">En attente</Select.Option>
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item label="Type d'utilisateur" required>
+                                <Select
+                                    value={newUser.type}
+                                    onChange={(value) => setNewUser({ ...newUser, type: value })}
+                                >
+                                    <Select.Option value="USER_SIMPLE">User simple</Select.Option>
+                                    <Select.Option value="ADMIN_IT">Admin IT</Select.Option>
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                    </Row>
 
-                        <Form.Item label="Publication">
-                            <Switch
-                                checked={newDepute.published}
-                                onChange={(checked) => setNewDepute({...newDepute, published: checked})}
-                                checkedChildren="Publié"
-                                unCheckedChildren="Non publié"
-                            />
-                        </Form.Item>
-
-                        <Form.Item label="Photo (optionnel)">
-                            <Upload
-                                listType="picture-card"
-                                showUploadList={false}
-                                beforeUpload={(file) => {
-                                    console.log("file:", file);
-                                    // On capture le fichier ici ✅
-                                    setNewDepute({
-                                        ...newDepute,
-                                        photo: URL.createObjectURL(file),
-                                        photoFile: file
-                                    });
-                                    return false; // empêcher le chargement automatique
-                                }}
-                            >
-                                {newDepute.photo ? (
-                                    <img src={newDepute.photo} alt="avatar" style={{ width: '100%' }} />
-                                ) : (
-                                    <div>
-                                        <PlusOutlined />
-                                        <div style={{ marginTop: 8 }}>Uploader</div>
-                                    </div>
-                                )}
-                            </Upload>
-                        </Form.Item>
-
-                    </Form>
-                </div>
+                    {newUser.type === 'ADMIN_IT' && (
+                        <>
+                            <Row gutter={16}>
+                                <Col span={12}>
+                                    <Form.Item label="Mot de passe" required>
+                                        <Input.Password
+                                            value={newUser.password}
+                                            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                            placeholder="********"
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={12}>
+                                    <Form.Item label="Rôle" required>
+                                        <Select
+                                            value={newUser.role}
+                                            onChange={(value) => setNewUser({ ...newUser, role: value })}
+                                        >
+                                            <Select.Option value="ADMIN">ADMIN</Select.Option>
+                                            <Select.Option value="SUPER_ADMIN">SUPER ADMIN</Select.Option>
+                                        </Select>
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                        </>
+                    )}
+                </Form>
             </Modal>
+
+
         </div>
     );
 };

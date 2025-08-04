@@ -271,21 +271,8 @@ const DocumentsOfficiels = () => {
                 Retour
             </Button>
             <Card
-                title="Gestion des Documents Officiels"
+                title="Gestion des Rapports Officiels"
                 bordered={false}
-                extra={
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => {
-                            setCurrentDocument(null);
-                            form.resetFields();
-                            setIsModalVisible(true);
-                        }}
-                    >
-                        Ajouter un Document
-                    </Button>
-                }
             >
                 {/* Barre de recherche et filtres */}
                 <div className="filters-bar">
@@ -301,46 +288,11 @@ const DocumentsOfficiels = () => {
                         </Col>
                         <Col xs={24} md={12} lg={16} style={{ textAlign: 'right' }}>
                             <Space>
-                                <Select
-                                    placeholder="Type de document"
-                                    style={{ width: 180 }}
-                                    allowClear
-                                >
-                                    {typesDocument.map(type => (
-                                        <Option key={type.value} value={type.value}>
-                                            <Space>
-                                                {type.icon}
-                                                {type.label}
-                                            </Space>
-                                        </Option>
-                                    ))}
-                                </Select>
                                 <DatePicker.RangePicker />
-                                <Button icon={<SyncOutlined />}>Réinitialiser</Button>
                             </Space>
                         </Col>
                     </Row>
                 </div>
-
-                {/* Onglets */}
-                <Tabs
-                    activeKey={activeTab}
-                    onChange={setActiveTab}
-                    style={{ margin: '16px 0' }}
-                >
-                    <TabPane tab="Tous" key="tous" />
-                    {statuts.map(statut => (
-                        <TabPane
-                            tab={
-                                <span>
-                  <Badge color={statut.color} />
-                                    {statut.label}
-                </span>
-                            }
-                            key={statut.value}
-                        />
-                    ))}
-                </Tabs>
 
                 {/* Tableau des documents */}
                 <Table
