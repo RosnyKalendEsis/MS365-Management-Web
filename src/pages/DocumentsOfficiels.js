@@ -168,10 +168,6 @@ const DocumentsOfficiels = () => {
                             onClick={() => handleDownload(record.url)}
                         />
                     </Tooltip>
-                    <Button
-                        icon={<EditOutlined />}
-                        onClick={() => editDocument(record)}
-                    />
                     <Popconfirm
                         title="Êtes-vous sûr de vouloir supprimer ce document ?"
                         onConfirm={() => deleteDocument(record.id)}

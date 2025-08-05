@@ -1,8 +1,8 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
     Table, Button, Input, Space, Tag, Avatar, Card, Row, Col, Popconfirm,
-    message, Select, Badge, Descriptions, Tabs, Statistic, Switch,
-    Modal, List, Timeline, Dropdown, Menu, Upload, Tooltip
+    message, Select, Badge, Descriptions, Tabs,
+    Modal, List, Timeline,Tooltip
 } from 'antd';
 import {
     SearchOutlined,
@@ -11,28 +11,19 @@ import {
     DeleteOutlined,
     SyncOutlined,
     UserOutlined,
-    FileExcelOutlined,
-    FilePdfOutlined,
     InfoCircleOutlined,
-    AppstoreOutlined,
-    UnorderedListOutlined,
-    HistoryOutlined,
-    ArrowDownOutlined,
-    CheckOutlined,
     SendOutlined,
     CloseOutlined,
     ArrowLeftOutlined,
-    PlusCircleOutlined, MinusCircleOutlined
 } from '@ant-design/icons';
 import '../styles/Deputes.css';
 import { Form } from 'antd';
-import {DeputyContext} from "../providers/UserProvider";
+import {useUserContext} from "../providers/UserProvider";
 import UserStats from "../components/UserStats";
 
-const { Option } = Select;
+
 const { Search } = Input;
 const { TabPane } = Tabs;
-const { Meta } = Card;
 
 const Users = () => {
     // États
@@ -43,7 +34,7 @@ const Users = () => {
     const [, setActiveTab] = useState('1');
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-    const { deputies,createUser,publishDeputy} = useContext(DeputyContext);
+    const {createUser, users,deleteUser} = useUserContext();
     const [newUser, setNewUser] = useState({
         displayName: '',
         userPrincipalName: '',
@@ -56,14 +47,6 @@ const Users = () => {
         password: '',
         role: '',
     });
-
-
-
-    // Données des députés
-    const [deputes, setDeputes] = useState(deputies);
-    useEffect(() => {
-        setDeputes(deputies);
-    }, [deputies]);
 
     // Historique des modifications
     const historyData = [
@@ -88,17 +71,6 @@ const Users = () => {
         }
 
         try {
-            // Appelle publishDeputy avec true pour chaque id sélectionné
-            await Promise.all(
-                selectedRowKeys.map(id => publishDeputy(id, true))
-            );
-
-            // Met à jour localement le state après confirmation API
-            setDeputes(deputes.map(depute =>
-                selectedRowKeys.includes(depute.id)
-                    ? { ...depute, published: true }
-                    : depute
-            ));
             message.success(`${selectedRowKeys.length} député(s) publié(s) avec succès`);
             setSelectedRowKeys([]);
         } catch (error) {
@@ -113,16 +85,6 @@ const Users = () => {
         }
 
         try {
-            // Appelle publishDeputy avec false pour chaque id sélectionné
-            await Promise.all(
-                selectedRowKeys.map(id => publishDeputy(id, false))
-            );
-
-            setDeputes(deputes.map(depute =>
-                selectedRowKeys.includes(depute.id)
-                    ? { ...depute, published: false }
-                    : depute
-            ));
             message.success(`${selectedRowKeys.length} député(s) retiré(s) de la publication`);
             setSelectedRowKeys([]);
         } catch (error) {
@@ -139,63 +101,59 @@ const Users = () => {
         console.log("Modification de l'utilisateur :", record);
     }
 
-    function deleteUser(record) {
-        console.log("Suppression de l'utilisateur :", record);
-    }
-
-    const [users, setUsers] = useState([
-        {
-            id: "1",
-            displayName: "Jean Dupont",
-            userPrincipalName: "j.dupont@entreprise.com",
-            jobTitle: "Développeur",
-            department: "Informatique",
-            officeLocation: "Paris",
-            phoneNumber: "+33 6 12 34 56 78",
-            isLicensed: true,
-            isLicenseExpired: false,
-            createdDate: "2025-08-01T10:30:00Z",
-            status: "ACTIVE",
-            manager: {
-                displayName: "Sophie Martin",
-                userPrincipalName: "s.martin@entreprise.com"
-            },
-            licenses: []
-        },
-        {
-            id: "2",
-            displayName: "Alice Durand",
-            userPrincipalName: "a.durand@entreprise.com",
-            jobTitle: "Chef de projet",
-            department: "Gestion de projet",
-            officeLocation: "Lyon",
-            phoneNumber: "+33 6 98 76 54 32",
-            isLicensed: true,
-            isLicenseExpired: false,
-            createdDate: "2025-07-20T09:00:00Z",
-            status: "ACTIVE",
-            manager: null,
-            licenses: []
-        },
-        {
-            id: "3",
-            displayName: "Marc Lemoine",
-            userPrincipalName: "m.lemoine@entreprise.com",
-            jobTitle: null,
-            department: null,
-            officeLocation: null,
-            phoneNumber: null,
-            isLicensed: false,
-            isLicenseExpired: true,
-            createdDate: "2025-06-15T14:45:00Z",
-            status: "INACTIVE",
-            manager: {
-                displayName: "Jean Dupont",
-                userPrincipalName: "j.dupont@entreprise.com"
-            },
-            licenses: []
-        }
-    ]);
+    // const [users, setUsers] = useState([
+    //     {
+    //         id: "1",
+    //         displayName: "Jean Dupont",
+    //         userPrincipalName: "j.dupont@entreprise.com",
+    //         jobTitle: "Développeur",
+    //         department: "Informatique",
+    //         officeLocation: "Paris",
+    //         phoneNumber: "+33 6 12 34 56 78",
+    //         isLicensed: true,
+    //         isLicenseExpired: false,
+    //         createdDate: "2025-08-01T10:30:00Z",
+    //         status: "ACTIVE",
+    //         manager: {
+    //             displayName: "Sophie Martin",
+    //             userPrincipalName: "s.martin@entreprise.com"
+    //         },
+    //         licenses: []
+    //     },
+    //     {
+    //         id: "2",
+    //         displayName: "Alice Durand",
+    //         userPrincipalName: "a.durand@entreprise.com",
+    //         jobTitle: "Chef de projet",
+    //         department: "Gestion de projet",
+    //         officeLocation: "Lyon",
+    //         phoneNumber: "+33 6 98 76 54 32",
+    //         isLicensed: true,
+    //         isLicenseExpired: false,
+    //         createdDate: "2025-07-20T09:00:00Z",
+    //         status: "ACTIVE",
+    //         manager: null,
+    //         licenses: []
+    //     },
+    //     {
+    //         id: "3",
+    //         displayName: "Marc Lemoine",
+    //         userPrincipalName: "m.lemoine@entreprise.com",
+    //         jobTitle: null,
+    //         department: null,
+    //         officeLocation: null,
+    //         phoneNumber: null,
+    //         isLicensed: false,
+    //         isLicenseExpired: true,
+    //         createdDate: "2025-06-15T14:45:00Z",
+    //         status: "INACTIVE",
+    //         manager: {
+    //             displayName: "Jean Dupont",
+    //             userPrincipalName: "j.dupont@entreprise.com"
+    //         },
+    //         licenses: []
+    //     }
+    // ]);
 
 
 
@@ -290,11 +248,11 @@ const Users = () => {
                     <Tooltip title="Supprimer l'utilisateur">
                         <Popconfirm
                             title="Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
-                            onConfirm={() => deleteUser(record)}
+                            onConfirm={() => deleteUser(record.id)}
                             okText="Oui"
                             cancelText="Non"
                         >
-                            <Button type="link" danger icon={<DeleteOutlined />} />
+                            <Button disabled={record.role === 'SUPER_ADMIN'} type="link" danger icon={<DeleteOutlined />} />
                         </Popconfirm>
                     </Tooltip>
                 </Space>
@@ -521,7 +479,7 @@ const Users = () => {
 
                     if (newUser.id) {
                         // modification
-                        setUsers(users.map(u => u.id === newUser.id ? userToSave : u));
+                        //setUsers(users.map(u => u.id === newUser.id ? userToSave : u));
                         message.success('Utilisateur modifié avec succès');
                     } else {
                         try {

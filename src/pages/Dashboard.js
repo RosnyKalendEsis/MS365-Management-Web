@@ -1,5 +1,21 @@
-import React, { useContext } from 'react';
-import {Card, Row, Col, Progress, Table, Tag, Button, Divider, Statistic, Select, Popconfirm, Avatar,Space,Tooltip} from 'antd';
+import React, {useContext, useState} from 'react';
+import {
+    Card,
+    Row,
+    Col,
+    Progress,
+    Table,
+    Tag,
+    Button,
+    Divider,
+    Statistic,
+    Select,
+    Popconfirm,
+    Avatar,
+    Space,
+    Tooltip,
+    Tabs, Descriptions, Badge, List, Modal, Empty
+} from 'antd';
 import {
     LineChart,
     Line,
@@ -209,11 +225,15 @@ const licences = [
 ]
 
 
-
+const { TabPane } = Tabs;
 export default function Dashboard() {
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [, setActiveTab] = useState('1');
 
     function showUserDetails(record) {
-        console.log("Afficher les détails de l'utilisateur :", record);
+        setSelectedUser(record);
+        setIsModalVisible(true);
     }
 
     function assignLicense(record) {
@@ -358,23 +378,6 @@ export default function Dashboard() {
                             danger
                         />
                     </Tooltip>
-                    <Tooltip title="Modifier l'utilisateur">
-                        <Button
-                            type="link"
-                            icon={<EditOutlined />}
-                            onClick={() => editUser(record)}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Supprimer l'utilisateur">
-                        <Popconfirm
-                            title="Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
-                            onConfirm={() => deleteUser(record)}
-                            okText="Oui"
-                            cancelText="Non"
-                        >
-                            <Button type="link" danger icon={<DeleteOutlined />} />
-                        </Popconfirm>
-                    </Tooltip>
                 </Space>
             )
         }
@@ -396,10 +399,9 @@ export default function Dashboard() {
     ];
 
     const participationData = [
-        { name: 'Réforme', value: 1250, color: '#1890ff' },
-        { name: 'Budget', value: 892, color: '#52c41a' },
-        { name: 'Éducation', value: 756, color: '#faad14' },
-        { name: 'Infrastructures', value: 1843, color: '#722ed1' },
+        { name: 'Attribuées', value: licences?.filter(lic => lic.Licenses && lic.Licenses.length > 0).length || 0, color: '#faad14' },
+        { name: 'Expirées', value: licences?.filter(lic => lic.isLicenseExpired).length || 0, color: '#722ed1' },
+        { name: 'Non Attribuées', value: licences?.filter(lic => !lic.Licenses || lic.Licenses.length === 0).length || 0, color: '#52c41a' },
     ];
 
     const COLORS = ['#1890ff', '#52c41a', '#faad14', '#722ed1'];
@@ -523,6 +525,97 @@ export default function Dashboard() {
                     </Col>
                 </Row>
 
+                <Modal
+                    title={`Fiche détaillée - ${selectedUser?.displayName}`}
+                    visible={isModalVisible}
+                    onCancel={() => setIsModalVisible(false)}
+                    footer={null}
+                    width={800}
+                    className="user-modal"
+                >
+                    {selectedUser && (
+                        <Tabs defaultActiveKey="1" onChange={setActiveTab}>
+                            <TabPane tab="Informations" key="1">
+                                <Descriptions bordered column={2}>
+                                    <Descriptions.Item label="Nom complet">{selectedUser.displayName}</Descriptions.Item>
+                                    <Descriptions.Item label="Email">{selectedUser.userPrincipalName}</Descriptions.Item>
+                                    <Descriptions.Item label="Poste">{selectedUser.jobTitle || 'Non spécifié'}</Descriptions.Item>
+                                    <Descriptions.Item label="Département">{selectedUser.department || 'Non spécifié'}</Descriptions.Item>
+                                    <Descriptions.Item label="Bureau">{selectedUser.officeLocation || 'Non spécifié'}</Descriptions.Item>
+                                    <Descriptions.Item label="Téléphone">{selectedUser.phoneNumber || 'Non spécifié'}</Descriptions.Item>
+                                    <Descriptions.Item label="Statut">
+                                        <Badge
+                                            status={selectedUser.status === 'actif' ? 'success' : 'default'}
+                                            text={selectedUser.status || 'Inconnu'}
+                                        />
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="Date de création">
+                                        {selectedUser.createdDate
+                                            ? new Date(selectedUser.createdDate).toLocaleString()
+                                            : 'Non spécifiée'}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="Manager" span={2}>
+                                        {selectedUser.manager?.displayName || 'Non spécifié'}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="Utilisateur licencié">
+                                        {selectedUser.isLicensed ? (
+                                            <Tag color="green">Oui</Tag>
+                                        ) : (
+                                            <Tag color="red">Non</Tag>
+                                        )}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="Licence expirée">
+                                        {selectedUser.isLicenseExpired ? (
+                                            <Tag color="red">Oui</Tag>
+                                        ) : (
+                                            <Tag color="green">Non</Tag>
+                                        )}
+                                    </Descriptions.Item>
+                                </Descriptions>
+                            </TabPane>
+
+                            <TabPane tab="Licences" key="2">
+                                {selectedUser.Licenses && selectedUser.Licenses.length > 0 ? (
+                                    selectedUser.Licenses.map((license, index) => (
+                                        <div key={index} style={{ marginBottom: 16 }}>
+                                            <h4>Licence : {license.AccountSkuId}</h4>
+                                            <List
+                                                dataSource={license.ServiceStatus}
+                                                renderItem={(service, idx) => (
+                                                    <List.Item key={idx}>
+                                                        <List.Item.Meta
+                                                            title={service.ServicePlan.ServiceName}
+                                                            description={
+                                                                <>
+                                                                    Statut de provisionnement :{" "}
+                                                                    <Tag
+                                                                        color={
+                                                                            service.ServicePlan.ProvisioningStatus === "Success"
+                                                                                ? "green"
+                                                                                : service.ServicePlan.ProvisioningStatus === "Disabled"
+                                                                                    ? "red"
+                                                                                    : "orange"
+                                                                        }
+                                                                    >
+                                                                        {service.ServicePlan.ProvisioningStatus}
+                                                                    </Tag>
+                                                                </>
+                                                            }
+                                                        />
+                                                    </List.Item>
+                                                )}
+                                            />
+                                        </div>
+                                    ))
+                                ) : (
+                                    <Empty description="Aucune activité liée aux licences" />
+                                )}
+                            </TabPane>
+
+                        </Tabs>
+                    )}
+                </Modal>
+
                 {/* Tableau des sondages */}
                 <Card
                     title="Listes des utilisateurs"
@@ -534,7 +627,7 @@ export default function Dashboard() {
                         pagination={{
                             pageSize: 5,
                             showSizeChanger: true,
-                            showTotal: (total) => `${total} députés`,
+                            showTotal: (total) => `${total} Utilisateurs`,
                         }}
                         rowKey="id"
                     />

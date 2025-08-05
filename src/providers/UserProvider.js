@@ -1,184 +1,115 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { hosts } from "../env/Environment";
 import { Ajax } from "../services/ajax";
 
-const DeputyContext = createContext();
+const UserContext = createContext();
 
-const UserProvider = ({ children }) => {
-    const [loading, setLoading] = useState(false);
-    const [provincialAssembly, setProvincialAssembly] = useState(null);
-    const [deputyLoading, setDeputyLoading] = useState(true);
-    const [deputies, setDeputies] = useState([]);
-    const [onCreateDeputy, setOnCreateDeputy] = useState(false);
-    const [ onUpdateDeputy,setOnUpdateDeputy] = useState(false);
-    const [deputyError, setDeputyError] = useState(null);
+export const UserProvider = ({ children }) => {
+    const [users, setUsers] = useState([]);
+    const [userLoading, setUserLoading] = useState(true);
+    const [userError, setUserError] = useState(null);
+    const [onCreateUser, setOnCreateUser] = useState(false);
+    const [onUpdateUser, setOnUpdateUser] = useState(false);
 
-
-    const createDeputy = async (deputyData, photoFile) => {
-        setOnCreateDeputy(true)
-        const formData = new FormData();
-        formData.append("data", JSON.stringify(deputyData));
-        if (photoFile) {
-            formData.append("photo", photoFile);
-        }
-
+    // 🔹 Charger tous les utilisateurs
+    const fetchUsers = async () => {
+        setUserLoading(true);
+        setUserError(null);
 
         try {
-            const {data} = await Ajax.postRequest("/admin/deputies", formData);
-
-            // Optionnel : recharger la liste après création
+            const { data } = await Ajax.getRequest("/api/users");
             if (!data.error) {
-                // convertir le député créé en format FR pour affichage
-                const newDeputy = {
-                    id: data.object.id,
-                    nom: data.object.name,
-                    circonscription: data.object.constituency,
-                    region: data.object.region,
-                    parti: data.object.party,
-                    commission: data.object.commission.title,
-                    statut: data.object.status,
-                    telephone: data.object.phone,
-                    email: data.object.email,
-                    photo: `${hosts.image}/${data.object.photo}`,
-                    published: data.object.published
-                };
-
-                setDeputies(prev => [...prev, newDeputy]);
+                setUsers(data);
+                console.log(data);
+            } else {
+                setUserError("Erreur lors du chargement des utilisateurs.");
             }
-
-            return data;
         } catch (error) {
-            console.error("Erreur:", error);
-            throw error;
-        }finally {
-            setDeputyLoading(false);
+            console.error("Erreur fetchUsers:", error);
+            setUserError("Impossible de contacter le serveur.");
+        } finally {
+            setUserLoading(false);
         }
     };
 
-    const updateDeputyPhoto = async (deputyId, photoFile) => {
-        if (!deputyId || !photoFile) {
-            console.warn("ID du député ou fichier photo manquant");
-            return;
-        }
-
-        setOnCreateDeputy(true);
-
-        const formData = new FormData();
-        formData.append("photo", photoFile);
-
+    // 🔹 Créer un utilisateur
+    const createUser = async (userData) => {
+        setOnCreateUser(true);
         try {
-            const { data } = await Ajax.putRequest(`/admin/deputies/${deputyId}/photo`, formData);
-
+            const { data } = await Ajax.postRequest("/api/users", userData);
             if (!data.error) {
-                const updatedDeputy = {
-                    id: data.object.id,
-                    nom: data.object.name,
-                    circonscription: data.object.constituency,
-                    region: data.object.region,
-                    parti: data.object.party,
-                    commission: data.object.commission.title,
-                    statut: data.object.status,
-                    telephone: data.object.phone,
-                    email: data.object.email,
-                    photo: `${hosts.image}/${data.object.photo}`,
-                    published: data.object.published
-                };
-
-                // Met à jour localement le député avec la nouvelle photo
-                setDeputies(prev =>
-                    prev.map(dep => dep.id === updatedDeputy.id ? updatedDeputy : dep)
-                );
+                setUsers(prev => [...prev, data]);
             }
-
             return data;
         } catch (error) {
-            console.error("Erreur lors de la mise à jour de la photo :", error);
+            console.error("Erreur createUser:", error);
             throw error;
         } finally {
-            setOnCreateDeputy(false);
+            setOnCreateUser(false);
         }
     };
 
-    const publishDeputy = async (id, published) => {
-        setOnUpdateDeputy(true);
+    // 🔹 Modifier un utilisateur
+    const updateUser = async (userId, updatedData) => {
+        setOnUpdateUser(true);
         try {
-            const {data} = await Ajax.putRequest(`/admin/deputies/publish/${id}?published=${published}`);
-
+            const { data } = await Ajax.putRequest(`/api/users/${userId}`, updatedData);
             if (!data.error) {
-                setDeputies((prev) =>
-                    prev.map((dep) =>
-                        dep.id === id ? { ...dep, published: published } : dep
-                    )
+                setUsers(prev =>
+                    prev.map(user => (user.id === userId ? data : user))
                 );
             }
-
             return data;
         } catch (error) {
-            console.error("Erreur lors de la mise à jour du statut publication :", error);
+            console.error("Erreur updateUser:", error);
             throw error;
-        }finally {
-            setDeputyLoading(false);
+        } finally {
+            setOnUpdateUser(false);
         }
     };
-    const deleteDeputy = async (id) => {
+
+    // 🔹 Supprimer un utilisateur
+    const deleteUser = async (userId) => {
         try {
-            await Ajax.deleteRequest(`/admin/deputies/${id}`);
-
-            // Mise à jour locale : on enlève le député supprimé du state
-            setDeputies(prev => prev.filter(dep => dep.id !== id));
-
-            setDeputyError("Député supprimé avec succès");
+            await Ajax.deleteRequest(`/api/users/${userId}`);
+            setUsers(prev => prev.filter(user => user.id !== userId));
         } catch (error) {
-            setDeputyError("Erreur lors de la suppression");
+            console.error("Erreur deleteUser:", error);
+            setUserError("Échec de la suppression.");
         }
     };
 
-
+    // 🔹 Obtenir les licences d'un utilisateur
+    const fetchUserLicenses = async (userId) => {
+        try {
+            const { data } = await Ajax.getRequest(`/api/users/${userId}/licenses`);
+            return data;
+        } catch (error) {
+            console.error("Erreur fetchUserLicenses:", error);
+            throw error;
+        }
+    };
 
     useEffect(() => {
-        const fetchDeputies = async () => {
-            if (!provincialAssembly) return;
-            setDeputyLoading(true);
-            setDeputyError(null);
-
-            try {
-                const { data } = await Ajax.getRequest(`/admin/deputies/assembly/${provincialAssembly.id}`);
-                if (!data.error) {
-                    const transformed = data.object.map(dep => ({
-                        id: dep.id,
-                        nom: dep.name,
-                        circonscription: dep.constituency,
-                        region: dep.region,
-                        parti: dep.party,
-                        commission: dep.commission.title,
-                        statut: dep.status,
-                        telephone: dep.phone,
-                        email: dep.email,
-                        photo: `${hosts.image}/${dep.photo}`,
-                        published: dep.published
-                    }));
-                    setDeputies(transformed);
-                } else {
-                    setDeputyError("Erreur lors du chargement des députés.");
-                }
-            } catch (err) {
-                console.error(err);
-                setDeputyError("Impossible de contacter le serveur.");
-            } finally {
-                setDeputyLoading(false);
-            }
-        };
-
-        if (!loading && provincialAssembly) {
-            fetchDeputies();
-        }
-    }, [loading, provincialAssembly]);
+        fetchUsers();
+    }, []);
 
     return (
-        <DeputyContext.Provider value={{ deputyLoading, deputies, deputyError, createDeputy, onCreateDeputy, publishDeputy, deleteDeputy,updateDeputyPhoto, onUpdateDeputy }}>
+        <UserContext.Provider
+            value={{
+                users,
+                userLoading,
+                userError,
+                onCreateUser,
+                onUpdateUser,
+                createUser,
+                updateUser,
+                deleteUser,
+                fetchUserLicenses,
+            }}
+        >
             {children}
-        </DeputyContext.Provider>
+        </UserContext.Provider>
     );
 };
 
-export { UserProvider, DeputyContext };
+export const useUserContext = () => useContext(UserContext);
