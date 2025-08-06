@@ -50,6 +50,7 @@ import {
 } from '@ant-design/icons';
 import HeaderAdmin from "../components/HeaderAdmin";
 import '../styles/admin-layout.css';
+import {useRapportContext} from "../providers/RapportProvider";
 
 const { Option } = Select;
 
@@ -230,6 +231,16 @@ export default function Dashboard() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [, setActiveTab] = useState('1');
+    const { rapports, loading, generateRapport, generating } = useRapportContext();
+
+    const handleGenerate = async () => {
+        try {
+            const filePath = await generateRapport();
+            alert("Rapport généré: " + filePath);
+        } catch (e) {
+            alert("Erreur de génération");
+        }
+    };
 
     function showUserDetails(record) {
         setSelectedUser(record);
@@ -426,8 +437,8 @@ export default function Dashboard() {
                         <p className="text-muted">Aperçu complet des utilisations des licences MS 365 et leur etat actuel</p>
                     </div>
                     <div className="dashboard-actions">
-                        <Button type="primary" icon={<DownloadOutlined />}>
-                            Generer rapport
+                        <Button type="primary" icon={<DownloadOutlined />} onClick={()=>handleGenerate()}>
+                            {generating ? "En cours de generation..." : "Generer rapport"}
                         </Button>
                     </div>
                 </div>

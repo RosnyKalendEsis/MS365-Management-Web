@@ -1,0 +1,13 @@
+.azure-modal .ant-modal-content {
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+    padding: 24px;
+}
+
+.azure-modal .ant-typography {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.azure-modal input {
+    font-weight: 500;
+}

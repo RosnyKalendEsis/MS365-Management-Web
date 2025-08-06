@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     Card,
     Table,
@@ -37,6 +37,7 @@ import {
 import moment from 'moment';
 import Search from "antd/es/input/Search";
 import '../styles/DocumentsOfficiels.css'
+import {useRapportContext} from "../providers/RapportProvider";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -49,49 +50,14 @@ const DocumentsOfficiels = () => {
     const [currentDocument, setCurrentDocument] = useState(null);
     const [activeTab, setActiveTab] = useState('tous');
     const [form] = Form.useForm();
+    const { rapports, loading, generateRapport, generating,deleteRapport } = useRapportContext();
 
     // Données des documents
-    const [documents, setDocuments] = useState([
-        {
-            id: 1,
-            titre: 'Loi de Finances 2024',
-            reference: 'LF-2024-001',
-            type: 'loi',
-            date: '2023-12-15',
-            statut: 'valide',
-            auteur: 'Ministère des Finances',
-            taille: '2.4 Mo',
-            format: 'pdf',
-            description: 'Projet de loi de finances pour l\'année 2024',
-            url: '/documents/loi-finances-2024.pdf'
-        },
-        {
-            id: 2,
-            titre: 'Rapport Annuel 2023',
-            reference: 'RA-2023-045',
-            type: 'rapport',
-            date: '2023-11-30',
-            statut: 'valide',
-            auteur: 'Assemblée Nationale',
-            taille: '5.1 Mo',
-            format: 'pdf',
-            description: 'Rapport annuel des activités parlementaires',
-            url: '/documents/rapport-annuel-2023.pdf'
-        },
-        {
-            id: 3,
-            titre: 'Projet de Réforme Constitutionnelle',
-            reference: 'PRC-2023-012',
-            type: 'projet',
-            date: '2023-10-20',
-            statut: 'brouillon',
-            auteur: 'Commission Constitutionnelle',
-            taille: '1.8 Mo',
-            format: 'docx',
-            description: 'Avant-projet de réforme constitutionnelle',
-            url: '/documents/reforme-constitutionnelle.docx'
-        }
-    ]);
+    const [documents, setDocuments] = useState(rapports);
+
+    useEffect(() => {
+        setDocuments(rapports);
+    },[rapports]);
 
     // Options
     const typesDocument = [
@@ -210,8 +176,8 @@ const DocumentsOfficiels = () => {
         setIsModalVisible(true);
     };
 
-    const deleteDocument = (id) => {
-        setDocuments(documents.filter(doc => doc.id !== id));
+    const deleteDocument = async (id) => {
+        await deleteRapport(id);
         message.success('Document supprimé avec succès');
     };
 

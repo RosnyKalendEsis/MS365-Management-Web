@@ -11,16 +11,24 @@ import SettingsPage from "./pages/SettingsPage";
 import {UserProvider} from "./providers/UserProvider";
 import {AuthProvider} from "./providers/AuthProvider";
 import {AlertProvider} from "./providers/AlertProvider";
+import {RapportProvider} from "./providers/RapportProvider";
+import {AzureStateProvider, useAzureState} from "./providers/AzureStateProvider";
+import {useEffect, useState} from "react";
+import ModalAzureDisconnected from "./components/ModalAzureDisconnected";
 
 
 function AppWrapper() {
     return (
         <AuthProvider>
-            <UserProvider>
-                <AlertProvider>
-                    <App />
-                </AlertProvider>
-            </UserProvider>
+            <AzureStateProvider>
+                <UserProvider>
+                    <AlertProvider>
+                        <RapportProvider>
+                            <App />
+                        </RapportProvider>
+                    </AlertProvider>
+                </UserProvider>
+            </AzureStateProvider>
         </AuthProvider>
     );
 }
@@ -28,6 +36,7 @@ function AppWrapper() {
 function App() {
     return (
         <BrowserRouter>
+            <ModalAzureDisconnected/>
             <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/dashboard" element={
