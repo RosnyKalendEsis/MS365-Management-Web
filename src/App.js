@@ -15,6 +15,7 @@ import {RapportProvider} from "./providers/RapportProvider";
 import {AzureStateProvider, useAzureState} from "./providers/AzureStateProvider";
 import {useEffect, useState} from "react";
 import ModalAzureDisconnected from "./components/ModalAzureDisconnected";
+import {AzureADProvider} from "./providers/AzureADProvider";
 
 
 function AppWrapper() {
@@ -23,9 +24,11 @@ function AppWrapper() {
             <AzureStateProvider>
                 <UserProvider>
                     <AlertProvider>
-                        <RapportProvider>
-                            <App />
-                        </RapportProvider>
+                        <AzureADProvider>
+                            <RapportProvider>
+                                <App />
+                            </RapportProvider>
+                        </AzureADProvider>
                     </AlertProvider>
                 </UserProvider>
             </AzureStateProvider>

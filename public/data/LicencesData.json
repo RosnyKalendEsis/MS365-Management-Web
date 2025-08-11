@@ -1,0 +1,46 @@
+[
+    {
+        "SkuPartNumber": "STREAM",
+        "SkuId": "1f2f344a-700d-42c9-9427-5cea1d5d7ba6"
+    },
+    {
+        "SkuPartNumber": "SPZA_IW",
+        "SkuId": "8f0c5670-4e56-4892-b06d-91c085d7004f"
+    },
+    {
+        "SkuPartNumber": "WINDOWS_STORE",
+        "SkuId": "6470687e-a428-4b7a-bef2-8a291ad947c9"
+    },
+    {
+        "SkuPartNumber": "STANDARDWOFFPACK_STUDENT",
+        "SkuId": "314c4481-f395-4525-be8b-2ec4bb1e9d91"
+    },
+    {
+        "SkuPartNumber": "FLOW_FREE",
+        "SkuId": "f30db892-07e9-47e9-837c-80727f46fd3d"
+    },
+    {
+        "SkuPartNumber": "CCIBOTS_PRIVPREV_VIRAL",
+        "SkuId": "606b54a9-78d8-4298-ad8b-df6ef4481c80"
+    },
+    {
+        "SkuPartNumber": "POWERAPPS_VIRAL",
+        "SkuId": "dcb1a3ae-b33f-4487-846a-a640262fadf4"
+    },
+    {
+        "SkuPartNumber": "POWER_BI_STANDARD",
+        "SkuId": "a403ebcc-fae0-4ca2-8c8c-7a907fd6c235"
+    },
+    {
+        "SkuPartNumber": "AX7_USER_TRIAL",
+        "SkuId": "fcecd1f9-a91e-488d-a918-a96cdb6ce2b0"
+    },
+    {
+        "SkuPartNumber": "STANDARDWOFFPACK_FACULTY",
+        "SkuId": "94763226-9b3c-4e75-a931-5c89701abe66"
+    },
+    {
+        "SkuPartNumber": "POWERAPPS_DEV",
+        "SkuId": "5b631642-bd26-49fe-bd20-1daaa972ef80"
+    }
+]

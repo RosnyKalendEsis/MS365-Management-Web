@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
     Card,
     Row,
@@ -14,7 +14,7 @@ import {
     Avatar,
     Space,
     Tooltip,
-    Tabs, Descriptions, Badge, List, Modal, Empty
+    Tabs, Descriptions, Badge, List, Modal, Empty, Alert
 } from 'antd';
 import {
     LineChart,
@@ -51,6 +51,7 @@ import {
 import HeaderAdmin from "../components/HeaderAdmin";
 import '../styles/admin-layout.css';
 import {useRapportContext} from "../providers/RapportProvider";
+import {useAzureAD} from "../providers/AzureADProvider";
 
 const { Option } = Select;
 
@@ -232,6 +233,49 @@ export default function Dashboard() {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [, setActiveTab] = useState('1');
     const { rapports, loading, generateRapport, generating } = useRapportContext();
+    const {runPowerShellCommand,checkUserExists, getAvailableSKUs,assignLicenseToUser} = useAzureAD();
+    const [isAttributeModalVisible, setIsAttributeModalVisible] = useState(false);
+    const [selectedLicense, setSelectedLicense] = useState(null);
+    const [licencesDisponibles, setLicencesDisponibles] = useState([]);
+    const [licences, setLicences] = useState([]);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+
+    useEffect(() => {
+        fetch('/data/UserData.json')
+            .then((res) => res.json())
+            .then((data) => {
+                const transformedData = Array.isArray(data)
+                    ? data.map((user) => ({
+                        DisplayName: user.DisplayName,
+                        UserPrincipalName: user.UserPrincipalName,
+                        isLicensed: !!user.AssignedLicenses?.length,
+                        Licenses: user.AssignedLicenses?.map((license) => ({
+                            AccountSkuId: license.SkuId,
+                            ServiceStatus: user.AssignedPlans?.filter(
+                                (plan) => plan.SkuId === license.SkuId
+                            ).map((plan) => ({
+                                ServicePlan: {
+                                    ServiceName: plan.ServicePlanName,
+                                    ProvisioningStatus: plan.ProvisioningStatus
+                                }
+                            })) || []
+                        }))
+                    }))
+                    : [];
+
+                setLicences(transformedData);
+            })
+            .catch((err) => console.error('Erreur chargement utilisateurs :', err));
+    }, []);
+
+
+
+    useEffect(() => {
+        fetch('/data/LicencesData.json')
+            .then((res) => res.json())
+            .then((data) => setLicencesDisponibles(data))
+            .catch((err) => console.error('Erreur chargement licences :', err));
+    }, []);
 
     const handleGenerate = async () => {
         try {
@@ -247,8 +291,9 @@ export default function Dashboard() {
         setIsModalVisible(true);
     }
 
-    function assignLicense(record) {
-        console.log("Attribution de licence à l'utilisateur :", record);
+    async function assignLicense(record) {
+        setIsAttributeModalVisible(true);
+        await runPowerShellCommand("Get-AzureADUser | ConvertTo-Json -Depth 10 | Out-File -Encoding UTF8 src/main/resources/scripts/powershell/response.json")
     }
 
     function removeLicense(record) {
@@ -586,46 +631,106 @@ export default function Dashboard() {
                             </TabPane>
 
                             <TabPane tab="Licences" key="2">
-                                {selectedUser.Licenses && selectedUser.Licenses.length > 0 ? (
-                                    selectedUser.Licenses.map((license, index) => (
-                                        <div key={index} style={{ marginBottom: 16 }}>
-                                            <h4>Licence : {license.AccountSkuId}</h4>
-                                            <List
-                                                dataSource={license.ServiceStatus}
-                                                renderItem={(service, idx) => (
-                                                    <List.Item key={idx}>
-                                                        <List.Item.Meta
-                                                            title={service.ServicePlan.ServiceName}
-                                                            description={
-                                                                <>
-                                                                    Statut de provisionnement :{" "}
-                                                                    <Tag
-                                                                        color={
-                                                                            service.ServicePlan.ProvisioningStatus === "Success"
-                                                                                ? "green"
-                                                                                : service.ServicePlan.ProvisioningStatus === "Disabled"
-                                                                                    ? "red"
-                                                                                    : "orange"
-                                                                        }
-                                                                    >
-                                                                        {service.ServicePlan.ProvisioningStatus}
-                                                                    </Tag>
-                                                                </>
-                                                            }
-                                                        />
-                                                    </List.Item>
-                                                )}
-                                            />
+                                {selectedUser && (
+                                    <>
+                                        <div style={{ marginBottom: 16 }}>
+                                            <h4>Assigner une licence</h4>
+                                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                <Select
+                                                    style={{ width: 300 }}
+                                                    placeholder="Sélectionnez une licence"
+                                                    value={selectedLicense}
+                                                    onChange={setSelectedLicense}
+                                                >
+                                                    {licencesDisponibles.map((licence) => (
+                                                        <Select.Option key={licence.SkuId} value={licence.SkuId}>
+                                                            {licence.SkuPartNumber}
+                                                        </Select.Option>
+                                                    ))}
+                                                </Select>
+                                                <Button
+                                                    type="primary"
+                                                    onClick={async () => {
+                                                        if (!selectedLicense) return;
+                                                        try {
+                                                            await assignLicenseToUser(selectedUser.UserPrincipalName, selectedLicense);
+                                                            setSelectedLicense(null);
+                                                            setIsModalVisible(false);
+                                                            setErrorModalVisible(true);
+                                                        } catch (e) {
+                                                            console.log("sss")
+                                                        }
+                                                    }}
+                                                >
+                                                    Assigner
+                                                </Button>
+                                            </div>
                                         </div>
-                                    ))
-                                ) : (
-                                    <Empty description="Aucune activité liée aux licences" />
+
+                                        <Divider />
+
+                                        {selectedUser.Licenses && selectedUser.Licenses.length > 0 ? (
+                                            selectedUser.Licenses.map((license, index) => (
+                                                <div key={index} style={{ marginBottom: 16 }}>
+                                                    <h4>Licence : {license.AccountSkuId}</h4>
+                                                    <List
+                                                        dataSource={license.ServiceStatus}
+                                                        renderItem={(service, idx) => (
+                                                            <List.Item key={idx}>
+                                                                <List.Item.Meta
+                                                                    title={service.ServicePlan.ServiceName}
+                                                                    description={
+                                                                        <>
+                                                                            Statut de provisionnement :{" "}
+                                                                            <Tag
+                                                                                color={
+                                                                                    service.ServicePlan.ProvisioningStatus === "Success"
+                                                                                        ? "green"
+                                                                                        : service.ServicePlan.ProvisioningStatus === "Disabled"
+                                                                                            ? "red"
+                                                                                            : "orange"
+                                                                                }
+                                                                            >
+                                                                                {service.ServicePlan.ProvisioningStatus}
+                                                                            </Tag>
+                                                                        </>
+                                                                    }
+                                                                />
+                                                            </List.Item>
+                                                        )}
+                                                    />
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <Empty description="Aucune activité liée aux licences" />
+                                        )}
+                                    </>
                                 )}
                             </TabPane>
 
                         </Tabs>
                     )}
                 </Modal>
+
+                <Modal
+                    title={
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: 20 }} />
+            Action impossible
+        </span>
+                    }
+                    visible={errorModalVisible}
+                    onOk={() => setErrorModalVisible(false)}
+                    onCancel={() => setErrorModalVisible(false)}
+                    okText="Fermer"
+                >
+                    <p style={{ fontSize: 16 }}>
+                        Vous ne pouvez pas assigner cette licence à l'utilisateur sélectionné.
+                        <br />
+                        Vous ne disposez pas des privilèges suffisants pour effectuer cette opération.
+                    </p>
+                </Modal>
+
 
                 {/* Tableau des sondages */}
                 <Card
