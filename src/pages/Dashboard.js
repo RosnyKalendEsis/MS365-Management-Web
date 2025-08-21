@@ -234,8 +234,8 @@ export default function Dashboard() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [, setActiveTab] = useState('1');
-    const { rapports, loading, generateRapport, generating } = useRapportContext();
-    const {runPowerShellCommand,checkUserExists, getAvailableSKUs,assignLicenseToUser,getADUsers} = useAzureAD();
+    const { rapports,generateRapport, generating } = useRapportContext();
+    const {runPowerShellCommand,checkUserExists, getAvailableSKUs,assignLicenseToUser,getADUsers,createAzureUser} = useAzureAD();
     const [isAttributeModalVisible, setIsAttributeModalVisible] = useState(false);
     const [selectedLicense, setSelectedLicense] = useState(null);
     const [licencesDisponibles, setLicencesDisponibles] = useState([]);
@@ -245,12 +245,76 @@ export default function Dashboard() {
     const [form] = Form.useForm();
     const [checking, setChecking] = useState(false);
     const [creating, setCreating] = useState(false);
+    const [loading, setLoading] = useState(false);
     const { azureStates } = useAzureState();
+
+    const fetchAzureData = async () => {
+        if (azureStates.length > 0 && azureStates[0].connected) {
+            try {
+                const usersData = await getADUsers();
+
+                const azureUsers = Array.isArray(JSON.parse(usersData.data))
+                    ? JSON.parse(usersData.data).map((user) => ({
+                        DisplayName: user.DisplayName,
+                        UserPrincipalName: user.UserPrincipalName,
+                        isLicensed: !!user.AssignedLicenses?.length,
+                        Licenses: user.AssignedLicenses?.map((license) => ({
+                            AccountSkuId: license?.SkuId,
+                            ServiceStatus:
+                                user.AssignedPlans?.filter(
+                                    (plan) => plan?.SkuId === license?.SkuId
+                                ).map((plan) => ({
+                                    ServicePlan: {
+                                        ServiceName: plan?.ServicePlanName,
+                                        ProvisioningStatus: plan?.ProvisioningStatus,
+                                    },
+                                })) || [],
+                        })),
+                    }))
+                    : [];
+
+                // --- Transformation des utilisateurs locaux (users) ---
+                const localUsersTransformed = users
+                    .filter((localUser) => localUser.role !== "SUPER_ADMIN") // exclure les SUPER_ADMIN
+                    .map((localUser) => ({
+                        DisplayName: localUser.displayName,
+                        UserPrincipalName: localUser.userPrincipalName,
+                        isLicensed: !!localUser.licenses?.length || localUser.licensed || false,
+                        Licenses:
+                            localUser.licenses?.map((license) => ({
+                                AccountSkuId: license.SkuId || license.accountSkuId || "UNKNOWN",
+                                ServiceStatus: license.ServiceStatus || [],
+                            })) || [],
+                    }));
+
+                // --- Fusion en évitant les doublons ---
+                const mergedUsers = [
+                    ...azureUsers,
+                    ...localUsersTransformed.filter(
+                        (localUser) =>
+                            !azureUsers.some(
+                                (azureUser) =>
+                                    azureUser.UserPrincipalName === localUser.UserPrincipalName
+                            )
+                    ),
+                ];
+
+                setLicences(mergedUsers);
+
+                const normalizedData = Array.isArray(JSON.parse(licences.data)) ? JSON.parse(licences.data) : [JSON.parse(licences.data)];
+                setLicencesDisponibles(normalizedData);
+
+            } catch (error) {
+                console.error("Erreur lors de l’exécution des commandes PowerShell:", error);
+            }
+        }
+    };
 
     useEffect(() => {
         const fetchAzureData = async () => {
             if (azureStates.length > 0 && azureStates[0].connected) {
                 try {
+                    setLoading(true);
                     const licences = await getAvailableSKUs();
                     const usersData = await getADUsers();
 
@@ -260,14 +324,14 @@ export default function Dashboard() {
                             UserPrincipalName: user.UserPrincipalName,
                             isLicensed: !!user.AssignedLicenses?.length,
                             Licenses: user.AssignedLicenses?.map((license) => ({
-                                AccountSkuId: license.SkuId,
+                                AccountSkuId: license?.SkuId,
                                 ServiceStatus:
                                     user.AssignedPlans?.filter(
-                                        (plan) => plan.SkuId === license.SkuId
+                                        (plan) => plan?.SkuId === license?.SkuId
                                     ).map((plan) => ({
                                         ServicePlan: {
-                                            ServiceName: plan.ServicePlanName,
-                                            ProvisioningStatus: plan.ProvisioningStatus,
+                                            ServiceName: plan?.ServicePlanName,
+                                            ProvisioningStatus: plan?.ProvisioningStatus,
                                         },
                                     })) || [],
                             })),
@@ -275,15 +339,18 @@ export default function Dashboard() {
                         : [];
 
                     // --- Transformation des utilisateurs locaux (users) ---
-                    const localUsersTransformed = users.map((localUser) => ({
-                        DisplayName: localUser.displayName,
-                        UserPrincipalName: localUser.userPrincipalName,
-                        isLicensed: !!localUser.licenses?.length || localUser.licensed || false,
-                        Licenses: localUser.licenses?.map((license) => ({
-                            AccountSkuId: license.SkuId || license.accountSkuId || "UNKNOWN",
-                            ServiceStatus: license.ServiceStatus || [],
-                        })) || [],
-                    }));
+                    const localUsersTransformed = users
+                        .filter((localUser) => localUser.role !== "SUPER_ADMIN") // exclure les SUPER_ADMIN
+                        .map((localUser) => ({
+                            DisplayName: localUser.displayName,
+                            UserPrincipalName: localUser.userPrincipalName,
+                            isLicensed: !!localUser.licenses?.length || localUser.licensed || false,
+                            Licenses:
+                                localUser.licenses?.map((license) => ({
+                                    AccountSkuId: license.SkuId || license.accountSkuId || "UNKNOWN",
+                                    ServiceStatus: license.ServiceStatus || [],
+                                })) || [],
+                        }));
 
                     // --- Fusion en évitant les doublons ---
                     const mergedUsers = [
@@ -304,12 +371,14 @@ export default function Dashboard() {
 
                 } catch (error) {
                     console.error("Erreur lors de l’exécution des commandes PowerShell:", error);
+                } finally {
+                    setLoading(false);
                 }
             }
         };
 
         fetchAzureData();
-    }, [azureStates]);
+    }, [azureStates, users]);
 
     const handleGenerate = async () => {
         try {
@@ -354,8 +423,20 @@ export default function Dashboard() {
         console.log("Suppression de licence pour l'utilisateur :", record);
     }
 
-    function editUser(record) {
-        console.log("Modification de l'utilisateur :", record);
+    async function handleSubmit(values) {
+        try {
+            await assignLicenseToUser(values.userPrincipalName, selectedLicense);
+        } catch (err) {
+            console.error("Erreur lors de la vérification de l'utilisateur :", err);
+        } finally {
+            setCreating(false);
+            setSelectedUser(null);
+            setIsAttributeModalVisible(false);
+            setSelectedLicense(null);
+            form.resetFields();
+            fetchAzureData();
+        }
+        console.log("Creation de l'utilisateur sur azure de l'utilisateur :", values);
     }
 
     function deleteUser(record) {
@@ -522,358 +603,391 @@ export default function Dashboard() {
 
     return (
         <div className="admin-dashboard">
-            <HeaderAdmin
-                user={{ name: "Super Admin", role: "Administrateur Principal" }}
-                version="1.1.0"
-                onLogout={handleLogout}
-            />
-
-            <div className="dashboard-content">
-                {/* En-tête du tableau de bord */}
-                <div className="dashboard-header">
-                    <div>
-                        <h1>Tableau de Bord Administratif</h1>
-                        <p className="text-muted">Aperçu complet des utilisations des licences MS 365 et leur etat actuel</p>
-                    </div>
-                    <div className="dashboard-actions">
-                        <Button type="primary" icon={<DownloadOutlined />} onClick={()=>handleGenerate()}>
-                            {generating ? "En cours de generation..." : "Generer rapport"}
-                        </Button>
+            {loading ? (
+                <div className="dashboard-content">
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            height: "100vh",
+                            width: "100%",
+                            textAlign: "center",
+                        }}
+                    >
+                        <Spin size="large" />
+                        <p className={"mt-3"}>Chargement des données en cours....</p>
                     </div>
                 </div>
 
-                {/* Cartes de statistiques */}
-                <Row gutter={[16, 16]} className="stats-row">
-                    {statsData.map((stat) => (
-                        <Col xs={24} sm={12} md={12} lg={6} key={stat.id}>
-                            <Card className="stat-card">
-                                <div className="stat-icon" style={{ backgroundColor: `${stat.color}20`, color: stat.color }}>
-                                    {stat.icon}
-                                </div>
-                                <Statistic
-                                    title={stat.title}
-                                    value={stat.value}
-                                    valueStyle={{ fontSize: '28px' }}
-                                />
-                                <div className="stat-change">
+            ):(
+                <>
+                    <HeaderAdmin
+                        user={{ name: "Super Admin", role: "Administrateur Principal" }}
+                        version="1.1.0"
+                        onLogout={handleLogout}
+                    />
+
+                    <div className="dashboard-content">
+                        {/* En-tête du tableau de bord */}
+                        <div className="dashboard-header">
+                            <div>
+                                <h1>Tableau de Bord Administratif</h1>
+                                <p className="text-muted">Aperçu complet des utilisations des licences MS 365 et leur etat actuel</p>
+                            </div>
+                            <div className="dashboard-actions">
+                                <Button type="primary" icon={<DownloadOutlined />} onClick={()=>handleGenerate()}>
+                                    {generating ? "En cours de generation..." : "Generer rapport"}
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Cartes de statistiques */}
+                        <Row gutter={[16, 16]} className="stats-row">
+                            {statsData.map((stat) => (
+                                <Col xs={24} sm={12} md={12} lg={6} key={stat.id}>
+                                    <Card className="stat-card">
+                                        <div className="stat-icon" style={{ backgroundColor: `${stat.color}20`, color: stat.color }}>
+                                            {stat.icon}
+                                        </div>
+                                        <Statistic
+                                            title={stat.title}
+                                            value={stat.value}
+                                            valueStyle={{ fontSize: '28px' }}
+                                        />
+                                        <div className="stat-change">
                                     <span className={`change-indicator ${stat.change >= 0 ? 'positive' : 'negative'}`}>
                                         {stat.change >= 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
                                         {Math.abs(stat.change)}%
                                     </span>
-                                    <span className="change-label">vs période précédente</span>
-                                </div>
-                            </Card>
-                        </Col>
-                    ))}
-                </Row>
-                {/* Graphiques et activité */}
-                <Row gutter={[16, 16]} className="charts-row mt-4 mb-4">
-                    <Col xs={24} lg={16}>
-                        <Card
-                            title="Activité des Consultations"
-                            extra={
-                                <Button.Group>
-                                    <Button>Hebdomadaire</Button>
-                                    <Button type="primary">Mensuel</Button>
-                                </Button.Group>
-                            }
-                        >
-                            <div style={{ height: 300 }}>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={activityData}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="name" />
-                                        <YAxis />
-                                        <Tooltip />
-                                        <Legend />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="participations"
-                                            stroke="#1890ff"
-                                            strokeWidth={2}
-                                            dot={{ r: 4 }}
-                                            activeDot={{ r: 6 }}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="utilisateurs"
-                                            stroke="#52c41a"
-                                            strokeWidth={2}
-                                            dot={{ r: 4 }}
-                                            activeDot={{ r: 6 }}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </Card>
-                    </Col>
-                    <Col xs={24} lg={8}>
-                        <Card title="Participation par Thème">
-                            <div style={{ height: 300 }}>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={participationData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            fill="#8884d8"
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                        >
-                                            {participationData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip formatter={(value) => [value.toLocaleString(), 'Participants']} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </Card>
-                    </Col>
-                </Row>
-
-                <Modal
-                    title={`Fiche détaillée - ${selectedUser?.displayName}`}
-                    visible={isModalVisible}
-                    onCancel={() => setIsModalVisible(false)}
-                    footer={null}
-                    width={800}
-                    className="user-modal"
-                >
-                    {selectedUser && (
-                        <Tabs defaultActiveKey="1" onChange={setActiveTab}>
-                            <TabPane tab="Informations" key="1">
-                                <Descriptions bordered column={2}>
-                                    <Descriptions.Item label="Nom complet">{selectedUser.displayName}</Descriptions.Item>
-                                    <Descriptions.Item label="Email">{selectedUser.userPrincipalName}</Descriptions.Item>
-                                    <Descriptions.Item label="Poste">{selectedUser.jobTitle || 'Non spécifié'}</Descriptions.Item>
-                                    <Descriptions.Item label="Département">{selectedUser.department || 'Non spécifié'}</Descriptions.Item>
-                                    <Descriptions.Item label="Bureau">{selectedUser.officeLocation || 'Non spécifié'}</Descriptions.Item>
-                                    <Descriptions.Item label="Téléphone">{selectedUser.phoneNumber || 'Non spécifié'}</Descriptions.Item>
-                                    <Descriptions.Item label="Statut">
-                                        <Badge
-                                            status={selectedUser.status === 'actif' ? 'success' : 'default'}
-                                            text={selectedUser.status || 'Inconnu'}
-                                        />
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label="Date de création">
-                                        {selectedUser.createdDate
-                                            ? new Date(selectedUser.createdDate).toLocaleString()
-                                            : 'Non spécifiée'}
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label="Manager" span={2}>
-                                        {selectedUser.manager?.displayName || 'Non spécifié'}
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label="Utilisateur licencié">
-                                        {selectedUser.isLicensed ? (
-                                            <Tag color="green">Oui</Tag>
-                                        ) : (
-                                            <Tag color="red">Non</Tag>
-                                        )}
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label="Licence expirée">
-                                        {selectedUser.isLicenseExpired ? (
-                                            <Tag color="red">Oui</Tag>
-                                        ) : (
-                                            <Tag color="green">Non</Tag>
-                                        )}
-                                    </Descriptions.Item>
-                                </Descriptions>
-                            </TabPane>
-
-                            <TabPane tab="Licences" key="2">
-                                {selectedUser && (
-                                    <>
-                                        <div style={{ marginBottom: 16 }}>
-                                            <h4>Assigner une licence</h4>
-                                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                                <Select
-                                                    style={{ width: 300 }}
-                                                    placeholder="Sélectionnez une licence"
-                                                    value={selectedLicense}
-                                                    onChange={setSelectedLicense}
-                                                >
-                                                    {licencesDisponibles.map((licence) => (
-                                                        <Select.Option key={licence.SkuId} value={licence.SkuId}>
-                                                            {licence.SkuPartNumber}
-                                                        </Select.Option>
-                                                    ))}
-                                                </Select>
-                                                <Button
-                                                    type="primary"
-                                                    onClick={async () => {
-                                                        if (!selectedLicense) return;
-                                                        try {
-                                                            await assignLicenseToUser(selectedUser.UserPrincipalName, selectedLicense);
-                                                            setSelectedLicense(null);
-                                                            setIsModalVisible(false);
-                                                            setErrorModalVisible(true);
-                                                        } catch (e) {
-                                                            console.log("sss")
-                                                        }
-                                                    }}
-                                                >
-                                                    Assigner
-                                                </Button>
-                                            </div>
+                                            <span className="change-label">vs période précédente</span>
                                         </div>
+                                    </Card>
+                                </Col>
+                            ))}
+                        </Row>
+                        {/* Graphiques et activité */}
+                        <Row gutter={[16, 16]} className="charts-row mt-4 mb-4">
+                            <Col xs={24} lg={16}>
+                                <Card
+                                    title="Activité des Consultations"
+                                    extra={
+                                        <Button.Group>
+                                            <Button>Hebdomadaire</Button>
+                                            <Button type="primary">Mensuel</Button>
+                                        </Button.Group>
+                                    }
+                                >
+                                    <div style={{ height: 300 }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <LineChart data={activityData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                <XAxis dataKey="name" />
+                                                <YAxis />
+                                                <Tooltip />
+                                                <Legend />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="participations"
+                                                    stroke="#1890ff"
+                                                    strokeWidth={2}
+                                                    dot={{ r: 4 }}
+                                                    activeDot={{ r: 6 }}
+                                                />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="utilisateurs"
+                                                    stroke="#52c41a"
+                                                    strokeWidth={2}
+                                                    dot={{ r: 4 }}
+                                                    activeDot={{ r: 6 }}
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </Card>
+                            </Col>
+                            <Col xs={24} lg={8}>
+                                <Card title="Participation par Thème">
+                                    <div style={{ height: 300 }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={participationData}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={80}
+                                                    fill="#8884d8"
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                                >
+                                                    {participationData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip formatter={(value) => [value.toLocaleString(), 'Participants']} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </Card>
+                            </Col>
+                        </Row>
 
-                                        <Divider />
+                        <Modal
+                            title={`Fiche détaillée - ${selectedUser?.displayName}`}
+                            visible={isModalVisible}
+                            onCancel={() => setIsModalVisible(false)}
+                            footer={null}
+                            width={800}
+                            className="user-modal"
+                        >
+                            {selectedUser && (
+                                <Tabs defaultActiveKey="1" onChange={setActiveTab}>
+                                    <TabPane tab="Informations" key="1">
+                                        <Descriptions bordered column={2}>
+                                            <Descriptions.Item label="Nom complet">{selectedUser.displayName}</Descriptions.Item>
+                                            <Descriptions.Item label="Email">{selectedUser.userPrincipalName}</Descriptions.Item>
+                                            <Descriptions.Item label="Poste">{selectedUser.jobTitle || 'Non spécifié'}</Descriptions.Item>
+                                            <Descriptions.Item label="Département">{selectedUser.department || 'Non spécifié'}</Descriptions.Item>
+                                            <Descriptions.Item label="Bureau">{selectedUser.officeLocation || 'Non spécifié'}</Descriptions.Item>
+                                            <Descriptions.Item label="Téléphone">{selectedUser.phoneNumber || 'Non spécifié'}</Descriptions.Item>
+                                            <Descriptions.Item label="Statut">
+                                                <Badge
+                                                    status={selectedUser.status === 'actif' ? 'success' : 'default'}
+                                                    text={selectedUser.status || 'Inconnu'}
+                                                />
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label="Date de création">
+                                                {selectedUser.createdDate
+                                                    ? new Date(selectedUser.createdDate).toLocaleString()
+                                                    : 'Non spécifiée'}
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label="Manager" span={2}>
+                                                {selectedUser.manager?.displayName || 'Non spécifié'}
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label="Utilisateur licencié">
+                                                {selectedUser.isLicensed ? (
+                                                    <Tag color="green">Oui</Tag>
+                                                ) : (
+                                                    <Tag color="red">Non</Tag>
+                                                )}
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label="Licence expirée">
+                                                {selectedUser.isLicenseExpired ? (
+                                                    <Tag color="red">Oui</Tag>
+                                                ) : (
+                                                    <Tag color="green">Non</Tag>
+                                                )}
+                                            </Descriptions.Item>
+                                        </Descriptions>
+                                    </TabPane>
 
-                                        {selectedUser.Licenses && selectedUser.Licenses.length > 0 ? (
-                                            selectedUser.Licenses.map((license, index) => (
-                                                <div key={index} style={{ marginBottom: 16 }}>
-                                                    <h4>Licence : {license.AccountSkuId}</h4>
-                                                    <List
-                                                        dataSource={license.ServiceStatus}
-                                                        renderItem={(service, idx) => (
-                                                            <List.Item key={idx}>
-                                                                <List.Item.Meta
-                                                                    title={service.ServicePlan.ServiceName}
-                                                                    description={
-                                                                        <>
-                                                                            Statut de provisionnement :{" "}
-                                                                            <Tag
-                                                                                color={
-                                                                                    service.ServicePlan.ProvisioningStatus === "Success"
-                                                                                        ? "green"
-                                                                                        : service.ServicePlan.ProvisioningStatus === "Disabled"
-                                                                                            ? "red"
-                                                                                            : "orange"
-                                                                                }
-                                                                            >
-                                                                                {service.ServicePlan.ProvisioningStatus}
-                                                                            </Tag>
-                                                                        </>
-                                                                    }
-                                                                />
-                                                            </List.Item>
-                                                        )}
-                                                    />
+                                    <TabPane tab="Licences" key="2">
+                                        {selectedUser && (
+                                            <>
+                                                <div style={{ marginBottom: 16 }}>
+                                                    <h4>Assigner une licence</h4>
+                                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                        <Select
+                                                            style={{ width: 300 }}
+                                                            placeholder="Sélectionnez une licence"
+                                                            value={selectedLicense}
+                                                            onChange={setSelectedLicense}
+                                                        >
+                                                            {licencesDisponibles.map((licence) => (
+                                                                <Select.Option key={licence?.SkuId} value={licence?.SkuId}>
+                                                                    {licence?.SkuPartNumber}
+                                                                </Select.Option>
+                                                            ))}
+                                                        </Select>
+                                                        <Button
+                                                            type="primary"
+                                                            onClick={async () => {
+                                                                if (!selectedLicense) return;
+                                                                try {
+                                                                    await assignLicenseToUser(selectedUser.UserPrincipalName, selectedLicense);
+                                                                    setSelectedLicense(null);
+                                                                    setIsModalVisible(false);
+                                                                    setErrorModalVisible(true);
+                                                                } catch (e) {
+                                                                    console.log("sss")
+                                                                }
+                                                            }}
+                                                        >
+                                                            Assigner
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <Empty description="Aucune activité liée aux licences" />
+
+                                                <Divider />
+
+                                                {selectedUser.Licenses && selectedUser.Licenses.length > 0 ? (
+                                                    selectedUser.Licenses.map((license, index) => (
+                                                        <div key={index} style={{ marginBottom: 16 }}>
+                                                            <h4>Licence : {license.AccountSkuId}</h4>
+                                                            <List
+                                                                dataSource={license.ServiceStatus}
+                                                                renderItem={(service, idx) => (
+                                                                    <List.Item key={idx}>
+                                                                        <List.Item.Meta
+                                                                            title={service.ServicePlan.ServiceName}
+                                                                            description={
+                                                                                <>
+                                                                                    Statut de provisionnement :{" "}
+                                                                                    <Tag
+                                                                                        color={
+                                                                                            service.ServicePlan.ProvisioningStatus === "Success"
+                                                                                                ? "green"
+                                                                                                : service.ServicePlan.ProvisioningStatus === "Disabled"
+                                                                                                    ? "red"
+                                                                                                    : "orange"
+                                                                                        }
+                                                                                    >
+                                                                                        {service.ServicePlan.ProvisioningStatus}
+                                                                                    </Tag>
+                                                                                </>
+                                                                            }
+                                                                        />
+                                                                    </List.Item>
+                                                                )}
+                                                            />
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <Empty description="Aucune activité liée aux licences" />
+                                                )}
+                                            </>
                                         )}
-                                    </>
-                                )}
-                            </TabPane>
+                                    </TabPane>
 
-                        </Tabs>
-                    )}
-                </Modal>
+                                </Tabs>
+                            )}
+                        </Modal>
 
-                <Modal
-                    title={
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Modal
+                            title={
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: 20 }} />
             Action impossible
         </span>
-                    }
-                    visible={errorModalVisible}
-                    onOk={() => setErrorModalVisible(false)}
-                    onCancel={() => setErrorModalVisible(false)}
-                    okText="Fermer"
-                >
-                    <p style={{ fontSize: 16 }}>
-                        Vous ne pouvez pas assigner cette licence à l'utilisateur sélectionné.
-                        <br />
-                        Vous ne disposez pas des privilèges suffisants pour effectuer cette opération.
-                    </p>
-                </Modal>
-
-                <Modal
-                    title={`Attribution d'une licence ${selectedUser?.DisplayName}`}
-                    visible={isAttributeModalVisible}
-                    onCancel={() => {
-                        setIsAttributeModalVisible(false);
-                        setChecking(false);
-                        setSelectedUser(null);
-                        form.resetFields();
-                    }}
-                    footer={[
-                        <Button key="back" onClick={() => setIsAttributeModalVisible(false)}>
-                            Annuler
-                        </Button>,
-                        <Button
-                            key="submit"
-                            type="primary"
-                            loading={creating}
-                            onClick={() => form.submit()}
-                            disabled={checking} // désactiver tant que checking est true
+                            }
+                            visible={errorModalVisible}
+                            onOk={() => setErrorModalVisible(false)}
+                            onCancel={() => setErrorModalVisible(false)}
+                            okText="Fermer"
                         >
-                            {creating ? "Envoi en cours..." : "Ajouter les images"}
-                        </Button>,
-                    ]}
-                >
-                    {checking ? (
-                        <div className="flex flex-col items-center justify-center w-full h-full py-10">
-                            <div
-                                style={{
-                                    width: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                }}
-                            >
-                                <Spin size="large" />
-                            </div>
-
-                            <p className="mt-4 text-center">
-                                Vérification de la validité de l’utilisateur sur AD...
+                            <p style={{ fontSize: 16 }}>
+                                Vous ne pouvez pas assigner cette licence à l'utilisateur sélectionné.
+                                <br />
+                                Vous ne disposez pas des privilèges suffisants pour effectuer cette opération.
                             </p>
-                        </div>
+                        </Modal>
 
-                    ) : (
-                        <Form
-                            form={form}
-                            layout="vertical"
-                            onFinish={() => console.log("dats")} // récupère tous les champs
+                        <Modal
+                            title={`Attribution d'une licence ${selectedUser?.DisplayName}`}
+                            visible={isAttributeModalVisible}
+                            onCancel={() => {
+                                setIsAttributeModalVisible(false);
+                                setChecking(false);
+                                setSelectedUser(null);
+                                form.resetFields();
+                            }}
+                            footer={[
+                                <Button key="back" onClick={() => setIsAttributeModalVisible(false)}>
+                                    Annuler
+                                </Button>,
+                                <Button
+                                    key="submit"
+                                    type="primary"
+                                    loading={creating}
+                                    onClick={() => form.submit()}
+                                    disabled={checking || selectedLicense===null} // désactiver tant que checking est true
+                                >
+                                    {creating ? "Envoi en cours..." : "Attribuer la licence"}
+                                </Button>,
+                            ]}
                         >
-                            {/* Champ titre */}
-                            <Form.Item
-                                label="Titre"
-                                name="title"
-                                rules={[{ required: true, message: "Veuillez entrer un titre" }]}
-                            >
-                                <Input placeholder="Entrez un titre" />
-                            </Form.Item>
+                            {checking ? (
+                                <div className="flex flex-col items-center justify-center w-full h-full py-10">
+                                    <div
+                                        style={{
+                                            width: "100%",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <Spin size="large" />
+                                    </div>
 
-                            {/* Champ description */}
-                            <Form.Item
-                                label="Description"
-                                name="description"
-                                rules={[{ required: true, message: "Veuillez entrer une description" }]}
-                            >
-                                <Input.TextArea rows={3} placeholder="Entrez une description" />
-                            </Form.Item>
-                        </Form>
-                    )}
-                </Modal>
+                                    <p className="mt-4 text-center">
+                                        Vérification de la validité de l’utilisateur sur AD...
+                                    </p>
+                                </div>
+                            ) : (
+                                <Form
+                                    form={form}
+                                    layout="vertical"
+                                    initialValues={{
+                                        displayName: selectedUser?.DisplayName,
+                                        userPrincipalName: selectedUser?.UserPrincipalName,
+                                    }}
+                                    onFinish={(values) => {
+                                        handleSubmit(values);
+                                    }}
+                                >
+                                    {/* DisplayName */}
+                                    <Form.Item label="Nom complet" name="displayName">
+                                        <Input value={selectedUser?.DisplayName} disabled />
+                                    </Form.Item>
+
+                                    {/* UserPrincipalName */}
+                                    <Form.Item label="Adresse e-mail (UPN)" name="userPrincipalName">
+                                        <Input value={selectedUser?.UserPrincipalName} disabled />
+                                    </Form.Item>
+
+                                    <Select
+                                        style={{ width: '100%' }}
+                                        placeholder="Sélectionnez une licence"
+                                        value={selectedLicense}
+                                        onChange={setSelectedLicense}
+                                    >
+                                        {licencesDisponibles.map((licence) => (
+                                            <Select.Option key={licence?.SkuId} value={licence?.SkuId}>
+                                                {licence?.SkuPartNumber}
+                                            </Select.Option>
+                                        ))}
+                                    </Select>
+                                </Form>
+                            )}
+                        </Modal>
 
 
 
-                {/* Tableau des sondages */}
-                <Card
-                    title="Listes des utilisateurs"
-                    className="polls-table"
-                >
-                    <Table
-                        columns={columns}
-                        dataSource={licences}
-                        pagination={{
-                            pageSize: 10,
-                            showSizeChanger: true,
-                            showTotal: (total) => `${total} Utilisateurs`,
-                        }}
-                        rowKey="id"
-                    />
-                </Card>
-            </div>
+
+                        {/* Tableau des sondages */}
+                        <Card
+                            title="Listes des utilisateurs"
+                            className="polls-table"
+                        >
+                            <Table
+                                columns={columns}
+                                dataSource={licences}
+                                pagination={{
+                                    pageSize: 10,
+                                    showSizeChanger: true,
+                                    showTotal: (total) => `${total} Utilisateurs`,
+                                }}
+                                rowKey="id"
+                            />
+                        </Card>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

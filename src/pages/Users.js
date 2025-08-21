@@ -20,6 +20,7 @@ import '../styles/Deputes.css';
 import { Form } from 'antd';
 import {useUserContext} from "../providers/UserProvider";
 import UserStats from "../components/UserStats";
+import {useAzureAD} from "../providers/AzureADProvider";
 
 
 const { Search } = Input;
@@ -31,6 +32,7 @@ const Users = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
+    const {runPowerShellCommand,checkUserExists, getAvailableSKUs,assignLicenseToUser,getADUsers,createAzureUser} = useAzureAD();
     const [, setActiveTab] = useState('1');
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -101,59 +103,6 @@ const Users = () => {
         console.log("Modification de l'utilisateur :", record);
     }
 
-    // const [users, setUsers] = useState([
-    //     {
-    //         id: "1",
-    //         displayName: "Jean Dupont",
-    //         userPrincipalName: "j.dupont@entreprise.com",
-    //         jobTitle: "Développeur",
-    //         department: "Informatique",
-    //         officeLocation: "Paris",
-    //         phoneNumber: "+33 6 12 34 56 78",
-    //         isLicensed: true,
-    //         isLicenseExpired: false,
-    //         createdDate: "2025-08-01T10:30:00Z",
-    //         status: "ACTIVE",
-    //         manager: {
-    //             displayName: "Sophie Martin",
-    //             userPrincipalName: "s.martin@entreprise.com"
-    //         },
-    //         licenses: []
-    //     },
-    //     {
-    //         id: "2",
-    //         displayName: "Alice Durand",
-    //         userPrincipalName: "a.durand@entreprise.com",
-    //         jobTitle: "Chef de projet",
-    //         department: "Gestion de projet",
-    //         officeLocation: "Lyon",
-    //         phoneNumber: "+33 6 98 76 54 32",
-    //         isLicensed: true,
-    //         isLicenseExpired: false,
-    //         createdDate: "2025-07-20T09:00:00Z",
-    //         status: "ACTIVE",
-    //         manager: null,
-    //         licenses: []
-    //     },
-    //     {
-    //         id: "3",
-    //         displayName: "Marc Lemoine",
-    //         userPrincipalName: "m.lemoine@entreprise.com",
-    //         jobTitle: null,
-    //         department: null,
-    //         officeLocation: null,
-    //         phoneNumber: null,
-    //         isLicensed: false,
-    //         isLicenseExpired: true,
-    //         createdDate: "2025-06-15T14:45:00Z",
-    //         status: "INACTIVE",
-    //         manager: {
-    //             displayName: "Jean Dupont",
-    //             userPrincipalName: "j.dupont@entreprise.com"
-    //         },
-    //         licenses: []
-    //     }
-    // ]);
 
 
 
@@ -484,6 +433,8 @@ const Users = () => {
                     } else {
                         try {
                             await createUser(userToSave);
+                            await createAzureUser({displayName:newUser.displayName,userPrincipalName:newUser.userPrincipalName,password:newUser.password});
+
                             message.success("Utilisateur ajouté avec succès !");
                         } catch (error) {
                             message.error("Erreur lors de la création de l’utilisateur.");
@@ -514,7 +465,19 @@ const Users = () => {
                             <Form.Item label="Nom complet" required>
                                 <Input
                                     value={newUser.displayName}
-                                    onChange={(e) => setNewUser({ ...newUser, displayName: e.target.value })}
+                                    onChange={(e) => {
+                                        const name = e.target.value;
+                                        // Nettoyage : enlever espaces, mettre en minuscule
+                                        const upn = name
+                                            .toLowerCase()
+                                            .replace(/\s+/g, "") + "@primecode243.onmicrosoft.com";
+
+                                        setNewUser({
+                                            ...newUser,
+                                            displayName: name,
+                                            userPrincipalName: upn,
+                                        });
+                                    }}
                                     placeholder="Jean Kabila"
                                 />
                             </Form.Item>
@@ -523,8 +486,8 @@ const Users = () => {
                             <Form.Item label="Adresse e-mail (UPN)" required>
                                 <Input
                                     value={newUser.userPrincipalName}
-                                    onChange={(e) => setNewUser({ ...newUser, userPrincipalName: e.target.value })}
-                                    placeholder="jean.kabila@example.com"
+                                    disabled // <- empêche toute modification manuelle
+                                    placeholder="jeankabila@primecode243.onmicrosoft.com"
                                 />
                             </Form.Item>
                         </Col>
@@ -598,32 +561,30 @@ const Users = () => {
                         </Col>
                     </Row>
 
-                    {newUser.type === 'ADMIN_IT' && (
-                        <>
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Form.Item label="Mot de passe" required>
-                                        <Input.Password
-                                            value={newUser.password}
-                                            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                                            placeholder="********"
-                                        />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={12}>
-                                    <Form.Item label="Rôle" required>
-                                        <Select
-                                            value={newUser.role}
-                                            onChange={(value) => setNewUser({ ...newUser, role: value })}
-                                        >
-                                            <Select.Option value="ADMIN">ADMIN</Select.Option>
-                                            <Select.Option value="SUPER_ADMIN">SUPER ADMIN</Select.Option>
-                                        </Select>
-                                    </Form.Item>
-                                </Col>
-                            </Row>
-                        </>
-                    )}
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item label="Mot de passe" required>
+                                <Input.Password
+                                    value={newUser.password}
+                                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                    placeholder="********"
+                                />
+                            </Form.Item>
+                        </Col>
+                        {newUser.type === 'ADMIN_IT' && (
+                        <Col span={12}>
+                            <Form.Item label="Rôle" required>
+                                <Select
+                                    value={newUser.role}
+                                    onChange={(value) => setNewUser({ ...newUser, role: value })}
+                                >
+                                    <Select.Option value="ADMIN">ADMIN</Select.Option>
+                                    <Select.Option value="SUPER_ADMIN">SUPER ADMIN</Select.Option>
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        )}
+                    </Row>
                 </Form>
             </Modal>
 

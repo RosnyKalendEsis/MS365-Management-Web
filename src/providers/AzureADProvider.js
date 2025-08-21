@@ -70,7 +70,7 @@ export const AzureADProvider = ({ children }) => {
     };
 
     // 3. Créer un utilisateur s’il n’existe pas
-    const createUser = async ({ displayName, userPrincipalName, password }) => {
+    const createAzureUser = async ({ displayName, userPrincipalName, password }) => {
         const command = `
             New-AzureADUser -DisplayName "${displayName}" `
             + `-UserPrincipalName "${userPrincipalName}" `
@@ -92,6 +92,16 @@ export const AzureADProvider = ({ children }) => {
         const command = `
         $user = Get-AzureADUser -Filter "UserPrincipalName eq '${userPrincipalName}'"
 
+        # Vérifie si UsageLocation est vide
+        if (-not $user.UsageLocation) {
+            # Définit une valeur par défaut (ici "CD" pour RDC)
+            Set-AzureADUser -ObjectId $user.ObjectId -UsageLocation "CD"
+            
+            # Recharge l'utilisateur avec la nouvelle valeur
+            $user = Get-AzureADUser -ObjectId $user.ObjectId
+        }
+
+        # Prépare la licence
         $license = New-Object -TypeName Microsoft.Open.AzureAD.Model.AssignedLicense
         $license.SkuId = "${skuId}"
 
@@ -99,10 +109,12 @@ export const AzureADProvider = ({ children }) => {
         $licenseAssignment.AddLicenses = @($license)
         $licenseAssignment.RemoveLicenses = @()
 
+        # Assigne la licence
         Set-AzureADUserLicense -ObjectId $user.ObjectId -AssignedLicenses $licenseAssignment
     `;
         return await runPowerShellCommand(command);
     };
+
 
     // 6. Désactiver (retirer) une licence
     const removeLicenseFromUser = async (userPrincipalName, skuId) => {
@@ -148,7 +160,7 @@ export const AzureADProvider = ({ children }) => {
                 runPowerShellCommand,
                 getAvailableSKUs,
                 checkUserExists,
-                createUser,
+                createAzureUser,
                 getUserObjectId,
                 assignLicenseToUser,
                 removeLicenseFromUser,
