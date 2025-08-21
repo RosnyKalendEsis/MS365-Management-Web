@@ -14,7 +14,7 @@ import {
     Avatar,
     Space,
     Tooltip,
-    Tabs, Descriptions, Badge, List, Modal, Empty, Alert
+    Tabs, Descriptions, Badge, List, Modal, Empty, Alert, Form, Input, Spin
 } from 'antd';
 import {
     LineChart,
@@ -52,6 +52,8 @@ import HeaderAdmin from "../components/HeaderAdmin";
 import '../styles/admin-layout.css';
 import {useRapportContext} from "../providers/RapportProvider";
 import {useAzureAD} from "../providers/AzureADProvider";
+import {useAzureState} from "../providers/AzureStateProvider";
+import {useUserContext} from "../providers/UserProvider";
 
 const { Option } = Select;
 
@@ -233,49 +235,81 @@ export default function Dashboard() {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [, setActiveTab] = useState('1');
     const { rapports, loading, generateRapport, generating } = useRapportContext();
-    const {runPowerShellCommand,checkUserExists, getAvailableSKUs,assignLicenseToUser} = useAzureAD();
+    const {runPowerShellCommand,checkUserExists, getAvailableSKUs,assignLicenseToUser,getADUsers} = useAzureAD();
     const [isAttributeModalVisible, setIsAttributeModalVisible] = useState(false);
     const [selectedLicense, setSelectedLicense] = useState(null);
     const [licencesDisponibles, setLicencesDisponibles] = useState([]);
     const [licences, setLicences] = useState([]);
     const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const {users} = useUserContext();
+    const [form] = Form.useForm();
+    const [checking, setChecking] = useState(false);
+    const [creating, setCreating] = useState(false);
+    const { azureStates } = useAzureState();
 
     useEffect(() => {
-        fetch('/data/UserData.json')
-            .then((res) => res.json())
-            .then((data) => {
-                const transformedData = Array.isArray(data)
-                    ? data.map((user) => ({
-                        DisplayName: user.DisplayName,
-                        UserPrincipalName: user.UserPrincipalName,
-                        isLicensed: !!user.AssignedLicenses?.length,
-                        Licenses: user.AssignedLicenses?.map((license) => ({
-                            AccountSkuId: license.SkuId,
-                            ServiceStatus: user.AssignedPlans?.filter(
-                                (plan) => plan.SkuId === license.SkuId
-                            ).map((plan) => ({
-                                ServicePlan: {
-                                    ServiceName: plan.ServicePlanName,
-                                    ProvisioningStatus: plan.ProvisioningStatus
-                                }
-                            })) || []
+        const fetchAzureData = async () => {
+            if (azureStates.length > 0 && azureStates[0].connected) {
+                try {
+                    const licences = await getAvailableSKUs();
+                    const usersData = await getADUsers();
+
+                    const azureUsers = Array.isArray(JSON.parse(usersData.data))
+                        ? JSON.parse(usersData.data).map((user) => ({
+                            DisplayName: user.DisplayName,
+                            UserPrincipalName: user.UserPrincipalName,
+                            isLicensed: !!user.AssignedLicenses?.length,
+                            Licenses: user.AssignedLicenses?.map((license) => ({
+                                AccountSkuId: license.SkuId,
+                                ServiceStatus:
+                                    user.AssignedPlans?.filter(
+                                        (plan) => plan.SkuId === license.SkuId
+                                    ).map((plan) => ({
+                                        ServicePlan: {
+                                            ServiceName: plan.ServicePlanName,
+                                            ProvisioningStatus: plan.ProvisioningStatus,
+                                        },
+                                    })) || [],
+                            })),
                         }))
-                    }))
-                    : [];
+                        : [];
 
-                setLicences(transformedData);
-            })
-            .catch((err) => console.error('Erreur chargement utilisateurs :', err));
-    }, []);
+                    // --- Transformation des utilisateurs locaux (users) ---
+                    const localUsersTransformed = users.map((localUser) => ({
+                        DisplayName: localUser.displayName,
+                        UserPrincipalName: localUser.userPrincipalName,
+                        isLicensed: !!localUser.licenses?.length || localUser.licensed || false,
+                        Licenses: localUser.licenses?.map((license) => ({
+                            AccountSkuId: license.SkuId || license.accountSkuId || "UNKNOWN",
+                            ServiceStatus: license.ServiceStatus || [],
+                        })) || [],
+                    }));
 
+                    // --- Fusion en évitant les doublons ---
+                    const mergedUsers = [
+                        ...azureUsers,
+                        ...localUsersTransformed.filter(
+                            (localUser) =>
+                                !azureUsers.some(
+                                    (azureUser) =>
+                                        azureUser.UserPrincipalName === localUser.UserPrincipalName
+                                )
+                        ),
+                    ];
 
+                    setLicences(mergedUsers);
 
-    useEffect(() => {
-        fetch('/data/LicencesData.json')
-            .then((res) => res.json())
-            .then((data) => setLicencesDisponibles(data))
-            .catch((err) => console.error('Erreur chargement licences :', err));
-    }, []);
+                    const normalizedData = Array.isArray(JSON.parse(licences.data)) ? JSON.parse(licences.data) : [JSON.parse(licences.data)];
+                    setLicencesDisponibles(normalizedData);
+
+                } catch (error) {
+                    console.error("Erreur lors de l’exécution des commandes PowerShell:", error);
+                }
+            }
+        };
+
+        fetchAzureData();
+    }, [azureStates]);
 
     const handleGenerate = async () => {
         try {
@@ -293,8 +327,28 @@ export default function Dashboard() {
 
     async function assignLicense(record) {
         setIsAttributeModalVisible(true);
-        await runPowerShellCommand("Get-AzureADUser | ConvertTo-Json -Depth 10 | Out-File -Encoding UTF8 src/main/resources/scripts/powershell/response.json")
+        setSelectedUser(record);
+        setChecking(true);
+
+        try {
+            const userData = await checkUserExists(record.UserPrincipalName);
+
+            if (!userData) {
+                console.log("Utilisateur non trouvé sur AD");
+                // Tu peux mettre à jour ton state ou afficher un message
+            } else {
+                console.log("Utilisateur trouvé :", userData);
+                // Tu peux maintenant stocker l'objet dans un state ou l'utiliser
+                // Exemple :
+                // setUserFromAD(userData);
+            }
+        } catch (err) {
+            console.error("Erreur lors de la vérification de l'utilisateur :", err);
+        } finally {
+            setChecking(false);
+        }
     }
+
 
     function removeLicense(record) {
         console.log("Suppression de licence pour l'utilisateur :", record);
@@ -731,6 +785,77 @@ export default function Dashboard() {
                     </p>
                 </Modal>
 
+                <Modal
+                    title={`Attribution d'une licence ${selectedUser?.DisplayName}`}
+                    visible={isAttributeModalVisible}
+                    onCancel={() => {
+                        setIsAttributeModalVisible(false);
+                        setChecking(false);
+                        setSelectedUser(null);
+                        form.resetFields();
+                    }}
+                    footer={[
+                        <Button key="back" onClick={() => setIsAttributeModalVisible(false)}>
+                            Annuler
+                        </Button>,
+                        <Button
+                            key="submit"
+                            type="primary"
+                            loading={creating}
+                            onClick={() => form.submit()}
+                            disabled={checking} // désactiver tant que checking est true
+                        >
+                            {creating ? "Envoi en cours..." : "Ajouter les images"}
+                        </Button>,
+                    ]}
+                >
+                    {checking ? (
+                        <div className="flex flex-col items-center justify-center w-full h-full py-10">
+                            <div
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                }}
+                            >
+                                <Spin size="large" />
+                            </div>
+
+                            <p className="mt-4 text-center">
+                                Vérification de la validité de l’utilisateur sur AD...
+                            </p>
+                        </div>
+
+                    ) : (
+                        <Form
+                            form={form}
+                            layout="vertical"
+                            onFinish={() => console.log("dats")} // récupère tous les champs
+                        >
+                            {/* Champ titre */}
+                            <Form.Item
+                                label="Titre"
+                                name="title"
+                                rules={[{ required: true, message: "Veuillez entrer un titre" }]}
+                            >
+                                <Input placeholder="Entrez un titre" />
+                            </Form.Item>
+
+                            {/* Champ description */}
+                            <Form.Item
+                                label="Description"
+                                name="description"
+                                rules={[{ required: true, message: "Veuillez entrer une description" }]}
+                            >
+                                <Input.TextArea rows={3} placeholder="Entrez une description" />
+                            </Form.Item>
+                        </Form>
+                    )}
+                </Modal>
+
+
 
                 {/* Tableau des sondages */}
                 <Card
@@ -741,7 +866,7 @@ export default function Dashboard() {
                         columns={columns}
                         dataSource={licences}
                         pagination={{
-                            pageSize: 5,
+                            pageSize: 10,
                             showSizeChanger: true,
                             showTotal: (total) => `${total} Utilisateurs`,
                         }}

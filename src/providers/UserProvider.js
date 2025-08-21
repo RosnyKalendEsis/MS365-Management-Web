@@ -19,7 +19,7 @@ export const UserProvider = ({ children }) => {
             const { data } = await Ajax.getRequest("/api/users");
             if (!data.error) {
                 setUsers(data);
-                console.log(data);
+                console.log("users: ",data);
             } else {
                 setUserError("Erreur lors du chargement des utilisateurs.");
             }

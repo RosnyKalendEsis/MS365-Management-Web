@@ -38,6 +38,7 @@ import moment from 'moment';
 import Search from "antd/es/input/Search";
 import '../styles/DocumentsOfficiels.css'
 import {useRapportContext} from "../providers/RapportProvider";
+import {hosts} from "../env/Environment";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -131,7 +132,7 @@ const DocumentsOfficiels = () => {
                     <Tooltip title="Télécharger">
                         <Button
                             icon={<DownloadOutlined />}
-                            onClick={() => handleDownload(record.url)}
+                            onClick={() => window.open(`${hosts.image}${record.url}`, "_blank")}
                         />
                     </Tooltip>
                     <Popconfirm
@@ -272,8 +273,8 @@ const DocumentsOfficiels = () => {
                                         <Tag>{record.format.toUpperCase()}</Tag>
                                     </Descriptions.Item>
                                     <Descriptions.Item label="URL">
-                                        <a href={record.url} target="_blank" rel="noopener noreferrer">
-                                            {record.url}
+                                        <a href={hosts.image+""+record.url} target="_blank" rel="noopener noreferrer">
+                                            {hosts.image+""+record.url}
                                         </a>
                                     </Descriptions.Item>
                                 </Descriptions>

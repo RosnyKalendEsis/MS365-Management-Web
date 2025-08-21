@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { Ajax } from '../services/ajax';
 
 const AzureADContext = createContext();
@@ -8,11 +8,12 @@ export const useAzureAD = () => useContext(AzureADContext);
 export const AzureADProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [output, setOutput] = useState("");
+    const pollingRef = useRef(null);
 
     const runPowerShellCommand = async (command) => {
         setLoading(true);
         try {
-            const response = await Ajax.postRequest('/api/powershell/run', {command: command});
+            const response = await Ajax.postRequest('/api/powershell/run', { command: command });
             setOutput(response?.data || "Aucune réponse");
             console.log(response?.data);
             return response.data;
@@ -26,14 +27,46 @@ export const AzureADProvider = ({ children }) => {
 
     // 1. Obtenir les licences disponibles (SKU)
     const getAvailableSKUs = async () => {
-        const command = `Get-AzureADSubscribedSku | Select SkuPartNumber, SkuId | ConvertTo-Json -Depth 10 | Out-File -Encoding UTF8 src/main/resources/scripts/powershell/response.json`;
-        return await runPowerShellCommand(command);
+        const command = `Get-AzureADSubscribedSku | Select SkuPartNumber, SkuId | ConvertTo-Json -Depth 10 | Out-File -Encoding UTF8 src/main/resources/scripts/powershell/azure_licences.json`;
+        try {
+            const response = await Ajax.postRequest('/api/powershell/get-licences', { command: command });
+            setOutput(response?.data || "Aucune réponse");
+            return response.data;
+        } catch (error) {
+            console.error("❌ Erreur lors de l'exécution PowerShell :", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getADUsers = async () => {
+        const command = `Get-AzureADUser | ConvertTo-Json -Depth 10 | Out-File -Encoding UTF8 src/main/resources/scripts/powershell/azure_users.json`;
+        try {
+            const response = await Ajax.postRequest('/api/powershell/get-users', { command: command });
+            setOutput(response?.data || "Aucune réponse");
+            return response.data;
+        } catch (error) {
+            console.error("❌ Erreur lors de l'exécution PowerShell :", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     };
 
     // 2. Vérifier si l'utilisateur existe
     const checkUserExists = async (userPrincipalName) => {
-        const command = `Get-AzureADUser -Filter "UserPrincipalName eq '${userPrincipalName}'" | Select ObjectId, UserPrincipalName | ConvertTo-Json -Depth 10 | Out-File -Encoding UTF8 src/main/resources/scripts/powershell/response.json`;
-        return await runPowerShellCommand(command);
+        const command = `Get-AzureADUser -Filter "UserPrincipalName eq '${userPrincipalName}'" | Select ObjectId, UserPrincipalName | ConvertTo-Json -Depth 10 | Out-File -Encoding UTF8 src/main/resources/scripts/powershell/ExistUser.json`;
+        try {
+            const response = await Ajax.postRequest('/api/powershell/check-user', { command: command });
+            setOutput(response?.data || "Aucune réponse");
+            return response.data;
+        } catch (error) {
+            console.error("❌ Erreur lors de l'exécution PowerShell :", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     };
 
     // 3. Créer un utilisateur s’il n’existe pas
@@ -71,7 +104,6 @@ export const AzureADProvider = ({ children }) => {
         return await runPowerShellCommand(command);
     };
 
-
     // 6. Désactiver (retirer) une licence
     const removeLicenseFromUser = async (userPrincipalName, skuId) => {
         const command = `
@@ -80,6 +112,33 @@ export const AzureADProvider = ({ children }) => {
         `;
         return await runPowerShellCommand(command);
     };
+
+    // ✅ Fonction périodique pour récupérer tous les utilisateurs
+    const pollUsers = async () => {
+        const command = `Get-AzureADUser | ConvertTo-Json -Depth 10 | Out-File -Encoding UTF8 src/main/resources/scripts/powershell/response.json`;
+        return await runPowerShellCommand(command);
+    };
+
+    const startUserPolling = (interval = 60000) => { // par défaut toutes les 60s
+        if (pollingRef.current) return; // éviter plusieurs intervalles
+        pollingRef.current = setInterval(() => {
+            pollUsers();
+        }, interval);
+        console.log("⏳ Polling AzureAD users démarré...");
+    };
+
+    const stopUserPolling = () => {
+        if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+            console.log("🛑 Polling AzureAD users arrêté.");
+        }
+    };
+
+    // Arrêter le polling quand le provider est démonté
+    useEffect(() => {
+        return () => stopUserPolling();
+    }, []);
 
     return (
         <AzureADContext.Provider
@@ -92,7 +151,11 @@ export const AzureADProvider = ({ children }) => {
                 createUser,
                 getUserObjectId,
                 assignLicenseToUser,
-                removeLicenseFromUser
+                removeLicenseFromUser,
+                pollUsers,
+                startUserPolling,
+                stopUserPolling,
+                getADUsers
             }}
         >
             {children}
