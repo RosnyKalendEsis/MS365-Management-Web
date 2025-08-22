@@ -208,7 +208,7 @@ const Notifications = () => {
                                         }
                                         title={
                                             <Space>
-                                                <span>{item.from.split('@')[0]}</span>
+                                                <span>Notifications</span>
                                                 {item.labels.map(label => (
                                                     <Tag key={label} color={labels.find(l => l.value === label)?.color}>
                                                         {labels.find(l => l.value === label)?.label}

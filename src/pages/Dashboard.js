@@ -54,6 +54,7 @@ import {useRapportContext} from "../providers/RapportProvider";
 import {useAzureAD} from "../providers/AzureADProvider";
 import {useAzureState} from "../providers/AzureStateProvider";
 import {useUserContext} from "../providers/UserProvider";
+import {Ajax} from "../services/ajax";
 
 const { Option } = Select;
 
@@ -235,8 +236,9 @@ export default function Dashboard() {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [, setActiveTab] = useState('1');
     const { rapports,generateRapport, generating } = useRapportContext();
-    const {runPowerShellCommand,checkUserExists, getAvailableSKUs,assignLicenseToUser,getADUsers,createAzureUser} = useAzureAD();
+    const {runPowerShellCommand,checkUserExists, getAvailableSKUs,assignLicenseToUser,getADUsers,createAzureUser,removeLicenseFromUser} = useAzureAD();
     const [isAttributeModalVisible, setIsAttributeModalVisible] = useState(false);
+    const [isRemoveModalVisible, setIsRemoveModalVisible] = useState(false);
     const [selectedLicense, setSelectedLicense] = useState(null);
     const [licencesDisponibles, setLicencesDisponibles] = useState([]);
     const [licences, setLicences] = useState([]);
@@ -246,69 +248,8 @@ export default function Dashboard() {
     const [checking, setChecking] = useState(false);
     const [creating, setCreating] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [removing, setRemoving] = useState(false);
     const { azureStates } = useAzureState();
-
-    const fetchAzureData = async () => {
-        if (azureStates.length > 0 && azureStates[0].connected) {
-            try {
-                const usersData = await getADUsers();
-
-                const azureUsers = Array.isArray(JSON.parse(usersData.data))
-                    ? JSON.parse(usersData.data).map((user) => ({
-                        DisplayName: user.DisplayName,
-                        UserPrincipalName: user.UserPrincipalName,
-                        isLicensed: !!user.AssignedLicenses?.length,
-                        Licenses: user.AssignedLicenses?.map((license) => ({
-                            AccountSkuId: license?.SkuId,
-                            ServiceStatus:
-                                user.AssignedPlans?.filter(
-                                    (plan) => plan?.SkuId === license?.SkuId
-                                ).map((plan) => ({
-                                    ServicePlan: {
-                                        ServiceName: plan?.ServicePlanName,
-                                        ProvisioningStatus: plan?.ProvisioningStatus,
-                                    },
-                                })) || [],
-                        })),
-                    }))
-                    : [];
-
-                // --- Transformation des utilisateurs locaux (users) ---
-                const localUsersTransformed = users
-                    .filter((localUser) => localUser.role !== "SUPER_ADMIN") // exclure les SUPER_ADMIN
-                    .map((localUser) => ({
-                        DisplayName: localUser.displayName,
-                        UserPrincipalName: localUser.userPrincipalName,
-                        isLicensed: !!localUser.licenses?.length || localUser.licensed || false,
-                        Licenses:
-                            localUser.licenses?.map((license) => ({
-                                AccountSkuId: license.SkuId || license.accountSkuId || "UNKNOWN",
-                                ServiceStatus: license.ServiceStatus || [],
-                            })) || [],
-                    }));
-
-                // --- Fusion en évitant les doublons ---
-                const mergedUsers = [
-                    ...azureUsers,
-                    ...localUsersTransformed.filter(
-                        (localUser) =>
-                            !azureUsers.some(
-                                (azureUser) =>
-                                    azureUser.UserPrincipalName === localUser.UserPrincipalName
-                            )
-                    ),
-                ];
-
-                setLicences(mergedUsers);
-
-                const normalizedData = Array.isArray(JSON.parse(licences.data)) ? JSON.parse(licences.data) : [JSON.parse(licences.data)];
-                setLicencesDisponibles(normalizedData);
-
-            } catch (error) {
-                console.error("Erreur lors de l’exécution des commandes PowerShell:", error);
-            }
-        }
-    };
 
     useEffect(() => {
         const fetchAzureData = async () => {
@@ -338,9 +279,9 @@ export default function Dashboard() {
                         }))
                         : [];
 
-                    // --- Transformation des utilisateurs locaux (users) ---
+                    // --- Transformation des utilisateurs locaux ---
                     const localUsersTransformed = users
-                        .filter((localUser) => localUser.role !== "SUPER_ADMIN") // exclure les SUPER_ADMIN
+                        .filter((localUser) => localUser.role !== "SUPER_ADMIN")
                         .map((localUser) => ({
                             DisplayName: localUser.displayName,
                             UserPrincipalName: localUser.userPrincipalName,
@@ -359,15 +300,47 @@ export default function Dashboard() {
                             (localUser) =>
                                 !azureUsers.some(
                                     (azureUser) =>
-                                        azureUser.UserPrincipalName === localUser.UserPrincipalName
+                                        azureUser.UserPrincipalName.toLowerCase() === localUser.UserPrincipalName.toLowerCase()
                                 )
                         ),
                     ];
 
                     setLicences(mergedUsers);
+                    console.log("merged users: ", mergedUsers);
 
-                    const normalizedData = Array.isArray(JSON.parse(licences.data)) ? JSON.parse(licences.data) : [JSON.parse(licences.data)];
+                    // --- Identifier les localUsers qui doivent être mis à jour ---
+                    const usersToUpdate = localUsersTransformed
+                        .map((localUser) => {
+                            const matchingAzureUser = azureUsers.find(
+                                (azureUser) =>
+                                    azureUser.UserPrincipalName.toLowerCase() === localUser.UserPrincipalName.toLowerCase()
+                            );
+
+                            if (matchingAzureUser && matchingAzureUser.isLicensed !== localUser.isLicensed) {
+                                return {
+                                    userPrincipalName: localUser.UserPrincipalName,
+                                    licensed: matchingAzureUser.isLicensed, // valeur mise à jour
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(Boolean);
+
+                    console.log("Local users à mettre à jour:", usersToUpdate);
+
+                    if(usersToUpdate.length > 0) {
+                        const {data} = await Ajax.putRequest(`/api/users/licenced`, usersToUpdate);
+                        console.log("mises a jour local: ",data);
+                    }
+
+
+                    // --- Licences disponibles ---
+                    const normalizedData = Array.isArray(JSON.parse(licences.data))
+                        ? JSON.parse(licences.data)
+                        : [JSON.parse(licences.data)];
+
                     setLicencesDisponibles(normalizedData);
+                    console.log("licences availble: ", normalizedData);
 
                 } catch (error) {
                     console.error("Erreur lors de l’exécution des commandes PowerShell:", error);
@@ -419,8 +392,20 @@ export default function Dashboard() {
     }
 
 
-    function removeLicense(record) {
-        console.log("Suppression de licence pour l'utilisateur :", record);
+    async function removeLicense(record) {
+
+        try{
+            await removeLicenseFromUser(selectedUser.UserPrincipalName, selectedLicense);
+        }catch(err){
+            console.error("Erreur lors de l'utilisateur :", err);
+        }finally {
+            setIsRemoveModalVisible(false);
+            setRemoving(false);
+            setSelectedLicense(null);
+            setSelectedUser(null);
+            form.resetFields();
+            window.location.reload();
+        }
     }
 
     async function handleSubmit(values) {
@@ -434,7 +419,7 @@ export default function Dashboard() {
             setIsAttributeModalVisible(false);
             setSelectedLicense(null);
             form.resetFields();
-            fetchAzureData();
+            window.location.reload();
         }
         console.log("Creation de l'utilisateur sur azure de l'utilisateur :", values);
     }
@@ -564,7 +549,10 @@ export default function Dashboard() {
                         <Button
                             type="link"
                             icon={<MinusCircleOutlined />}
-                            onClick={() => removeLicense(record)}
+                            onClick={() => {
+                                setIsRemoveModalVisible(true);
+                                setSelectedUser(record);
+                            }}
                             disabled={!record.isLicensed}
                             danger
                         />
@@ -964,6 +952,60 @@ export default function Dashboard() {
                                     </Select>
                                 </Form>
                             )}
+                        </Modal>
+
+
+                        <Modal
+                            title={`Retirer la licence a ${selectedUser?.DisplayName}`}
+                            visible={isRemoveModalVisible}
+                            onCancel={() => {
+                                setIsRemoveModalVisible(false);
+                                setRemoving(false);
+                                setSelectedLicense(null);
+                                setSelectedUser(null);
+                                form.resetFields();
+                            }}
+                            footer={[
+                                <Button key="back" onClick={() => setIsRemoveModalVisible(false)}>
+                                    Annuler
+                                </Button>,
+                                <Button
+                                    key="submit"
+                                    type="primary"
+                                    loading={removing}
+                                    onClick={() => form.submit()}
+                                    disabled={removing || selectedLicense===null} // désactiver tant que checking est true
+                                >
+                                    {removing ? "Retrait en cours..." : "Retirer la licence"}
+                                </Button>,
+                            ]}
+                        >
+                            <Form
+                                form={form}
+                                layout="vertical"
+                                initialValues={{
+                                    displayName: selectedUser?.DisplayName,
+                                    userPrincipalName: selectedUser?.UserPrincipalName,
+                                }}
+                                onFinish={(values) => {
+                                    removeLicense(values);
+                                }}
+                            >
+                                <p>Selectionner la license a retirer</p>
+
+                                <Select
+                                    style={{ width: '100%' }}
+                                    placeholder="Sélectionnez une licence"
+                                    value={selectedLicense}
+                                    onChange={setSelectedLicense}
+                                >
+                                    {licencesDisponibles.map((licence) => (
+                                        <Select.Option key={licence?.SkuId} value={licence?.SkuId}>
+                                            {licence?.SkuPartNumber}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form>
                         </Modal>
 
 

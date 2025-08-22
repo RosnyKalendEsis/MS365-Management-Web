@@ -21,8 +21,8 @@ export const AlertProvider = ({ children }) => {
 
             const transformed = data.map((notif, index) => ({
                 id: notif.id,
-                from: 'taxes@dgrk.cd',
-                to: `${notif.recipient.mail}`,
+                from: 'System',
+                to: `ADMIN`,
                 subject: notif.title,
                 content: notif.body,
                 date: moment(notif.dateTime).format('YYYY-MM-DD HH:mm'),
@@ -64,7 +64,14 @@ export const AlertProvider = ({ children }) => {
 
     useEffect(() => {
         getNotifications();
+
+        const interval = setInterval(() => {
+            getNotifications();
+        }, 10000);
+
+        return () => clearInterval(interval);
     }, []);
+
 
     return (
         <NotificationContext.Provider
